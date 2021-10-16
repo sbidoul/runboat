@@ -1,0 +1,46 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+namePrefix: "{{ name_prefix }}-"
+
+commonLabels:
+  runboat-build: "{{ name_prefix}}"
+
+images:
+  - name: odoo
+    newName: "{{ image_name }}"
+    newTag: latest
+
+secretGenerator:
+  - name: odoosecretenv
+    literals:
+      - DB_PASSWORD={{ db_passwd }}
+      - ADMIN_PASSWD={{ admin_passwd }}
+
+configMapGenerator:
+  - name: odooenv
+    literals:
+      - DB_HOST={{ db_host }}
+      - DB_PORT={{ db_port }}
+      - DB_USER={{ db_user }}
+      - DB_NAME={{ db_name }}
+      - LIST_DB=False
+  - name: runboat-scripts
+    files:
+      - runboat-clone-and-install.sh
+      - runboat-init.sh
+      - runboat-start.sh
+  - name: vars
+    literals:
+      - HOSTNAME={{ hostname }}
+
+vars:
+  - name: HOSTNAME
+    objref:
+      name: vars
+      kind: ConfigMap
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.HOSTNAME

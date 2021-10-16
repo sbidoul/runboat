@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: odoo
+  template:
+    metadata:
+      labels:
+        app: odoo
+    spec:
+      initContainers:
+        - name: odoo-init
+          image: odoo
+          volumeMounts:
+            - name: runboat-scripts
+              mountPath: /runboat
+          envFrom:
+            - secretRef:
+                name: odoosecretenv
+            - configMapRef:
+                name: odooenv
+          args: ["bash", "/runboat/runboat-init.sh"]
+      containers:
+        - name: odoo
+          image: odoo
+          volumeMounts:
+            - name: runboat-scripts
+              mountPath: /runboat
+          envFrom:
+            - secretRef:
+                name: odoosecretenv
+            - configMapRef:
+                name: odooenv
+          ports:
+            - name: web
+              containerPort: 8069
+            - name: longpolling
+              containerPort: 8072
+          args: ["bash", "/runboat/runboat-start.sh"]
+      volumes:
+        - name: runboat-scripts
+          configMap:
+            name: runboat-scripts

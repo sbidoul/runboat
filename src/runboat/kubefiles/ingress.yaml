@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: odoo
+spec:
+  rules:
+    - host: $(HOSTNAME)
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  number: 8069
+          - path: /longpolling
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  number: 8072

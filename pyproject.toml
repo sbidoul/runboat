@@ -1,0 +1,28 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "runboat"
+authors = [{name = "St\u00e9phane Bidoul", email = "stephane.bidoul@gmail.com"}]
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "fastapi",
+    "jinja2",
+    "kubernetes",
+    "psycopg2",
+    "sqlalchemy",
+    "uvicorn",
+]
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://github.com/sbidoul/runboat"
+
+[tool.isort]
+profile = 'black'
+
+# flake8 config is in .flake8
