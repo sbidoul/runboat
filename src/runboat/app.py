@@ -6,5 +6,5 @@ app = FastAPI(title="Runboat")
 
 
 @app.on_event("startup")
-async def startup():
+async def startup() -> None:
     create_tables()

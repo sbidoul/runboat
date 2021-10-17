@@ -19,10 +19,26 @@ dependencies = [
 ]
 dynamic = ["version", "description"]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+mypy = [
+    "mypy",
+    "sqlalchemy[mypy]",
+    "types-requests",
+]
+
 [project.urls]
 Home = "https://github.com/sbidoul/runboat"
 
 [tool.isort]
 profile = 'black'
+
+[tool.mypy]
+plugins = [
+    "sqlalchemy.ext.mypy.plugin",
+]
 
 # flake8 config is in .flake8

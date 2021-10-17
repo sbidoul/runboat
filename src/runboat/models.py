@@ -1,10 +1,12 @@
+from typing import List
+
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import expression
 
 from .build_images import get_build_image
-from .db import Base, Session
+from .db import Base
 from .exceptions import RepoNotFound
 from .github import BranchInfo, PullRequestInfo
 from .settings import settings
@@ -28,7 +30,7 @@ class Repo(Base):
     org = Column(String, nullable=False)
     name = Column(String, nullable=False)
 
-    branches = relationship("Branch", back_populates="repo")
+    branches: List["Branch"] = relationship("Branch", back_populates="repo")
 
     @property
     def display_name(self) -> str:
@@ -62,13 +64,13 @@ class Branch(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     created = Column(DateTime, nullable=False, server_default=utcnow())
-    target_branch = Column(String, nullable=False)
+    target_branch: str = Column(String, nullable=False)
     pr = Column(Integer, nullable=True)
 
     repo_id = Column(Integer, ForeignKey("repo.id"), nullable=False, index=True)
 
-    repo = relationship("Repo", back_populates="branches")
-    builds = relationship("Build", back_populates="branch")
+    repo: Repo = relationship(Repo, back_populates="branches")
+    builds: List["Build"] = relationship("Build", back_populates="branch")
 
     @property
     def display_name(self) -> str:
@@ -143,11 +145,11 @@ class Build(Base):
     created = Column(DateTime, nullable=False, server_default=utcnow())
 
     branch_id = Column(Integer, ForeignKey("branch.id"), nullable=False, index=True)
-    branch = relationship("Branch", back_populates="builds")
+    branch: Branch = relationship(Branch, back_populates="builds")
 
     build_image = Column(String, nullable=False)
-    git_sha = Column(String, nullable=False)
-    status = Column(String, nullable=False)
+    git_sha: str = Column(String, nullable=False)
+    status: str = Column(String, nullable=False)
     # ressource_label = Column(String, nullable=False, unique=True, index=True)
 
     # TODO: add unique constraint on branch_id + git_sha
@@ -166,7 +168,6 @@ class Build(Base):
 
     @classmethod
     def for_branch(cls, db: Session, branch: Branch, git_sha: str) -> "Build":
-        print("*******", branch)
         build = (
             db.query(Build)
             .filter(

@@ -117,8 +117,8 @@ def stop(repo_id: str, branch_id: str, build_id: str):
 )
 def trigger_branch(org: str, repo: str, branch: str, db: Session = Depends(get_db)):
     branch_info = github.get_branch_info(org, repo, branch)
-    branch = models.Branch.for_github_branch(db, branch_info)
-    return models.Build.for_branch(db, branch, branch_info.head_sha)
+    _branch = models.Branch.for_github_branch(db, branch_info)
+    return models.Build.for_branch(db, _branch, branch_info.head_sha)
 
 
 @app.post(
@@ -127,5 +127,5 @@ def trigger_branch(org: str, repo: str, branch: str, db: Session = Depends(get_d
 )
 def trigger_pr(org: str, repo: str, pr: int, db: Session = Depends(get_db)):
     pr_info = github.get_pr_info(org, repo, pr)
-    branch = models.Branch.for_github_pr(db, pr_info)
-    return models.Build.for_branch(db, branch, pr_info.head_sha)
+    _branch = models.Branch.for_github_pr(db, pr_info)
+    return models.Build.for_branch(db, _branch, pr_info.head_sha)
