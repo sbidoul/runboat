@@ -12,3 +12,7 @@ class BranchNotFound(ClientError):
 
 class NotFoundOnGithub(ClientError):
     pass
+
+
+class BranchNotSupported(ClientError):
+    pass

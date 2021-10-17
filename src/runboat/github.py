@@ -13,7 +13,7 @@ def _github_get(url: str) -> Any:
     }
     response = requests.get(full_url, headers)
     if response.status_code == 404:
-        raise NotFoundOnGithub(full_url)
+        raise NotFoundOnGithub(f"GitHub URL not found: {full_url}.")
     response.raise_for_status()
     return response.json()
 

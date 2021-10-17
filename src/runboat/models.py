@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
@@ -5,7 +6,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import expression
 
-from .build_images import get_build_image
+from .build_images import check_branch_supported, get_build_image
 from .db import Base
 from .exceptions import RepoNotFound
 from .github import BranchInfo, PullRequestInfo
@@ -55,7 +56,7 @@ class Repo(Base):
             .one_or_none()
         )
         if repo is None:
-            raise RepoNotFound()
+            raise RepoNotFound(f"Repo {org}/{name} not supported by this runboat.")
         return repo
 
 
@@ -106,6 +107,7 @@ class Branch(Base):
             .one_or_none()
         )
         if branch is None:
+            check_branch_supported(branch_info.name)
             branch = Branch(
                 repo=repo,
                 target_branch=branch_info.name,
@@ -128,6 +130,7 @@ class Branch(Base):
             .one_or_none()
         )
         if branch is None:
+            check_branch_supported(pr_info.target_branch)
             branch = Branch(
                 repo=repo,
                 target_branch=pr_info.target_branch,
@@ -136,6 +139,13 @@ class Branch(Base):
             db.add(branch)
             db.flush()
         return branch
+
+
+class BuildStatus(str, Enum):
+    stopped = "stopped"
+    running = "running"
+    deploying = "deploying"
+    not_deployed = "not_deployed"
 
 
 class Build(Base):
@@ -147,9 +157,9 @@ class Build(Base):
     branch_id = Column(Integer, ForeignKey("branch.id"), nullable=False, index=True)
     branch: Branch = relationship(Branch, back_populates="builds")
 
-    build_image = Column(String, nullable=False)
+    build_image: str = Column(String, nullable=False)
     git_sha: str = Column(String, nullable=False)
-    status: str = Column(String, nullable=False)
+    status: BuildStatus = Column(String, nullable=False)
     # ressource_label = Column(String, nullable=False, unique=True, index=True)
 
     # TODO: add unique constraint on branch_id + git_sha
@@ -182,7 +192,7 @@ class Build(Base):
                 branch=branch,
                 git_sha=git_sha,
                 build_image=build_image,
-                status="not_deployed",  # TODO use same enum as in API
+                status=BuildStatus.not_deployed,
             )
             db.add(build)
             db.flush()

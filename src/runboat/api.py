@@ -1,11 +1,11 @@
 import datetime
-from enum import Enum
 from typing import List
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from starlette.status import HTTP_404_NOT_FOUND
 
 from . import github, models
 from .app import app
@@ -45,14 +45,10 @@ class Branch(BaseModel):
     response_model=List[Branch],
 )
 def branches(repo_id: str, db: Session = Depends(get_db)):
-    return db.query(models.Branch).filter(models.Branch.repo_id == repo_id).all()
-
-
-class BuildStatus(str, Enum):
-    stopped = "stopped"
-    running = "running"
-    deploying = "deploying"
-    not_deployed = "not_deployed"
+    repo = db.query(models.Repo).get(repo_id)
+    if not repo:
+        raise HTTPException(HTTP_404_NOT_FOUND)
+    return db.query(models.Branch).filter(models.Branch.repo == repo).all()
 
 
 class Build(BaseModel):
@@ -60,7 +56,7 @@ class Build(BaseModel):
     created: datetime.datetime
     display_name: str
     display_url: str = Field(title="Link to open the build")
-    status: BuildStatus
+    status: models.BuildStatus
 
     class Config:
         orm_mode = True
@@ -70,8 +66,18 @@ class Build(BaseModel):
     "/repos/{repo_id}/branches/{branch_id}/builds",
     response_model=List[Build],
 )
-def builds(repo_id: str, branch_id: str):
-    ...
+def builds(repo_id: str, branch_id: str, db: Session = Depends(get_db)):
+    repo = db.query(models.Repo).get(repo_id)
+    if not repo:
+        raise HTTPException(HTTP_404_NOT_FOUND)
+    branch = (
+        db.query(models.Branch)
+        .filter(models.Branch.id == branch_id, models.Branch.repo == repo)
+        .one_or_none()
+    )
+    if not branch:
+        raise HTTPException(HTTP_404_NOT_FOUND)
+    return db.query(models.Build).filter(models.Build.branch == branch).all()
 
 
 @app.get(
