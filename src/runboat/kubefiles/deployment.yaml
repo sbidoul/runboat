@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: odoo
+  annotations:
+    runboat/todo: "start"  # ask controller to start when there is capacity
 spec:
-  replicas: 1
+  replicas: 0  # deploy idle (with 0 replica)
   strategy:
     type: Recreate
   selector:
@@ -17,6 +19,7 @@ spec:
       initContainers:
         - name: odoo-init
           image: odoo
+          restartPolicy: Never
           volumeMounts:
             - name: runboat-scripts
               mountPath: /runboat
@@ -26,6 +29,10 @@ spec:
             - configMapRef:
                 name: odooenv
           args: ["bash", "/runboat/runboat-init.sh"]
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
       containers:
         - name: odoo
           image: odoo
@@ -43,6 +50,11 @@ spec:
             - name: longpolling
               containerPort: 8072
           args: ["bash", "/runboat/runboat-start.sh"]
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          terminationGracePeriodSeconds: 5
       volumes:
         - name: runboat-scripts
           configMap:

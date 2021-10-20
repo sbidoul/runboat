@@ -3,30 +3,41 @@ resources:
   - service.yaml
   - ingress.yaml
 
-namePrefix: "{{ name_prefix }}-"
+namespace: {{ namespace }}
+
+nameSuffix: "-{{ build_name }}"
 
 commonLabels:
-  runboat-build: "{{ name_prefix}}"
+  runboat/build: "{{ build_name }}"
+
+commonAnnotations:
+  runboat/repo: "{{ repo }}"
+  runboat/target-branch: "{{ target_branch }}"
+  runboat/pr: "{{ pr if pr else '' }}"
+  runboat/commit: "{{ commit }}"
 
 images:
   - name: odoo
     newName: "{{ image_name }}"
-    newTag: latest
+    newTag: "{{ image_tag }}"
 
 secretGenerator:
   - name: odoosecretenv
     literals:
-      - DB_PASSWORD={{ db_passwd }}
+      - PGPASSWORD={{ pgpassword }}
       - ADMIN_PASSWD={{ admin_passwd }}
 
 configMapGenerator:
   - name: odooenv
     literals:
-      - DB_HOST={{ db_host }}
-      - DB_PORT={{ db_port }}
-      - DB_USER={{ db_user }}
-      - DB_NAME={{ db_name }}
-      - LIST_DB=False
+      - PGHOST={{ pghost }}
+      - PGPORT={{ pgport }}
+      - PGUSER={{ pguser }}
+      - PGNAME={{ pgname }}
+      - PGDATABASE={{ pgdatabase }}
+      - ADDONS_DIR=/build
+      - RUNBOAT_GIT_REPO=https://github.com/{{ repo }}
+      - RUNBOAT_GIT_REF={{ commit }}
   - name: runboat-scripts
     files:
       - runboat-clone-and-install.sh

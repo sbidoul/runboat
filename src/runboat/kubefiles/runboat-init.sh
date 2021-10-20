@@ -10,8 +10,7 @@ bash /runboat/runboat-clone-and-install.sh
 
 oca_wait_for_postgres
 
-# TODO: rather, do nothing if db exists, so we can start instantly ?
-dropdb --if-exists $PGDATABASE
+# TODO: do nothing if db exists and all addons are installed, so we can start instantly
 
 ADDONS=$(addons --addons-dir ${ADDONS_DIR} --include "${INCLUDE}" --exclude "${EXCLUDE}" list)
 

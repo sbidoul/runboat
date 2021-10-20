@@ -37,7 +37,7 @@ def get_branch_info(org: str, repo: str, branch: str) -> BranchInfo:
 
 
 @dataclass
-class PullRequestInfo:
+class PullInfo:
     org: str
     repo: str
     number: int
@@ -45,9 +45,9 @@ class PullRequestInfo:
     target_branch: str
 
 
-def get_pr_info(org: str, repo: str, pr: int) -> PullRequestInfo:
+def get_pull_info(org: str, repo: str, pr: int) -> PullInfo:
     pr_data = _github_get(f"/repos/{org}/{repo}/pulls/{pr}")
-    return PullRequestInfo(
+    return PullInfo(
         org=org,
         repo=repo,
         number=pr,

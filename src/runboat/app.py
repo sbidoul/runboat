@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 
-from .db import create_tables
+from . import api, controller, k8s
 
-app = FastAPI(title="Runboat")
+app = FastAPI(title="Runboat", description="Runbot on Kubernetes ☸️")
+app.include_router(api.router)
 
 
 @app.on_event("startup")
 async def startup() -> None:
-    create_tables()
+    await k8s.load_kube_config()
+    await controller.controller.start()
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    await controller.controller.stop()

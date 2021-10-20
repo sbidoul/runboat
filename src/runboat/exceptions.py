@@ -2,7 +2,7 @@ class ClientError(Exception):
     pass
 
 
-class RepoNotFound(ClientError):
+class RepoNotSupported(ClientError):
     pass
 
 
