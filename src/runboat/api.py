@@ -14,8 +14,11 @@ router = APIRouter()
 
 class Status(BaseModel):
     deployed: int
+    max_deployed: int
     running: int
+    max_running: int
     starting: int
+    max_starting: int
 
     class Config:
         orm_mode = True

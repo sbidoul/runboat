@@ -40,12 +40,24 @@ class Controller:
         return self.db.count_by_statuses([BuildStatus.started, BuildStatus.starting])
 
     @property
+    def max_running(self) -> int:
+        return settings.max_running
+
+    @property
     def starting(self) -> int:
         return self.db.count_by_statuses([BuildStatus.starting])
 
     @property
+    def max_starting(self) -> int:
+        return settings.max_starting
+
+    @property
     def deployed(self) -> int:
         return self.db.count_all()
+
+    @property
+    def max_deployed(self) -> int:
+        return settings.max_deployed
 
     def _wakeup(self) -> None:
         self._wakeup_event.set()
@@ -71,8 +83,8 @@ class Controller:
             await self._wakeup_event.wait()
             while True:
                 can_start = max(
-                    settings.max_running - self.running,
-                    settings.max_starting - self.starting,
+                    self.max_running - self.running,
+                    self.max_starting - self.starting,
                 )
                 if can_start <= 0:
                     break  # no capacity for now, back to sleep
@@ -89,7 +101,7 @@ class Controller:
         while True:
             await self._wakeup_event.wait()
             while True:
-                can_stop = self.running - settings.max_running
+                can_stop = self.running - self.max_running
                 if can_stop <= 0:
                     break  # nothing to top for now, back to sleep
                 to_stop = self.db.oldest_started(limit=can_stop)
@@ -105,7 +117,7 @@ class Controller:
         while True:
             await self._wakeup_event.wait()
             while True:
-                can_undeploy = self.deployed - settings.max_deployed
+                can_undeploy = self.deployed - self.max_deployed
                 if can_undeploy <= 0:
                     break  # nothing to undeploy for now, back to sleep
                 to_undeploy = self.db.oldest_stopped(limit=can_undeploy)
