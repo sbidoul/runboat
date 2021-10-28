@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -69,14 +69,14 @@ async def controller_status():
     return controller
 
 
-@router.get("/repos", response_model=List[Repo])
+@router.get("/repos", response_model=list[Repo])
 async def repos():
     return [models.Repo(name=name) for name in settings.supported_repos]
 
 
 @router.get(
     "/repos/{org}/{repo}/branches-and-pulls",
-    response_model=List[BranchOrPull],
+    response_model=list[BranchOrPull],
     response_model_exclude_none=True,
 )
 async def branches_and_pulls(org: str, repo: str):
