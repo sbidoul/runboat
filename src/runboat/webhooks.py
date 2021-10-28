@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
-from . import controller
+from . import models
 from .settings import settings
 
 _logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ async def receive_payload(
     background_tasks: BackgroundTasks,
     request: Request,
     x_github_event: str = Header(...),
-):
+) -> None:
     # TODO check x-hub-signature
     payload = await request.json()
     repo = payload["repository"]["full_name"]
@@ -29,7 +29,7 @@ async def receive_payload(
     if x_github_event == "pull_request":
         if action in ("opened", "synchronize"):
             background_tasks.add_task(
-                controller.Build.deploy,
+                models.Build.deploy,
                 repo=repo,
                 target_branch=payload["pull_request"]["base"]["ref"],
                 pr=payload["pull_request"]["number"],
@@ -37,7 +37,7 @@ async def receive_payload(
             )
     elif x_github_event == "push":
         background_tasks.add_task(
-            controller.Build.deploy,
+            models.Build.deploy,
             repo=repo,
             target_branch=payload["ref"].split("/")[-1],
             pr=None,

@@ -118,10 +118,10 @@ async def trigger_pull(org: str, repo: str, pr: int):
 
 
 def _build_by_name(name: str) -> models.Build:
-    try:
-        return controller.db.get(name)
-    except KeyError:
+    build = controller.db.get(name)
+    if build is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return build
 
 
 @router.get("/builds/{name}", response_model=Build)

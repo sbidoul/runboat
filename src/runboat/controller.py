@@ -27,17 +27,17 @@ class Controller:
     _tasks: list[asyncio.Task]
     _wakeup_event: asyncio.Event
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._tasks = []
         self._wakeup_event = asyncio.Event()
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.db = BuildsDb()
 
     @property
     def running(self) -> int:
-        return self.db.count_by_statuses([BuildStatus.started, BuildStatus.starting])
+        return self.db.count_by_statuses((BuildStatus.started, BuildStatus.starting))
 
     @property
     def max_running(self) -> int:
@@ -45,7 +45,7 @@ class Controller:
 
     @property
     def starting(self) -> int:
-        return self.db.count_by_statuses([BuildStatus.starting])
+        return self.db.count_by_statuses((BuildStatus.starting,))
 
     @property
     def max_starting(self) -> int:
@@ -131,7 +131,7 @@ class Controller:
                 if len(to_undeploy) < can_undeploy:
                     break  # back to sleep
 
-    async def start(self):
+    async def start(self) -> None:
         _logger.info("Starting controller tasks.")
 
         async def walking_dead(func):
@@ -148,7 +148,7 @@ class Controller:
         for f in (self.watcher, self.starter, self.stopper, self.undeployer):
             self._tasks.append(asyncio.create_task(walking_dead(f)))
 
-    async def stop(self):
+    async def stop(self) -> None:
         _logger.info("Stopping controller tasks.")
         for task in self._tasks:
             task.cancel()

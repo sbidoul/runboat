@@ -16,7 +16,7 @@ class BuildsDb:
 
     _con: sqlite3.Connection
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
 
     @classmethod
@@ -88,7 +88,7 @@ class BuildsDb:
                 ),
             )
 
-    def count_by_statuses(self, statuses: tuple[BuildStatus]) -> int:
+    def count_by_statuses(self, statuses: tuple[BuildStatus, ...]) -> int:
         q = ",".join(["?"] * len(statuses))
         return self._con.execute(
             f"SELECT COUNT(name) FROM builds WHERE status IN ({q})", statuses
@@ -123,7 +123,7 @@ class BuildsDb:
 
     def branches_and_pulls(self, repo: str) -> list[BranchOrPull]:
         res = []
-        branch_or_pull: BranchOrPull = None
+        branch_or_pull: BranchOrPull | None = None
         for row in self._con.execute(
             "SELECT * FROM builds WHERE repo=?"
             "ORDER BY target_branch, pr, created DESC",

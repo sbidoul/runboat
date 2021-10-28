@@ -5,7 +5,7 @@ import tempfile
 from contextlib import contextmanager
 from importlib import resources
 from pathlib import Path
-from typing import Any, AsyncGenerator, ContextManager, Dict, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
 
 from jinja2 import Template
 from kubernetes_asyncio import client, config, watch
@@ -95,7 +95,7 @@ def make_deployment_vars(
 
 
 @contextmanager
-def _render_kubefiles(deployment_vars: DeploymentVars) -> ContextManager[Path]:
+def _render_kubefiles(deployment_vars: DeploymentVars) -> Generator[Path, None, None]:
     with resources.path(
         __package__, "kubefiles"
     ) as kubefiles_path, tempfile.TemporaryDirectory() as tmp_dir:
@@ -111,9 +111,9 @@ def _render_kubefiles(deployment_vars: DeploymentVars) -> ContextManager[Path]:
 
 async def _kubectl(args: List[str]) -> None:
     proc = await asyncio.create_subprocess_exec("kubectl", *args)
-    await proc.wait()
-    if proc.returncode != 0:
-        raise subprocess.CalledProcessError(proc.returncode, ["kubectl"] + args)
+    return_code = await proc.wait()
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, ["kubectl"] + args)
 
 
 async def deploy(deployment_vars: DeploymentVars) -> None:
