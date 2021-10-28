@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import controller, github
+from . import github, models
+from .controller import controller
 from .deps import authenticated
+from .settings import settings
 
 router = APIRouter()
 
@@ -30,14 +32,15 @@ class Repo(BaseModel):
 
 
 class Build(BaseModel):
-    # created: datetime.datetime
+    # TODO created: datetime.datetime
+    name: str
     repo: str
     target_branch: str
     pr: Optional[int]
     commit: str
     image: str
     link: str
-    status: controller.BuildStatus
+    status: models.BuildStatus
 
     class Config:
         orm_mode = True
@@ -50,21 +53,21 @@ class BranchOrPull(BaseModel):
     target_branch: str
     pr: Optional[int]
     link: str
-    builds: List[Build]
+    builds: list[Build]
 
     class Config:
         orm_mode = True
+        read_with_orm_mode = True
 
 
 @router.get("/status", response_model=Status)
 async def controller_status():
-    return controller.controller
+    return controller
 
 
 @router.get("/repos", response_model=List[Repo])
 async def repos():
-    # return models.Repo.all()
-    ...
+    return [models.Repo(name=name) for name in settings.supported_repos]
 
 
 @router.get(
@@ -73,8 +76,7 @@ async def repos():
     response_model_exclude_none=True,
 )
 async def branches_and_pulls(org: str, repo: str):
-    # return await models.Repo.by_org_repo(org, repo).branches_and_pulls()
-    ...
+    return controller.db.branches_and_pulls(f"{org}/{repo}")
 
 
 @router.post(
@@ -86,7 +88,7 @@ async def trigger_branch(org: str, repo: str, branch: str):
     """Trigger build for a branch."""
     # TODO async github call
     branch_info = github.get_branch_info(org, repo, branch)
-    controller.Build.deploy(
+    await models.Build.deploy(
         repo=f"{branch_info.org}/{branch_info.repo}",
         target_branch=branch_info.name,
         pr=None,
@@ -103,7 +105,7 @@ async def trigger_pull(org: str, repo: str, pr: int):
     """Trigger build for a pull request."""
     # TODO async github call
     pull_info = github.get_pull_info(org, repo, pr)
-    await controller.Build.deploy(
+    await models.Build.deploy(
         repo=f"{pull_info.org}/{pull_info.repo}",
         target_branch=pull_info.target_branch,
         pr=pull_info.number,
@@ -111,10 +113,9 @@ async def trigger_pull(org: str, repo: str, pr: int):
     )
 
 
-def _build_by_name(name: str) -> controller.Build:
+def _build_by_name(name: str) -> models.Build:
     try:
-        # TODO do not access controller internals
-        return controller.controller._builds_by_name[name]
+        return controller.db.get(name)
     except KeyError:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
 
@@ -155,7 +156,7 @@ async def start(name: str):
 async def stop(name: str):
     """Stop the deployment."""
     build = _build_by_name(name)
-    await build.stop()
+    await build.scale(0)
 
 
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])

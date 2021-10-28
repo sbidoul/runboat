@@ -2,8 +2,7 @@
 
 A simple runbot lookalike on kubernetes. Main goal is replacing the OCA runbot.
 
-
-# Requirements
+## Requirements
 
 For running the builds:
 
@@ -24,24 +23,28 @@ For running the controller:
 
 Prototype:
 
-- webhook
 - plug it on a bunch of OCA and shopinvader repos to test load
 - handle init failures, add failed status
-- reaper
+- basic API
 
 MVP:
 
 - finish api
-- log api endpoints
+- build/log and build/init-log api endpoints
 - report build status to github
 - k8s init container timeout
 - error handling in API
 - basic tests
 - look at other TODO in code
-- build image
+- build and publis runboat container image
 - deployment
-- plug it on shopinvader and acsone
+- plug it on shopinvader and acsone to test on small scale
+- create builds for all supported repos on startup (goes with sticky branches)
+- advanced reaper (sticky branches)
+- test what happens when the watcher looses connection to k8s
 
 More:
 
 - UI
+- handle PR close (delete all builds for PR)
+- handle branch delete (delete all builds for branch)

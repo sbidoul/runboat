@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 
-from . import api, controller, k8s
+from . import api, controller, k8s, webhooks
 
 app = FastAPI(title="Runboat", description="Runbot on Kubernetes ☸️")
 app.include_router(api.router)
+app.include_router(webhooks.router)
 
 
 @app.on_event("startup")

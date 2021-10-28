@@ -16,10 +16,11 @@ spec:
       labels:
         app: odoo
     spec:
+      # TODO restartPolicy: Never
+      # TODO terminationGracePeriodSeconds: 5
       initContainers:
         - name: odoo-init
           image: odoo
-          restartPolicy: Never
           volumeMounts:
             - name: runboat-scripts
               mountPath: /runboat
@@ -54,7 +55,6 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
-          terminationGracePeriodSeconds: 5
       volumes:
         - name: runboat-scripts
           configMap:
