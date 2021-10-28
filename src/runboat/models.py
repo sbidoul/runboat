@@ -91,8 +91,8 @@ class Build(BaseModel):
         """Mark a build for startup.
 
         This is done by setting the runboat/todo annotation to 'start'.
-        This will in turn let the starter process it when there is
-        available capacity.
+        The starter process will then start it when there is available
+        capacity.
         """
         await k8s.patch_deployment(
             self.deployment_name,
@@ -108,7 +108,8 @@ class Build(BaseModel):
     async def scale(self, replicas: int) -> None:
         """Start a build.
 
-        Set replicas to 1, and reset todo.
+        Set replicas, reset todo annotation, and set last-scaled
+        annotation.
         """
         _logger.info(f"Scaling {self.slug} ({self.name}) to {replicas}.")
         await k8s.patch_deployment(
