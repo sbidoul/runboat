@@ -22,8 +22,7 @@ def get_target_branch(branch_name: str) -> str:
             f"Malformed branch name {branch_name} "
             f"(it should start with an Odoo branch name)."
         )
-    if mo:
-        key = mo.group(1)
+    key = mo.group(1)
     if key not in images:
         raise BranchNotSupported(
             f"No build image configured for {key} (from {branch_name})."

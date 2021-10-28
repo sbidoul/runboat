@@ -19,32 +19,46 @@ For running the controller:
   with permissions to create and delete service, deployment, ingress, secret and
   configmap resources.
 
+## Developing
+
+- setup environment variables (start from `.env.sample`)
+- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -e .`
+- run with `uvicorn runboat.app:app --reload --log-config=log-config-dev.yaml`
+
+## Author and contributors
+
+Authored by Stéphane Bidoul (@sbidoul).
+
+Contributions welcome.
+
 ## TODO
 
-Prototype:
+Prototype (min required to do load testing):
 
 - plug it on a bunch of OCA and shopinvader repos to test load
 - handle init failures, add failed status
-- basic API
+- configuring many repos in a .env file may be difficult, switch to a toml file ?
 
 MVP:
 
-- finish api
+- deployment and more load testing
 - build/log and build/init-log api endpoints
 - report build status to github
+- secure github webhooks
 - k8s init container timeout
-- error handling in API
+- better error handling in API (return 400 on user errors)
 - basic tests
-- look at other TODO in code
-- build and publis runboat container image
-- deployment
-- plug it on shopinvader and acsone to test on small scale
-- create builds for all supported repos on startup (goes with sticky branches)
-- advanced reaper (sticky branches)
+- build and publish runboat container image
 - test what happens when the watcher looses connection to k8s
+- look at other TODO in code to see if anything important remains
+- basic UI (single page with a combo box to select repo and show builds by branch/pr,
+  with start/stop buttons)
 
 More:
 
-- UI
+- shiny UI
 - handle PR close (delete all builds for PR)
 - handle branch delete (delete all builds for branch)
+- create builds for all supported repos on startup (goes with sticky branches)
+- never undeploy last build of sticky branches
+- make build images configurable (see `build_images.py`)

@@ -1,0 +1,14 @@
+version: 1
+disable_existing_loggers: false
+formatters:
+  rich:
+    datefmt: "[%X]"
+handlers:
+  console:
+    class: rich.logging.RichHandler
+    level: NOTSET
+    formatter: rich
+    rich_tracebacks: true
+root:
+  level: DEBUG
+  handlers: [console]

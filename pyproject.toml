@@ -13,8 +13,9 @@ dependencies = [
     "fastapi",
     "jinja2",
     "kubernetes_asyncio",
-    "uvicorn",
     "requests",  # TODO for github, to replace by aiohttp or httpx
+    "rich",
+    "uvicorn",
 ]
 dynamic = ["version", "description"]
 
