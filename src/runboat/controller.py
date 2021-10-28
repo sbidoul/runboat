@@ -90,7 +90,7 @@ class Controller:
                     break  # no capacity for now, back to sleep
                 to_start = self.db.to_start(limit=can_start)
                 if not to_start:
-                    break
+                    break  # nothing startable, back to sleep
                 _logger.info(f"Starting {len(to_start)} builds of up to {can_start}.")
                 for build in to_start:
                     await build.scale(1)
@@ -103,10 +103,10 @@ class Controller:
             while True:
                 can_stop = self.running - self.max_running
                 if can_stop <= 0:
-                    break  # nothing to top for now, back to sleep
+                    break  # no need to stop for now, back to sleep
                 to_stop = self.db.oldest_started(limit=can_stop)
                 if not to_stop:
-                    break
+                    break  # nothing stoppable, back to sleep
                 _logger.info(f"Stopping {len(to_stop)} builds of up to {can_stop}.")
                 for build in to_stop:
                     await build.scale(0)
@@ -119,10 +119,10 @@ class Controller:
             while True:
                 can_undeploy = self.deployed - self.max_deployed
                 if can_undeploy <= 0:
-                    break  # nothing to undeploy for now, back to sleep
+                    break  # no need to undeploy for now, back to sleep
                 to_undeploy = self.db.oldest_stopped(limit=can_undeploy)
                 if not to_undeploy:
-                    break
+                    break  # nothing undeployable, back to sleep
                 _logger.info(
                     f"Undeploying {len(to_undeploy)} builds of up to {can_undeploy}."
                 )
