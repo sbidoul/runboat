@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -35,7 +36,6 @@ class Repo(BaseModel):
 
 
 class Build(BaseModel):
-    # TODO created: datetime.datetime
     name: str
     repo: str
     target_branch: str
@@ -44,6 +44,8 @@ class Build(BaseModel):
     image: str
     link: str
     status: models.BuildStatus
+    created: datetime.datetime
+    last_scaled: Optional[datetime.datetime]
 
     class Config:
         orm_mode = True
@@ -51,7 +53,6 @@ class Build(BaseModel):
 
 
 class BranchOrPull(BaseModel):
-    # created: datetime.datetime
     repo: str
     target_branch: str
     pr: Optional[int]

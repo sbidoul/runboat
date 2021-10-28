@@ -1,6 +1,6 @@
+import datetime
 import logging
 import uuid
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -36,7 +36,7 @@ class Build(BaseModel):
     status: BuildStatus
     todo: Optional[BuildTodo]
     last_scaled: Optional[str]
-    created: str
+    created: datetime.datetime
 
     @classmethod
     def from_deployment(cls, deployment: V1Deployment) -> "Build":
@@ -52,7 +52,7 @@ class Build(BaseModel):
             todo=deployment.metadata.annotations["runboat/todo"] or None,
             last_scaled=deployment.metadata.annotations.get("runboat/last-scaled")
             or None,
-            created="TODO",  # deployment.metadata.creationTimestamp,
+            created=deployment.metadata.creation_timestamp,
         )
 
     @classmethod
@@ -124,7 +124,7 @@ class Build(BaseModel):
                     # record last scaled time for the stopper and undeployer
                     "op": "replace",
                     "path": "/metadata/annotations/runboat~1last-scaled",
-                    "value": datetime.utcnow().isoformat() + "Z",
+                    "value": datetime.datetime.utcnow().isoformat() + "Z",
                 },
                 {
                     # set replicas

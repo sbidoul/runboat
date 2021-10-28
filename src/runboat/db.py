@@ -84,7 +84,7 @@ class BuildsDb:
                     build.status,
                     build.todo,
                     build.last_scaled,
-                    build.created,
+                    build.created.isoformat(),
                 ),
             )
 
