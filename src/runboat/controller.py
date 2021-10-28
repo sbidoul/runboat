@@ -60,6 +60,25 @@ class Controller:
     def max_deployed(self) -> int:
         return settings.max_deployed
 
+    async def deploy_or_delay_start(
+        self, repo: str, target_branch: str, pr: int | None, git_commit: str
+    ) -> None:
+        build = self.db.get_for_commit(
+            repo=repo,
+            target_branch=target_branch,
+            pr=pr,
+            git_commit=git_commit,
+        )
+        if build is not None:
+            await build.delay_start()
+            return
+        await Build.deploy(
+            repo=repo,
+            target_branch=target_branch,
+            pr=pr,
+            git_commit=git_commit,
+        )
+
     def _wakeup(self) -> None:
         self._wakeup_event.set()
         self._wakeup_event.clear()

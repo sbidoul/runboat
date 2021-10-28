@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
-from . import models
+from .controller import controller
 from .settings import settings
 
 _logger = logging.getLogger(__name__)
@@ -29,17 +29,17 @@ async def receive_payload(
     if x_github_event == "pull_request":
         if action in ("opened", "synchronize"):
             background_tasks.add_task(
-                models.Build.deploy,
+                controller.deploy_or_delay_start,
                 repo=repo,
                 target_branch=payload["pull_request"]["base"]["ref"],
                 pr=payload["pull_request"]["number"],
-                commit=payload["pull_request"]["head"]["sha"],
+                git_commit=payload["pull_request"]["head"]["sha"],
             )
     elif x_github_event == "push":
         background_tasks.add_task(
-            models.Build.deploy,
+            controller.deploy_or_delay_start,
             repo=repo,
             target_branch=payload["ref"].split("/")[-1],
             pr=None,
-            commit=payload["after"],
+            git_commit=payload["after"],
         )

@@ -53,7 +53,7 @@ class DeploymentVars(BaseModel):
     repo: str
     target_branch: str
     pr: Optional[int]
-    commit: str
+    git_commit: str
     image_name: str
     image_tag: str
     pghost: str
@@ -71,7 +71,7 @@ def make_deployment_vars(
     repo: str,
     target_branch: str,
     pr: int | None,
-    commit: str,
+    git_commit: str,
     image: str,
 ) -> DeploymentVars:
     image_name, image_tag = _split_image_name_tag(image)
@@ -81,7 +81,7 @@ def make_deployment_vars(
         repo=repo,
         target_branch=target_branch,
         pr=pr,
-        commit=commit,
+        git_commit=git_commit,
         image_name=image_name,
         image_tag=image_tag,
         pghost=settings.build_pghost,
@@ -118,6 +118,14 @@ async def _kubectl(args: list[str]) -> None:
 
 async def deploy(deployment_vars: DeploymentVars) -> None:
     with _render_kubefiles(deployment_vars) as tmp_path:
+        await _kubectl(
+            [
+                "apply",
+                "--dry-run=server",
+                "-k",
+                str(tmp_path),
+            ]
+        )
         await _kubectl(
             [
                 "apply",

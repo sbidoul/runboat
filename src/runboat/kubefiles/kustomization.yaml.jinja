@@ -14,7 +14,7 @@ commonAnnotations:
   runboat/repo: "{{ repo }}"
   runboat/target-branch: "{{ target_branch }}"
   runboat/pr: "{{ pr if pr else '' }}"
-  runboat/commit: "{{ commit }}"
+  runboat/git-commit: "{{ git_commit }}"
 
 images:
   - name: odoo
@@ -37,7 +37,7 @@ configMapGenerator:
       - PGDATABASE={{ pgdatabase }}
       - ADDONS_DIR=/build
       - RUNBOAT_GIT_REPO=https://github.com/{{ repo }}
-      - RUNBOAT_GIT_REF={{ commit }}
+      - RUNBOAT_GIT_REF={{ git_commit }}
   - name: runboat-scripts
     files:
       - runboat-clone-and-install.sh

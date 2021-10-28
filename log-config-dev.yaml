@@ -3,6 +3,7 @@ disable_existing_loggers: false
 formatters:
   rich:
     datefmt: "[%X]"
+    format: "%(name)25s %(message)s"
 handlers:
   console:
     class: rich.logging.RichHandler

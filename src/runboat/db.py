@@ -33,7 +33,7 @@ class BuildsDb:
             "    repo TEXT NOT NULL, "
             "    target_branch TEXT NOT NULL, "
             "    pr INTEGER, "
-            "    'commit' TEXT NOT NULL, "
+            "    git_commit TEXT NOT NULL, "
             "    image TEXT NOT NULL,"
             "    status TEXT NOT NULL, "
             "    todo TEXT, "
@@ -47,6 +47,21 @@ class BuildsDb:
 
     def get(self, name: str) -> Build | None:
         row = self._con.execute("SELECT * FROM builds WHERE name=?", (name,)).fetchone()
+        if not row:
+            return None
+        return self._build_from_row(row)
+
+    def get_for_commit(
+        self, repo: str, target_branch: str, pr: int | None, git_commit: str
+    ) -> Build | None:
+        query = "SELECT * FROM builds WHERE repo=? AND target_branch=? AND git_commit=?"
+        params = [repo.lower(), target_branch, git_commit]
+        if pr:
+            query += " AND pr=?"
+            params.append(pr)
+        else:
+            query += " AND pr IS NULL"
+        row = self._con.execute(query, params).fetchone()
         if not row:
             return None
         return self._build_from_row(row)
@@ -65,7 +80,7 @@ class BuildsDb:
                 "    repo,"
                 "    target_branch,"
                 "    pr,"
-                "    'commit',"
+                "    git_commit,"
                 "    image,"
                 "    status,"
                 "    todo, "
@@ -79,7 +94,7 @@ class BuildsDb:
                     build.repo,
                     build.target_branch,
                     build.pr,
-                    build.commit,
+                    build.git_commit,
                     build.image,
                     build.status,
                     build.todo,
@@ -99,6 +114,7 @@ class BuildsDb:
 
     def to_start(self, limit: int) -> list[Build]:
         """Return the list of builds to start, ordered by todo timestamp."""
+        # TODO ordering is not correct as setting todo does not set last_scaled
         rows = self._con.execute(
             "SELECT * FROM builds WHERE todo=? ORDER BY last_scaled LIMIT ?",
             (BuildTodo.start, limit),
@@ -127,7 +143,7 @@ class BuildsDb:
         for row in self._con.execute(
             "SELECT * FROM builds WHERE repo=?"
             "ORDER BY target_branch, pr, created DESC",
-            (repo,),
+            (repo.lower(),),
         ).fetchall():
             build = self._build_from_row(row)
             if (

@@ -40,7 +40,7 @@ class Build(BaseModel):
     repo: str
     target_branch: str
     pr: Optional[int]
-    commit: str
+    git_commit: str
     image: str
     link: str
     status: models.BuildStatus
@@ -92,11 +92,11 @@ async def trigger_branch(org: str, repo: str, branch: str):
     """Trigger build for a branch."""
     # TODO async github call
     branch_info = github.get_branch_info(org, repo, branch)
-    await models.Build.deploy(
+    await controller.deploy_or_delay_start(
         repo=f"{branch_info.org}/{branch_info.repo}",
         target_branch=branch_info.name,
         pr=None,
-        commit=branch_info.head_sha,
+        git_commit=branch_info.head_sha,
     )
 
 
@@ -109,11 +109,11 @@ async def trigger_pull(org: str, repo: str, pr: int):
     """Trigger build for a pull request."""
     # TODO async github call
     pull_info = github.get_pull_info(org, repo, pr)
-    await models.Build.deploy(
+    await controller.deploy_or_delay_start(
         repo=f"{pull_info.org}/{pull_info.repo}",
         target_branch=pull_info.target_branch,
         pr=pull_info.number,
-        commit=pull_info.head_sha,
+        git_commit=pull_info.head_sha,
     )
 
 

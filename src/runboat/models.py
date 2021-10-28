@@ -31,7 +31,7 @@ class Build(BaseModel):
     repo: str
     target_branch: str
     pr: Optional[int]
-    commit: str
+    git_commit: str
     image: str
     status: BuildStatus
     todo: Optional[BuildTodo]
@@ -46,7 +46,7 @@ class Build(BaseModel):
             repo=deployment.metadata.annotations["runboat/repo"],
             target_branch=deployment.metadata.annotations["runboat/target-branch"],
             pr=deployment.metadata.annotations["runboat/pr"] or None,
-            commit=deployment.metadata.annotations["runboat/commit"],
+            git_commit=deployment.metadata.annotations["runboat/git-commit"],
             image=deployment.spec.template.spec.containers[0].image,
             status=cls._status_from_deployment(deployment),
             todo=deployment.metadata.annotations["runboat/todo"] or None,
@@ -71,17 +71,17 @@ class Build(BaseModel):
 
     @classmethod
     def make_slug(
-        cls, repo: str, target_branch: str, pr: int | None, commit: str
+        cls, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> str:
         slug = f"{slugify(repo)}-{slugify(target_branch)}"
         if pr:
             slug = f"{slug}-pr{slugify(pr)}"
-        slug = f"{slug}-{commit[:12]}"
+        slug = f"{slug}-{git_commit[:12]}"
         return slug
 
     @property
     def slug(self) -> str:
-        return self.make_slug(self.repo, self.target_branch, self.pr, self.commit)
+        return self.make_slug(self.repo, self.target_branch, self.pr, self.git_commit)
 
     @property
     def link(self) -> str:
@@ -147,11 +147,11 @@ class Build(BaseModel):
 
     @classmethod
     async def deploy(
-        cls, repo: str, target_branch: str, pr: int | None, commit: str
+        cls, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> None:
         """Deploy a build, without starting it."""
         name = str(uuid.uuid4())
-        slug = cls.make_slug(repo, target_branch, pr, commit)
+        slug = cls.make_slug(repo, target_branch, pr, git_commit)
         _logger.info(f"Deploying {slug} ({name})")
         image = get_build_image(target_branch)
         deployment_vars = k8s.make_deployment_vars(
@@ -160,7 +160,7 @@ class Build(BaseModel):
             repo.lower(),
             target_branch,
             pr,
-            commit,
+            git_commit,
             image,
         )
         await k8s.deploy(deployment_vars)
