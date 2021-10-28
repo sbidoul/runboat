@@ -83,8 +83,8 @@ class Controller:
         while True:
             await self._wakeup_event.wait()
             while True:
-                can_start = max(
-                    self.max_running - self.running,
+                can_start = min(
+                    self.max_running - self.running + 1,
                     self.max_starting - self.starting,
                 )
                 if can_start <= 0:
