@@ -12,13 +12,14 @@ _logger = logging.getLogger(__name__)
 class Controller:
     """The controller monitors and manages the deployments.
 
-    It run several background tasks:
+    It runs several background tasks:
+
     - The 'watcher' listens to kubernetes events on deployements and maintains an
       in-memory database of existing deployments and their state. It wakes up the
       starter and the reaper when necessary.
-    - The 'starter' starts deployment that have been flagged to start, while making sure
-      that the maximum number of deployment starting concurrently does not exceed the
-      limit.
+    - The 'starter' starts deployments that have been flagged to start, while making
+      sure that the maximum number of deployment starting concurrently does not exceed
+      the limit.
     - The 'stopper' stops old running deployments.
     - The 'undeployer' undeploys old stopped deployments.
     """
@@ -136,12 +137,14 @@ class Controller:
 
         async def walking_dead(func):
             while True:
+                _logger.info(f"(Re)starting {func.__name__}")
                 try:
                     await func()
                 except Exception:
                     delay = 5
                     _logger.exception(
-                        f"Unhandled exception in {func}, restarting in {delay} sec."
+                        f"Unhandled exception in {func.__name__}, "
+                        f"restarting in {delay} sec."
                     )
                     await asyncio.sleep(delay)
 
