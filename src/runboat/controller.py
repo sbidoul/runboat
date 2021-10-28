@@ -75,9 +75,15 @@ class Controller:
                     settings.max_starting - self.starting,
                 )
                 if can_start <= 0:
+                    break  # no capacity for now, back to sleep
+                to_start = self.db.to_start(limit=can_start)
+                if not to_start:
                     break
-                for build in self.db.to_start(limit=can_start):
+                _logger.info(f"Starting {len(to_start)} builds of up to {can_start}.")
+                for build in to_start:
                     await build.scale(1)
+                if len(to_start) < can_start:
+                    break  # back to sleep
 
     async def stopper(self) -> None:
         while True:
@@ -85,9 +91,15 @@ class Controller:
             while True:
                 can_stop = self.running - settings.max_running
                 if can_stop <= 0:
+                    break  # nothing to top for now, back to sleep
+                to_stop = self.db.oldest_started(limit=can_stop)
+                if not to_stop:
                     break
-                for build in self.db.oldest_started(limit=can_stop):
+                _logger.info(f"Stopping {len(to_stop)} builds of up to {can_stop}.")
+                for build in to_stop:
                     await build.scale(0)
+                if len(to_stop) < can_stop:
+                    break  # back to sleep
 
     async def undeployer(self) -> None:
         while True:
@@ -95,9 +107,17 @@ class Controller:
             while True:
                 can_undeploy = self.deployed - settings.max_deployed
                 if can_undeploy <= 0:
+                    break  # nothing to undeploy for now, back to sleep
+                to_undeploy = self.db.oldest_stopped(limit=can_undeploy)
+                if not to_undeploy:
                     break
-                for build in self.db.oldest_stopped(limit=can_undeploy):
+                _logger.info(
+                    f"Undeploying {len(to_undeploy)} builds of up to {can_undeploy}."
+                )
+                for build in to_undeploy:
                     await build.undeploy()
+                if len(to_undeploy) < can_undeploy:
+                    break  # back to sleep
 
     async def start(self):
         _logger.info("Starting controller tasks.")
