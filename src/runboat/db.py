@@ -69,7 +69,7 @@ class BuildsDb:
             return None
         return self._build_from_row(row)
 
-    def remove(self, name: str) -> None:
+    def remove(self, name: str) -> bool:
         if self.get(name) is None:
             return False  # no change
         with self._con:
@@ -77,7 +77,7 @@ class BuildsDb:
         _logger.info("Noticed removal of %s", name)
         return True
 
-    def add(self, build: Build) -> None:
+    def add(self, build: Build) -> bool:
         prev_build = self.get(build.name)
         if prev_build == build:
             return False  # no change

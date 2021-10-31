@@ -48,8 +48,8 @@ class Build(BaseModel):
     def __str__(self) -> str:
         return f"{self.slug} ({self.name})"
 
-    def __eq__(self, other: "Build") -> bool:
-        if other is None:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Build):
             return False
         if self.name != other.name:
             return False
