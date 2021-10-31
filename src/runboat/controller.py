@@ -94,6 +94,18 @@ class Controller:
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(self._wakeup_event.wait(), 10)
 
+    async def get_build(self, build_name: str, db_only: bool = True) -> Build | None:
+        build = self.db.get(build_name)
+        if build is not None:
+            return build
+        if not db_only:
+            build = await Build.from_name(build_name)
+            if build is not None:
+                if self.db.add(build):
+                    self._wakeup()
+                return build
+        return None
+
     async def deployment_watcher(self) -> None:
         self.reset()  # empty the local db each time we start watching
         async for event_type, deployment in k8s.watch_deployments():
@@ -119,19 +131,21 @@ class Controller:
             if job_kind not in ("initialize", "cleanup"):
                 continue
             if event_type in ("ADDED", "MODIFIED"):
-                build = self.db.get(build_name)
+                _logger.debug(
+                    "job %s for %s status %s", job_kind, build_name, job.status
+                )
+                # Look for build in local db and also in k8s api.
+                # This is necessary because job events may come before build events
+                # have arrived.
+                build = await self.get_build(build_name, db_only=False)
                 if build is None:
-                    # Not found in db, look in k8s api, in case the controller
-                    # is starting and the db has not been populated yet.
-                    build = await Build.from_name(build_name)
-                    if build is None:
-                        _logger.warning(
-                            f"Received job event for {build_name} "
-                            f"but the corresponding deployment is gone. "
-                            f"Deleting all build resources."
-                        )
-                        await k8s.delete_resources(build_name)
-                        continue
+                    _logger.warning(
+                        f"Received job event for {build_name} "
+                        f"but the corresponding deployment is gone. "
+                        f"Deleting all build resources."
+                    )
+                    await k8s.delete_resources(build_name)
+                    continue
                 if job_kind == "initialize":
                     if job.status.active:
                         await build.on_initialize_started()

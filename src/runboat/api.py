@@ -117,8 +117,8 @@ async def trigger_pull(org: str, repo: str, pr: int):
     )
 
 
-def _build_by_name(name: str) -> models.Build:
-    build = controller.db.get(name)
+async def _build_by_name(name: str) -> models.Build:
+    build = await controller.get_build(name)
     if build is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return build
@@ -126,7 +126,7 @@ def _build_by_name(name: str) -> models.Build:
 
 @router.get("/builds/{name}", response_model=Build)
 async def build(name: str):
-    return _build_by_name(name)
+    return await _build_by_name(name)
 
 
 @router.get(
@@ -135,7 +135,7 @@ async def build(name: str):
     responses={200: {"content": {"text/plain": {}}}},
 )
 async def init_log(name: str):
-    # build = _build_by_name(name)
+    # build = await _build_by_name(name)
     ...
 
 
@@ -152,19 +152,19 @@ async def log(name: str):
 @router.post("/builds/{name}/start")
 async def start(name: str):
     """Start the deployment."""
-    build = _build_by_name(name)
+    build = await _build_by_name(name)
     await build.start()
 
 
 @router.post("/builds/{name}/stop")
 async def stop(name: str):
     """Stop the deployment."""
-    build = _build_by_name(name)
+    build = await _build_by_name(name)
     await build.stop()
 
 
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])
 async def delete(name: str):
     """Delete the deployment and drop the database."""
-    build = _build_by_name(name)
+    build = await _build_by_name(name)
     await build.undeploy()
