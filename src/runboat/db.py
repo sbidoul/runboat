@@ -1,7 +1,8 @@
 import logging
 import sqlite3
+from typing import Optional
 
-from .models import BranchOrPull, Build, BuildInitStatus, BuildStatus
+from .models import Build, BuildInitStatus, BuildStatus
 
 _logger = logging.getLogger(__name__)
 
@@ -166,27 +167,15 @@ class BuildsDb:
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
 
-    def branches_and_pulls(self, repo: str) -> list[BranchOrPull]:
-        res = []
-        branch_or_pull: BranchOrPull | None = None
-        for row in self._con.execute(
-            "SELECT * FROM builds WHERE repo=?"
-            "ORDER BY target_branch, pr, created DESC",
-            (repo.lower(),),
-        ).fetchall():
-            build = self._build_from_row(row)
-            if (
-                branch_or_pull is None
-                or branch_or_pull.repo != build.repo
-                or branch_or_pull.target_branch != build.target_branch
-                or branch_or_pull.pr != build.pr
-            ):
-                branch_or_pull = BranchOrPull(
-                    repo=build.repo,
-                    target_branch=build.target_branch,
-                    pr=build.pr,
-                    builds=[],
-                )
-                res.append(branch_or_pull)
-            branch_or_pull.builds.append(build)
-        return res
+    def search(self, repo: Optional[str] = None) -> list[Build]:
+        query = "SELECT * FROM builds "
+        where = []
+        params = []
+        if repo:
+            where.append("repo=?")
+            params.append(repo.lower())
+        if where:
+            query += "WHERE " + " AND ".join(where)
+        query += "ORDER BY repo, target_branch, pr, created DESC"
+        rows = self._con.execute(query, params).fetchall()
+        return [self._build_from_row(row) for row in rows]

@@ -52,18 +52,6 @@ class Build(BaseModel):
         read_with_orm_mode = True
 
 
-class BranchOrPull(BaseModel):
-    repo: str
-    target_branch: str
-    pr: Optional[int]
-    link: str
-    builds: list[Build]
-
-    class Config:
-        orm_mode = True
-        read_with_orm_mode = True
-
-
 @router.get("/status", response_model=Status)
 async def controller_status():
     return controller
@@ -75,25 +63,24 @@ async def repos():
 
 
 @router.get(
-    "/repos/{org}/{repo}/branches-and-pulls",
-    response_model=list[BranchOrPull],
+    "/builds",
+    response_model=list[Build],
     response_model_exclude_none=True,
 )
-async def branches_and_pulls(org: str, repo: str):
-    return controller.db.branches_and_pulls(f"{org}/{repo}")
+async def builds(repo: Optional[str] = None):
+    return controller.db.search(repo)
 
 
 @router.post(
-    "/repos/{org}/{repo}/branches/{branch}/trigger",
-    response_model=Build,
+    "/builds/trigger/branch",
     dependencies=[Depends(authenticated)],
 )
-async def trigger_branch(org: str, repo: str, branch: str):
+async def trigger_branch(repo: str, branch: str):
     """Trigger build for a branch."""
     # TODO async github call
-    branch_info = github.get_branch_info(org, repo, branch)
+    branch_info = github.get_branch_info(repo, branch)
     await controller.deploy_or_delay_start(
-        repo=f"{branch_info.org}/{branch_info.repo}",
+        repo=branch_info.repo,
         target_branch=branch_info.name,
         pr=None,
         git_commit=branch_info.head_sha,
@@ -101,16 +88,15 @@ async def trigger_branch(org: str, repo: str, branch: str):
 
 
 @router.post(
-    "/repos/{org}/{repo}/pulls/{pr}/trigger",
-    response_model=Build,
+    "/builds/trigger/pr",
     dependencies=[Depends(authenticated)],
 )
-async def trigger_pull(org: str, repo: str, pr: int):
+async def trigger_pull(repo: str, pr: int):
     """Trigger build for a pull request."""
     # TODO async github call
-    pull_info = github.get_pull_info(org, repo, pr)
+    pull_info = github.get_pull_info(repo, pr)
     await controller.deploy_or_delay_start(
-        repo=f"{pull_info.org}/{pull_info.repo}",
+        repo=pull_info.repo,
         target_branch=pull_info.target_branch,
         pr=pull_info.number,
         git_commit=pull_info.head_sha,

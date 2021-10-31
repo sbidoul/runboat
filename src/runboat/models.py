@@ -45,6 +45,9 @@ class Build(BaseModel):
     last_scaled: datetime.datetime
     created: datetime.datetime
 
+    class Config:
+        read_with_orm_mode = True
+
     def __str__(self) -> str:
         return f"{self.slug} ({self.name})"
 
@@ -290,22 +293,3 @@ class Repo(BaseModel):
 
     class Config:
         read_with_orm_mode = True
-
-
-class BranchOrPull(BaseModel):
-    repo: str
-    target_branch: str
-    pr: Optional[int]
-    builds: list[Build]
-
-    class Config:
-        read_with_orm_mode = True
-
-    @property
-    def link(self) -> str:
-        link = f"https://github.com/{self.repo}"
-        if self.pr:
-            link = f"{link}/pull/{self.pr}"
-        else:
-            link = f"{link}/tree/{self.target_branch}"
-        return link
