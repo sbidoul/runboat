@@ -38,7 +38,7 @@ class BuildsDb:
             "    desired_replicas INTEGER NOT NULL,"
             "    status TEXT NOT NULL, "
             "    init_status TEXT NOT NULL, "
-            "    last_scaled TEXT, "
+            "    last_scaled TEXT NOT NULL, "
             "    created TEXT NOT NULL"
             ")"
         )
