@@ -4,6 +4,7 @@ from typing import Any
 import requests
 
 from .exceptions import NotFoundOnGithub
+from .settings import settings
 
 
 def _github_get(url: str) -> Any:
@@ -12,6 +13,8 @@ def _github_get(url: str) -> Any:
     headers = {
         "Accept": "application/vnd.github.v3+json",
     }
+    if settings.github_token:
+        headers["Authorization"] = f"token {settings.github_token}"
     response = requests.get(full_url, headers)
     if response.status_code == 404:
         raise NotFoundOnGithub(f"GitHub URL not found: {full_url}.")

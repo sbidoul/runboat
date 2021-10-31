@@ -35,8 +35,6 @@ Contributions welcome.
 
 Prototype (min required to do load testing):
 
-- github token for github api requests
-- set requests otherwise requests is same as limits ?
 - plug it on a bunch of OCA and shopinvader repos to test load
 - configuring many repos in a .env file may be difficult, switch to a toml file ?
 

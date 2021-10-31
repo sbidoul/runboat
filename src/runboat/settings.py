@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseSettings
 
 
@@ -15,6 +17,7 @@ class Settings(BaseSettings):
     build_pgpassword: str
     build_admin_passwd: str
     build_domain: str
+    github_token: Optional[str]
 
     class Config:
         env_prefix = "RUNBOAT_"
