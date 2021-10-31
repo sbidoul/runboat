@@ -156,7 +156,7 @@ class Build(BaseModel):
             return
         elif self.status == BuildStatus.failed:
             _logger.info(f"Marking failed {self} for reinitialization.")
-            await k8s.delete_job(self.name, job_kind="initialize")
+            await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
             await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0)
         elif self.status == BuildStatus.stopped:
             _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
@@ -170,8 +170,9 @@ class Build(BaseModel):
             _logger.info(f"Ignoring stop command for {self} that is not started.")
 
     async def initialize(self) -> None:
-        # Start initizalization job. on_init_started/on_init_succeeded/on_init_failed
-        # will be callsed back when it starts/succeeds/fails.
+        """Initialize a build."""
+        # Start initizalization job. on_initialize_{started,succeeded,failed} callbacks
+        # will follow from job events.
         _logger.info(f"Deploying initialize job for {self}.")
         deployment_vars = k8s.make_deployment_vars(
             k8s.DeploymentMode.initialize,
@@ -187,8 +188,12 @@ class Build(BaseModel):
 
     async def undeploy(self) -> None:
         """Undeploy a build."""
-        await self.stop()
-        # Start cleanup job. on_cleanup_XXX callbacks will follow.
+        # Delete the initialization job to reduce conflict with the cleanup job.
+        await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
+        # Be sure it is stopped.
+        await self._patch(desired_replicas=0)
+        # Start cleanup job. on_cleanup_{started,succeeded,failed} callbacks will follow
+        # from job events.
         _logger.info(f"Deploying cleanup job for {self}.")
         deployment_vars = k8s.make_deployment_vars(
             k8s.DeploymentMode.cleanup,

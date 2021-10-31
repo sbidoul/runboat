@@ -79,7 +79,7 @@ class DeploymentMode(str, Enum):
 
 class DeploymentVars(BaseModel):
     namespace: str
-    mode: str
+    mode: DeploymentMode
     build_name: str
     repo: str
     target_branch: str
@@ -178,7 +178,7 @@ async def delete_resources(build_name: str) -> None:
     )
 
 
-async def delete_job(build_name: str, job_kind: str) -> None:
+async def delete_job(build_name: str, job_kind: DeploymentMode) -> None:
     await _kubectl(
         [
             "-n",
