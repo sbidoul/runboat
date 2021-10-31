@@ -1,17 +1,17 @@
+import logging
 import sqlite3
 
 from .models import BranchOrPull, Build, BuildInitStatus, BuildStatus
+
+_logger = logging.getLogger(__name__)
 
 
 class BuildsDb:
     """An in-memory database of builds.
 
-    It is maintained up-to-date by the controller that receives events from the cluster.
-    We use sqlite3 to facilitate queries and sorting, such as counting by status, or
-    finding oldest builds.
-
-    Querying it on each event from k8s is probably not the most efficient, but this
-    should do for a start, and there are plenty of ways to optimize.
+    It is maintained up-to-date by the controller that receives events
+    from the cluster. We use sqlite3 to facilitate queries and sorting,
+    such as counting by status, or finding oldest builds.
     """
 
     _con: sqlite3.Connection
@@ -35,6 +35,7 @@ class BuildsDb:
             "    pr INTEGER, "
             "    git_commit TEXT NOT NULL, "
             "    image TEXT NOT NULL,"
+            "    desired_replicas INTEGER NOT NULL,"
             "    status TEXT NOT NULL, "
             "    init_status TEXT NOT NULL, "
             "    last_scaled TEXT, "
@@ -69,10 +70,17 @@ class BuildsDb:
         return self._build_from_row(row)
 
     def remove(self, name: str) -> None:
+        if self.get(name) is None:
+            return False  # no change
         with self._con:
             self._con.execute("DELETE FROM builds WHERE name=?", (name,))
+        _logger.info("Noticed removal of %s", name)
+        return True
 
     def add(self, build: Build) -> None:
+        prev_build = self.get(build.name)
+        if prev_build == build:
+            return False  # no change
         with self._con:
             self._con.execute(
                 "INSERT OR REPLACE INTO builds "
@@ -84,12 +92,13 @@ class BuildsDb:
                 "    pr,"
                 "    git_commit,"
                 "    image,"
+                "    desired_replicas,"
                 "    status,"
                 "    init_status, "
                 "    last_scaled, "
                 "    created"
                 ") "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     build.name,
                     build.deployment_name,
@@ -98,12 +107,27 @@ class BuildsDb:
                     build.pr,
                     build.git_commit,
                     build.image,
+                    build.desired_replicas,
                     build.status,
                     build.init_status,
-                    build.last_scaled,
+                    build.last_scaled.isoformat(),
                     build.created.isoformat(),
                 ),
             )
+        if prev_build is None:
+            action = "addition"
+        else:
+            action = "update"
+        _logger.info(
+            "Noticed %s of %s (%s/%s/desired_replicas=%s/last_scaled=%s)",
+            action,
+            build,
+            build.status,
+            build.init_status,
+            build.desired_replicas,
+            build.last_scaled,
+        )
+        return True
 
     def count_by_status(self, status: BuildStatus) -> int:
         return self._con.execute(

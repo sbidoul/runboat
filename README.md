@@ -48,7 +48,6 @@ MVP:
 - better error handling in API (return 400 on user errors)
 - basic tests
 - build and publish runboat container image
-- test what happens when the watcher looses connection to k8s
 - look at other TODO in code to see if anything important remains
 - basic UI (single page with a combo box to select repo and show builds by branch/pr,
   with start/stop buttons)
@@ -56,6 +55,7 @@ MVP:
 More:
 
 - shiny UI
+- websocket stream of build changes, for a dynamic UI
 - handle PR close (delete all builds for PR)
 - handle branch delete (delete all builds for branch)
 - create builds for all supported repos on startup (goes with sticky branches)

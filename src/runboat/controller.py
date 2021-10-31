@@ -100,14 +100,15 @@ class Controller:
             build_name = deployment.metadata.labels.get("runboat/build")
             if not build_name:
                 continue
-            _logger.debug(f"k8s {event_type} {deployment.kind} {build_name}")
+            should_wakeup = False
             if event_type in ("ADDED", "MODIFIED"):
-                self.db.add(Build.from_deployment(deployment))
+                should_wakeup = self.db.add(Build.from_deployment(deployment))
             elif event_type == "DELETED":
-                self.db.remove(build_name)
+                should_wakeup = self.db.remove(build_name)
             else:
                 _logger.error(f"Unexpected k8s event type {event_type}.")
-            self._wakeup()
+            if should_wakeup:
+                self._wakeup()
 
     async def job_watcher(self) -> None:
         async for event_type, job in k8s.watch_jobs():
@@ -117,7 +118,6 @@ class Controller:
             job_kind = job.metadata.labels.get("runboat/job-kind")
             if job_kind not in ("initialize", "cleanup"):
                 continue
-            _logger.debug(f"k8s {event_type} {job.kind} {job_kind} {build_name}")
             if event_type in ("ADDED", "MODIFIED"):
                 build = self.db.get(build_name)
                 if build is None:
@@ -125,21 +125,27 @@ class Controller:
                     # is starting and the db has not been populated yet.
                     build = await Build.from_name(build_name)
                     if build is None:
+                        _logger.warning(
+                            f"Received job event for {build_name} "
+                            f"but the corresponding deployment is gone. "
+                            f"Deleting all build resources."
+                        )
+                        await k8s.delete_resources(build_name)
                         continue
                 if job_kind == "initialize":
-                    if job.status.succeeded:
+                    if job.status.active:
+                        await build.on_initialize_started()
+                    elif job.status.succeeded:
                         await build.on_initialize_succeeded()
                     elif job.status.failed:
                         await build.on_initialize_failed()
-                    else:
-                        await build.on_initialize_started()
                 if job_kind == "cleanup":
-                    if job.status.succeeded:
+                    if job.status.active:
+                        await build.on_cleanup_started()
+                    elif job.status.succeeded:
                         await build.on_cleanup_succeeded()
                     elif job.status.failed:
                         await build.on_cleanup_failed()
-                    else:
-                        await build.on_cleanup_started()
             elif event_type == "DELETED":
                 pass
             else:
@@ -155,8 +161,8 @@ class Controller:
             if not to_initialize:
                 continue  # nothing startable, back to sleep
             _logger.info(
-                f"{self.initializing}/{self.max_initializing} builds are initializing. "
-                f"Initializing {len(to_initialize)} more."
+                f"{self.initializing} builds of max {self.max_initializing} "
+                f"are initializing. Initializing {len(to_initialize)} more."
             )
             for build in to_initialize:
                 await build.initialize()
@@ -171,7 +177,7 @@ class Controller:
             if not to_stop:
                 continue  # nothing stoppable, back to sleep
             _logger.info(
-                f"{self.started}/{self.max_started} builds started. "
+                f"{self.started} builds of max {self.max_started} are started. "
                 f"Stopping {len(to_stop)}."
             )
             for build in to_stop:
@@ -187,7 +193,7 @@ class Controller:
             if not to_undeploy:
                 continue  # nothing undeployable, back to sleep
             _logger.info(
-                f"{self.deployed}/{self.max_deployed} builds deployed. "
+                f"{self.deployed} builds of max {self.max_deployed} are deployed. "
                 f"Undeploying {len(to_undeploy)}."
             )
             for build in to_undeploy:

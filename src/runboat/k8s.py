@@ -143,7 +143,9 @@ def _render_kubefiles(deployment_vars: DeploymentVars) -> Generator[Path, None, 
 
 
 async def _kubectl(args: list[str]) -> None:
-    proc = await asyncio.create_subprocess_exec("kubectl", *args)
+    proc = await asyncio.create_subprocess_exec(
+        "kubectl", *args, stdout=subprocess.DEVNULL
+    )
     return_code = await proc.wait()
     if return_code != 0:
         raise subprocess.CalledProcessError(return_code, ["kubectl"] + args)
@@ -159,13 +161,7 @@ async def deploy(deployment_vars: DeploymentVars) -> None:
                 str(tmp_path),
             ]
         )
-        await _kubectl(
-            [
-                "apply",
-                "-k",
-                str(tmp_path),
-            ]
-        )
+        await _kubectl(["apply", "-k", str(tmp_path), "--wait=false"])
 
 
 async def delete_resources(build_name: str) -> None:

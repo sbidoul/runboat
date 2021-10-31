@@ -24,7 +24,7 @@ class BuildStatus(str, Enum):
 
 
 class BuildInitStatus(str, Enum):
-    todo = "todo"  # to initialize as soon as there is capacity
+    todo = "todo"  # to initialize and start as soon as there is capacity
     started = "started"  # initialization job running
     succeeded = "succeeded"  # initialization job succeeded
     failed = "failed"  # initialization job failed
@@ -41,11 +41,25 @@ class Build(BaseModel):
     image: str
     status: BuildStatus
     init_status: BuildInitStatus
+    desired_replicas: int
     last_scaled: datetime.datetime
     created: datetime.datetime
 
     def __str__(self) -> str:
         return f"{self.slug} ({self.name})"
+
+    def __eq__(self, other: "Build") -> bool:
+        if other is None:
+            return False
+        if self.name != other.name:
+            return False
+        # Ignore fields that are immutable by design.
+        return (
+            self.status == other.status
+            and self.init_status == other.init_status
+            and self.desired_replicas == other.desired_replicas
+            and self.last_scaled == other.last_scaled
+        )
 
     @classmethod
     async def from_name(cls, build_name: str) -> Optional["Build"]:
@@ -67,8 +81,9 @@ class Build(BaseModel):
             image=deployment.spec.template.spec.containers[0].image,
             init_status=deployment.metadata.annotations["runboat/init-status"],
             status=cls._status_from_deployment(deployment),
+            desired_replicas=deployment.spec.replicas or 0,
             last_scaled=deployment.metadata.annotations.get("runboat/last-scaled")
-            or datetime.datetime.utcnow(),
+            or deployment.metadata.creation_timestamp,
             created=deployment.metadata.creation_timestamp,
         )
 
@@ -82,7 +97,7 @@ class Build(BaseModel):
         elif init_status == BuildInitStatus.failed:
             return BuildStatus.failed
         elif init_status == BuildInitStatus.succeeded:
-            replicas = deployment.status.replicas
+            replicas = deployment.spec.replicas
             if not replicas:
                 return BuildStatus.stopped
             else:
@@ -142,19 +157,17 @@ class Build(BaseModel):
         elif self.status == BuildStatus.failed:
             _logger.info(f"Marking failed {self} for reinitialization.")
             await k8s.delete_job(self.name, job_kind="initialize")
-            await self._patch(
-                init_status=BuildInitStatus.todo, replicas=0, update_last_scaled=False
-            )
+            await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0)
         elif self.status == BuildStatus.stopped:
-            _logger.info(f"Starting {self}.")
-            await self._patch(replicas=1, update_last_scaled=True)
+            _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
+            await self._patch(desired_replicas=1)
 
     async def stop(self) -> None:
         if self.status == BuildStatus.started:
-            _logger.info(f"Stopping {self}.")
-            await self._patch(replicas=0, update_last_scaled=True)
+            _logger.info(f"Stopping {self} that was last scaled on {self.last_scaled}.")
+            await self._patch(desired_replicas=0)
         else:
-            _logger.info("Ignoring stop command for {self} " "that is not started.")
+            _logger.info(f"Ignoring stop command for {self} that is not started.")
 
     async def initialize(self) -> None:
         # Start initizalization job. on_init_started/on_init_succeeded/on_init_failed
@@ -193,9 +206,7 @@ class Build(BaseModel):
         if self.init_status == BuildInitStatus.started:
             return
         _logger.info(f"Initialization job started for {self}.")
-        await self._patch(
-            init_status=BuildInitStatus.started, replicas=0, update_last_scaled=True
-        )
+        await self._patch(init_status=BuildInitStatus.started, desired_replicas=0)
 
     async def on_initialize_succeeded(self) -> None:
         if self.init_status == BuildInitStatus.succeeded:
@@ -203,9 +214,7 @@ class Build(BaseModel):
             # succeeded old initialization jobs after a controller restart.
             return
         _logger.info(f"Initialization job succeded for {self}, starting.")
-        await self._patch(
-            init_status=BuildInitStatus.succeeded, replicas=1, update_last_scaled=True
-        )
+        await self._patch(init_status=BuildInitStatus.succeeded, desired_replicas=1)
 
     async def on_initialize_failed(self) -> None:
         if self.init_status == BuildInitStatus.failed:
@@ -213,15 +222,13 @@ class Build(BaseModel):
             # restarting, and is notified of existing initialization jobs.
             return
         _logger.info(f"Initialization job failed for {self}.")
-        await self._patch(
-            init_status=BuildInitStatus.failed, replicas=0, update_last_scaled=True
-        )
+        await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0)
 
     async def on_cleanup_started(self) -> None:
+        if self.init_status == BuildInitStatus.cleaning:
+            return
         _logger.info(f"Cleanup job started for {self}.")
-        await self._patch(
-            init_status=BuildInitStatus.cleaning, replicas=0, update_last_scaled=False
-        )
+        await self._patch(init_status=BuildInitStatus.cleaning, desired_replicas=0)
 
     async def on_cleanup_succeeded(self) -> None:
         _logger.info(f"Cleanup job succeeded for {self}, deleting resources.")
@@ -235,11 +242,10 @@ class Build(BaseModel):
     async def _patch(
         self,
         init_status: BuildInitStatus | None = None,
-        replicas: int | None = None,
-        update_last_scaled: bool = True,
+        desired_replicas: int | None = None,
     ) -> None:
         ops = []
-        if init_status is not None:
+        if init_status is not None and init_status != self.init_status:
             ops.extend(
                 [
                     {
@@ -249,22 +255,24 @@ class Build(BaseModel):
                     },
                 ],
             )
-        if replicas is not None:
-            ops.append(
-                {
-                    "op": "replace",
-                    "path": "/spec/replicas",
-                    "value": replicas,
-                },
-            )
-            if update_last_scaled:
-                ops.append(
+        if desired_replicas is not None and desired_replicas != self.desired_replicas:
+            ops.extend(
+                [
+                    {
+                        "op": "replace",
+                        "path": "/spec/replicas",
+                        "value": desired_replicas,
+                    },
                     {
                         "op": "replace",
                         "path": "/metadata/annotations/runboat~1last-scaled",
-                        "value": datetime.datetime.utcnow().isoformat() + "Z",
+                        "value": datetime.datetime.utcnow()
+                        .replace(microsecond=0)
+                        .isoformat()
+                        + "Z",
                     },
-                )
+                ]
+            )
         await k8s.patch_deployment(self.deployment_name, ops)
 
 

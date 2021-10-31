@@ -3,13 +3,14 @@ disable_existing_loggers: false
 formatters:
   rich:
     datefmt: "[%X]"
-    format: "%(name)25s %(message)s"
+    # format: "%(name)25s %(message)s"
 handlers:
   console:
     class: rich.logging.RichHandler
     level: NOTSET
     formatter: rich
     rich_tracebacks: true
+    show_path: false
 root:
   level: DEBUG
   handlers: [console]

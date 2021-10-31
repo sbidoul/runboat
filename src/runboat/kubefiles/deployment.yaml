@@ -3,9 +3,9 @@ kind: Deployment
 metadata:
   name: odoo
   annotations:
-    runboat/init-status: "todo"  # ask controller to start when there is capacity
+    runboat/init-status: "todo"  # ask controller to initialize when there is capacity
 spec:
-  replicas: 0  # deploy idle (with 0 replica)
+  replicas: 0  # deploy idle
   selector:
     matchLabels:
       app: odoo

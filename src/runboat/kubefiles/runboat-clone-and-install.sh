@@ -4,7 +4,7 @@ set -ex
 
 #
 # Clone an addons repository at git reference in $ADDONS_DIR.
-# Run oca_install_addons and oca_init_db on it.
+# Run oca_install_addons on it.
 #
 
 git clone --filter=blob:none $RUNBOAT_GIT_REPO $ADDONS_DIR
