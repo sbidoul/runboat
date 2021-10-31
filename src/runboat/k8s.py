@@ -161,7 +161,14 @@ async def deploy(deployment_vars: DeploymentVars) -> None:
                 str(tmp_path),
             ]
         )
-        await _kubectl(["apply", "-k", str(tmp_path), "--wait=false"])
+        await _kubectl(
+            [
+                "apply",
+                "-k",
+                str(tmp_path),
+                "--wait=false",
+            ]
+        )
 
 
 async def delete_resources(build_name: str) -> None:
