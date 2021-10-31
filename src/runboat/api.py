@@ -16,10 +16,10 @@ router = APIRouter()
 class Status(BaseModel):
     deployed: int
     max_deployed: int
-    running: int
-    max_running: int
-    starting: int
-    max_starting: int
+    started: int
+    max_started: int
+    initializing: int
+    max_initializing: int
 
     class Config:
         orm_mode = True
@@ -153,14 +153,14 @@ async def log(name: str):
 async def start(name: str):
     """Start the deployment."""
     build = _build_by_name(name)
-    await build.delay_start()
+    await build.start()
 
 
 @router.post("/builds/{name}/stop")
 async def stop(name: str):
     """Stop the deployment."""
     build = _build_by_name(name)
-    await build.scale(0)
+    await build.stop()
 
 
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])

@@ -1,6 +1,6 @@
 import sqlite3
 
-from .models import BranchOrPull, Build, BuildStatus, BuildTodo
+from .models import BranchOrPull, Build, BuildInitStatus, BuildStatus
 
 
 class BuildsDb:
@@ -36,12 +36,14 @@ class BuildsDb:
             "    git_commit TEXT NOT NULL, "
             "    image TEXT NOT NULL,"
             "    status TEXT NOT NULL, "
-            "    todo TEXT, "
+            "    init_status TEXT NOT NULL, "
             "    last_scaled TEXT, "
             "    created TEXT NOT NULL"
             ")"
         )
-        self._con.execute("CREATE INDEX idx_todo ON builds(todo, last_scaled)")
+        self._con.execute(
+            "CREATE INDEX idx_init_status ON builds(init_status, created)"
+        )
         self._con.execute("CREATE INDEX idx_status ON builds(status, last_scaled)")
         self._con.execute("CREATE INDEX idx_repo ON builds(repo)")
 
@@ -83,7 +85,7 @@ class BuildsDb:
                 "    git_commit,"
                 "    image,"
                 "    status,"
-                "    todo, "
+                "    init_status, "
                 "    last_scaled, "
                 "    created"
                 ") "
@@ -97,27 +99,30 @@ class BuildsDb:
                     build.git_commit,
                     build.image,
                     build.status,
-                    build.todo,
+                    build.init_status,
                     build.last_scaled,
                     build.created.isoformat(),
                 ),
             )
 
-    def count_by_statuses(self, statuses: tuple[BuildStatus, ...]) -> int:
-        q = ",".join(["?"] * len(statuses))
+    def count_by_status(self, status: BuildStatus) -> int:
         return self._con.execute(
-            f"SELECT COUNT(name) FROM builds WHERE status IN ({q})", statuses
+            "SELECT COUNT(name) FROM builds WHERE status=?", (status,)
+        ).fetchone()[0]
+
+    def count_by_init_status(self, init_status: BuildInitStatus) -> int:
+        return self._con.execute(
+            "SELECT COUNT(name) FROM builds WHERE init_status=?", (init_status,)
         ).fetchone()[0]
 
     def count_all(self) -> int:
         return self._con.execute("SELECT COUNT(name) FROM builds").fetchone()[0]
 
-    def to_start(self, limit: int) -> list[Build]:
-        """Return the list of builds to start, ordered by todo timestamp."""
-        # TODO ordering is not correct as setting todo does not set last_scaled
+    def to_initialize(self, limit: int) -> list[Build]:
+        """Return the list of builds to initialize, ordered by creation timestamp."""
         rows = self._con.execute(
-            "SELECT * FROM builds WHERE todo=? ORDER BY last_scaled LIMIT ?",
-            (BuildTodo.start, limit),
+            "SELECT * FROM builds WHERE init_status=? ORDER BY created LIMIT ?",
+            (BuildInitStatus.todo, limit),
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
 
@@ -132,8 +137,8 @@ class BuildsDb:
     def oldest_stopped(self, limit: int) -> list[Build]:
         """Return a list of oldest stopped builds."""
         rows = self._con.execute(
-            "SELECT * FROM builds WHERE status=? ORDER BY last_scaled LIMIT ?",
-            (BuildStatus.stopped, limit),
+            "SELECT * FROM builds WHERE status IN (?, ?) ORDER BY last_scaled LIMIT ?",
+            (BuildStatus.stopped, BuildStatus.failed, limit),
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
 

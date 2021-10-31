@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import contextmanager
+from enum import Enum
 from importlib import resources
 from pathlib import Path
 from typing import Any, AsyncGenerator, Generator, Optional
@@ -11,6 +12,7 @@ from jinja2 import Template
 from kubernetes_asyncio import client, config, watch
 from kubernetes_asyncio.client.api_client import ApiClient
 from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
+from kubernetes_asyncio.client.models.v1_job import V1Job
 from pydantic import BaseModel
 
 from .settings import settings
@@ -24,6 +26,17 @@ def _split_image_name_tag(img: str) -> tuple[str, str]:
 
 async def load_kube_config() -> None:
     await config.load_kube_config()
+
+
+async def read_deployment(name: str) -> Optional[V1Deployment]:
+    async with ApiClient() as api:
+        appsv1 = client.AppsV1Api(api)
+        ret = await appsv1.list_namespaced_deployment(
+            namespace=settings.build_namespace, label_selector=f"runboat/build={name}"
+        )
+        for item in ret.items:
+            return item  # return first
+        return None  # None found
 
 
 async def patch_deployment(deployment_name: str, ops: list[dict["str", Any]]) -> None:
@@ -47,8 +60,26 @@ async def watch_deployments() -> AsyncGenerator[tuple[str, V1Deployment], None]:
             yield event["type"], event["object"]
 
 
+async def watch_jobs() -> AsyncGenerator[tuple[str, V1Job], None]:
+    w = watch.Watch()
+    # use the context manager to close http sessions automatically
+    async with ApiClient() as api:
+        appsv1 = client.BatchV1Api(api)
+        async for event in w.stream(
+            appsv1.list_namespaced_job, namespace=settings.build_namespace
+        ):
+            yield event["type"], event["object"]
+
+
+class DeploymentMode(str, Enum):
+    deploy = "deploy"
+    initialize = "initialize"
+    cleanup = "cleanup"
+
+
 class DeploymentVars(BaseModel):
     namespace: str
+    mode: str
     build_name: str
     repo: str
     target_branch: str
@@ -66,6 +97,7 @@ class DeploymentVars(BaseModel):
 
 
 def make_deployment_vars(
+    mode: DeploymentMode,
     build_name: str,
     slug: str,
     repo: str,
@@ -76,6 +108,7 @@ def make_deployment_vars(
 ) -> DeploymentVars:
     image_name, image_tag = _split_image_name_tag(image)
     return DeploymentVars(
+        mode=mode,
         namespace=settings.build_namespace,
         build_name=build_name,
         repo=repo,
@@ -135,45 +168,29 @@ async def deploy(deployment_vars: DeploymentVars) -> None:
         )
 
 
-async def dropdb(build_name: str) -> None:
-    await _kubectl(
-        [
-            "-n",
-            settings.build_namespace,
-            "run",
-            f"dropdb-{build_name}",
-            "--restart=Never",
-            "--rm",
-            "-i",
-            "--tty",
-            "--image",
-            "postgres",
-            "--env",
-            f"PGHOST={settings.build_pghost}",
-            "--env",
-            f"PGPORT={settings.build_pgport}",
-            "--env",
-            f"PGUSER={settings.build_pguser}",
-            "--env",
-            f"PGPASSWORD={settings.build_pgpassword}",
-            "--",
-            "dropdb",
-            "--if-exists",
-            "--force",  # pg 13+
-            build_name,
-        ]
-    )
-
-
-async def undeploy(build_name: str) -> None:
+async def delete_resources(build_name: str) -> None:
     await _kubectl(
         [
             "-n",
             settings.build_namespace,
             "delete",
-            "service,deployment,ingress,secret,configmap",
+            "configmap,deployment,ingress,job,secret,service",
             "-l",
             f"runboat/build={build_name}",
+            "--wait=false",
+        ]
+    )
+
+
+async def delete_job(build_name: str, job_kind: str) -> None:
+    await _kubectl(
+        [
+            "-n",
+            settings.build_namespace,
+            "delete",
+            "job",
+            "-l",
+            f"runboat/build={build_name},runboat/job-kind={job_kind}",
             "--wait=false",
         ]
     )

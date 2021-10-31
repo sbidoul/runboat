@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: initalize
+  labels:
+    runboat/job-kind: initialize
+spec:
+  template:
+    spec:
+      containers:
+        - name: initalize
+          image: odoo
+          volumeMounts:
+            - name: runboat-scripts
+              mountPath: /runboat
+          envFrom:
+            - secretRef:
+                name: odoosecretenv
+            - configMapRef:
+                name: odooenv
+          args: ["bash", "/runboat/runboat-initialize.sh"]
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: runboat-scripts
+          configMap:
+            name: runboat-scripts
+      restartPolicy: Never
+  backoffLimit: 0

@@ -8,6 +8,7 @@ from .exceptions import NotFoundOnGithub
 
 def _github_get(url: str) -> Any:
     full_url = f"https://api.github.com{url}"
+    # TODO github token
     headers = {
         "Accept": "application/vnd.github.v3+json",
     }

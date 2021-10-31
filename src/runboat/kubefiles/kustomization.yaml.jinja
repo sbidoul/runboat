@@ -1,11 +1,17 @@
 resources:
+  {% if mode == 'deploy' -%}
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  {% elif mode == "initialize" -%}
+  - initialize.yaml
+  {% elif mode == "cleanup" -%}
+  - cleanup.yaml
+  {% endif %}
 
 namespace: {{ namespace }}
 
-nameSuffix: "-{{ build_name }}"
+namePrefix: "{{ build_name }}-"
 
 commonLabels:
   runboat/build: "{{ build_name }}"
@@ -41,12 +47,19 @@ configMapGenerator:
   - name: runboat-scripts
     files:
       - runboat-clone-and-install.sh
-      - runboat-init.sh
+      - runboat-initialize.sh
+      - runboat-cleanup.sh
       - runboat-start.sh
+  {% if mode == 'deploy' -%}
   - name: vars
     literals:
       - HOSTNAME={{ hostname }}
+  {% endif %}
 
+generatorOptions:
+  disableNameSuffixHash: true
+
+{% if mode == 'deploy' -%}
 vars:
   - name: HOSTNAME
     objref:
@@ -55,3 +68,4 @@ vars:
       apiVersion: v1
     fieldref:
       fieldpath: data.HOSTNAME
+{% endif %}

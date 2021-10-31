@@ -16,13 +16,19 @@ _logger = logging.getLogger(__name__)
 
 
 class BuildStatus(str, Enum):
-    stopped = "stopped"
-    starting = "starting"
-    started = "started"
+    stopped = "stopped"  # initialization succeeded and 0 replicas
+    starting = "starting"  # to initialize or initializing or scaling up
+    started = "started"  # running
+    failed = "failed"  # initialization failed
+    cleaning = "cleaning"  # cleaning up, will be undeployed soon
 
 
-class BuildTodo(str, Enum):
-    start = "start"
+class BuildInitStatus(str, Enum):
+    todo = "todo"  # to initialize as soon as there is capacity
+    started = "started"  # initialization job running
+    succeeded = "succeeded"  # initialization job succeeded
+    failed = "failed"  # initialization job failed
+    cleaning = "cleaning"  # cleanup job running
 
 
 class Build(BaseModel):
@@ -34,9 +40,20 @@ class Build(BaseModel):
     git_commit: str
     image: str
     status: BuildStatus
-    todo: Optional[BuildTodo]
-    last_scaled: Optional[str]
+    init_status: BuildInitStatus
+    last_scaled: datetime.datetime
     created: datetime.datetime
+
+    def __str__(self) -> str:
+        return f"{self.slug} ({self.name})"
+
+    @classmethod
+    async def from_name(cls, build_name: str) -> Optional["Build"]:
+        """Create a Build model by reading the k8s api."""
+        deployment = await k8s.read_deployment(build_name)
+        if deployment is None:
+            return None
+        return cls.from_deployment(deployment)
 
     @classmethod
     def from_deployment(cls, deployment: V1Deployment) -> "Build":
@@ -48,26 +65,32 @@ class Build(BaseModel):
             pr=deployment.metadata.annotations["runboat/pr"] or None,
             git_commit=deployment.metadata.annotations["runboat/git-commit"],
             image=deployment.spec.template.spec.containers[0].image,
+            init_status=deployment.metadata.annotations["runboat/init-status"],
             status=cls._status_from_deployment(deployment),
-            todo=deployment.metadata.annotations["runboat/todo"] or None,
             last_scaled=deployment.metadata.annotations.get("runboat/last-scaled")
-            or None,
+            or datetime.datetime.utcnow(),
             created=deployment.metadata.creation_timestamp,
         )
 
     @classmethod
     def _status_from_deployment(cls, deployment: V1Deployment) -> BuildStatus:
-        replicas = deployment.status.replicas
-        if not replicas:
-            status = BuildStatus.stopped
-        else:
-            if deployment.status.ready_replicas == replicas:
-                status = BuildStatus.started
+        init_status = deployment.metadata.annotations["runboat/init-status"]
+        if init_status in (BuildInitStatus.todo, BuildInitStatus.started):
+            return BuildStatus.starting
+        elif init_status == BuildInitStatus.cleaning:
+            return BuildStatus.cleaning
+        elif init_status == BuildInitStatus.failed:
+            return BuildStatus.failed
+        elif init_status == BuildInitStatus.succeeded:
+            replicas = deployment.status.replicas
+            if not replicas:
+                return BuildStatus.stopped
             else:
-                status = BuildStatus.starting
-        # TODO detect stopping, deploying, undeploying ?
-        # TODO: failed status
-        return status
+                if deployment.status.ready_replicas == replicas:
+                    return BuildStatus.started
+                else:
+                    return BuildStatus.starting
+        raise RuntimeError(f"Could not compute status of {deployment.metadata.name}.")
 
     @classmethod
     def make_slug(
@@ -87,74 +110,17 @@ class Build(BaseModel):
     def link(self) -> str:
         return f"http://{self.slug}.{settings.build_domain}"
 
-    async def delay_start(self) -> None:
-        """Mark a build for startup.
-
-        This is done by setting the runboat/todo annotation to 'start'.
-        The starter process will then start it when there is available
-        capacity.
-        """
-        await k8s.patch_deployment(
-            self.deployment_name,
-            [
-                {
-                    "op": "replace",
-                    "path": "/metadata/annotations/runboat~1todo",
-                    "value": "start",
-                },
-            ],
-        )
-
-    async def scale(self, replicas: int) -> None:
-        """Start a build.
-
-        Set replicas, reset todo annotation, and set last-scaled
-        annotation.
-        """
-        _logger.info(f"Scaling {self.slug} ({self.name}) to {replicas}.")
-        await k8s.patch_deployment(
-            self.deployment_name,
-            [
-                {
-                    # clear todo
-                    "op": "replace",
-                    "path": "/metadata/annotations/runboat~1todo",
-                    "value": "",
-                },
-                {
-                    # record last scaled time for the stopper and undeployer
-                    "op": "replace",
-                    "path": "/metadata/annotations/runboat~1last-scaled",
-                    "value": datetime.datetime.utcnow().isoformat() + "Z",
-                },
-                {
-                    # set replicas
-                    "op": "replace",
-                    "path": "/spec/replicas",
-                    "value": replicas,
-                },
-            ],
-        )
-
-    async def undeploy(self) -> None:
-        """Undeploy a build.
-
-        Delete all resources, and drop the database.
-        """
-        _logger.info(f"Undeploying {self.slug} ({self.name})")
-        await k8s.undeploy(self.name)
-        await k8s.dropdb(self.name)
-
     @classmethod
     async def deploy(
         cls, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> None:
         """Deploy a build, without starting it."""
-        name = str(uuid.uuid4())
+        name = f"b{uuid.uuid4()}"
         slug = cls.make_slug(repo, target_branch, pr, git_commit)
-        _logger.info(f"Deploying {slug} ({name})")
+        _logger.info(f"Deploying {slug} ({name}).")
         image = get_build_image(target_branch)
         deployment_vars = k8s.make_deployment_vars(
+            k8s.DeploymentMode.deploy,
             name,
             slug,
             repo.lower(),
@@ -164,6 +130,142 @@ class Build(BaseModel):
             image,
         )
         await k8s.deploy(deployment_vars)
+
+    async def start(self) -> None:
+        """Start build if init succeeded, or reinitialize if failed."""
+        if self.status in (BuildStatus.started, BuildStatus.starting):
+            _logger.info(
+                f"Ignoring start command for {self} "
+                "that is already started or starting."
+            )
+            return
+        elif self.status == BuildStatus.failed:
+            _logger.info(f"Marking failed {self} for reinitialization.")
+            await k8s.delete_job(self.name, job_kind="initialize")
+            await self._patch(
+                init_status=BuildInitStatus.todo, replicas=0, update_last_scaled=False
+            )
+        elif self.status == BuildStatus.stopped:
+            _logger.info(f"Starting {self}.")
+            await self._patch(replicas=1, update_last_scaled=True)
+
+    async def stop(self) -> None:
+        if self.status == BuildStatus.started:
+            _logger.info(f"Stopping {self}.")
+            await self._patch(replicas=0, update_last_scaled=True)
+        else:
+            _logger.info("Ignoring stop command for {self} " "that is not started.")
+
+    async def initialize(self) -> None:
+        # Start initizalization job. on_init_started/on_init_succeeded/on_init_failed
+        # will be callsed back when it starts/succeeds/fails.
+        _logger.info(f"Deploying initialize job for {self}.")
+        deployment_vars = k8s.make_deployment_vars(
+            k8s.DeploymentMode.initialize,
+            self.name,
+            self.slug,
+            self.repo,
+            self.target_branch,
+            self.pr,
+            self.git_commit,
+            self.image,
+        )
+        await k8s.deploy(deployment_vars)
+
+    async def undeploy(self) -> None:
+        """Undeploy a build."""
+        await self.stop()
+        # Start cleanup job. on_cleanup_XXX callbacks will follow.
+        _logger.info(f"Deploying cleanup job for {self}.")
+        deployment_vars = k8s.make_deployment_vars(
+            k8s.DeploymentMode.cleanup,
+            self.name,
+            self.slug,
+            self.repo,
+            self.target_branch,
+            self.pr,
+            self.git_commit,
+            self.image,
+        )
+        await k8s.deploy(deployment_vars)
+
+    async def on_initialize_started(self) -> None:
+        if self.init_status == BuildInitStatus.started:
+            return
+        _logger.info(f"Initialization job started for {self}.")
+        await self._patch(
+            init_status=BuildInitStatus.started, replicas=0, update_last_scaled=True
+        )
+
+    async def on_initialize_succeeded(self) -> None:
+        if self.init_status == BuildInitStatus.succeeded:
+            # Avoid restarting stopped deployments when the controller is notified of
+            # succeeded old initialization jobs after a controller restart.
+            return
+        _logger.info(f"Initialization job succeded for {self}, starting.")
+        await self._patch(
+            init_status=BuildInitStatus.succeeded, replicas=1, update_last_scaled=True
+        )
+
+    async def on_initialize_failed(self) -> None:
+        if self.init_status == BuildInitStatus.failed:
+            # Already marked as failed. We are probably here because the controller is
+            # restarting, and is notified of existing initialization jobs.
+            return
+        _logger.info(f"Initialization job failed for {self}.")
+        await self._patch(
+            init_status=BuildInitStatus.failed, replicas=0, update_last_scaled=True
+        )
+
+    async def on_cleanup_started(self) -> None:
+        _logger.info(f"Cleanup job started for {self}.")
+        await self._patch(
+            init_status=BuildInitStatus.cleaning, replicas=0, update_last_scaled=False
+        )
+
+    async def on_cleanup_succeeded(self) -> None:
+        _logger.info(f"Cleanup job succeeded for {self}, deleting resources.")
+        await k8s.delete_resources(self.name)
+
+    async def on_cleanup_failed(self) -> None:
+        _logger.error(
+            f"Cleanup job failed for {self}, " f"manual intervention required."
+        )
+
+    async def _patch(
+        self,
+        init_status: BuildInitStatus | None = None,
+        replicas: int | None = None,
+        update_last_scaled: bool = True,
+    ) -> None:
+        ops = []
+        if init_status is not None:
+            ops.extend(
+                [
+                    {
+                        "op": "replace",
+                        "path": "/metadata/annotations/runboat~1init-status",
+                        "value": init_status,
+                    },
+                ],
+            )
+        if replicas is not None:
+            ops.append(
+                {
+                    "op": "replace",
+                    "path": "/spec/replicas",
+                    "value": replicas,
+                },
+            )
+            if update_last_scaled:
+                ops.append(
+                    {
+                        "op": "replace",
+                        "path": "/metadata/annotations/runboat~1last-scaled",
+                        "value": datetime.datetime.utcnow().isoformat() + "Z",
+                    },
+                )
+        await k8s.patch_deployment(self.deployment_name, ops)
 
 
 class Repo(BaseModel):
