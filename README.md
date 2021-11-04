@@ -23,7 +23,17 @@ For running the controller:
 
 - setup environment variables (start from `.env.sample`)
 - create a virtualenv, make sure to have pip>=21.3.1 and `pip install -e .`
-- run with `uvicorn runboat.app:app --reload --log-config=log-config-dev.yaml`
+- run with `uvicorn runboat.app:app --log-config=log-config-dev.yaml`
+
+## Running in production
+
+`gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app`.
+
+One and only one worker process !
+
+Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
+`run_in_executor`, SIGINT/SIGTERM handling does not work very well in python, and
+gunicorn makes it more robust. https://bugs.python.org/issue29309
 
 ## Author and contributors
 

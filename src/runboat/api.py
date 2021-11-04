@@ -18,6 +18,7 @@ class Status(BaseModel):
     max_deployed: int
     started: int
     max_started: int
+    to_initialize: int
     initializing: int
     max_initializing: int
 

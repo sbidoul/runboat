@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     build_admin_passwd: str
     build_domain: str
     github_token: Optional[str]
+    log_config: Optional[str]
 
     class Config:
         env_prefix = "RUNBOAT_"

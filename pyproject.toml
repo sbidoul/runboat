@@ -11,8 +11,9 @@ classifiers = [
 ]
 dependencies = [
     "fastapi",
+    "gunicorn",
     "jinja2",
-    "kubernetes_asyncio",
+    "kubernetes",
     "requests",  # TODO for github, to replace by aiohttp or httpx
     "rich",
     "uvicorn",

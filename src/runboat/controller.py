@@ -50,6 +50,10 @@ class Controller:
         return settings.max_started
 
     @property
+    def to_initialize(self) -> int:
+        return self.db.count_by_init_status(BuildInitStatus.todo)
+
+    @property
     def initializing(self) -> int:
         return self.db.count_by_init_status(BuildInitStatus.started)
 
@@ -99,6 +103,9 @@ class Controller:
         if build is not None:
             return build
         if not db_only:
+            _logger.debug(
+                "Build %s not in local db, fetching from k8s api.", build_name
+            )
             build = await Build.from_name(build_name)
             if build is not None:
                 if self.db.add(build):
@@ -109,11 +116,19 @@ class Controller:
     async def deployment_watcher(self) -> None:
         self.reset()  # empty the local db each time we start watching
         async for event_type, deployment in k8s.watch_deployments():
+            _logger.debug(
+                "%s %s %s dr=%s/rr=%s",
+                event_type,
+                deployment.metadata.name,
+                deployment.metadata.resource_version,
+                deployment.spec.replicas,
+                deployment.status.ready_replicas,
+            )
             build_name = deployment.metadata.labels.get("runboat/build")
             if not build_name:
                 continue
             should_wakeup = False
-            if event_type in ("ADDED", "MODIFIED"):
+            if event_type in (None, "ADDED", "MODIFIED"):
                 should_wakeup = self.db.add(Build.from_deployment(deployment))
             elif event_type == "DELETED":
                 should_wakeup = self.db.remove(build_name)
@@ -124,16 +139,22 @@ class Controller:
 
     async def job_watcher(self) -> None:
         async for event_type, job in k8s.watch_jobs():
+            _logger.debug(
+                "%s %s %s a=%s/s=%s/f=%s",
+                event_type,
+                job.metadata.name,
+                job.metadata.resource_version,
+                job.status.active,
+                job.status.succeeded,
+                job.status.failed,
+            )
             build_name = job.metadata.labels.get("runboat/build")
             if not build_name:
                 continue
             job_kind = job.metadata.labels.get("runboat/job-kind")
             if job_kind not in ("initialize", "cleanup"):
                 continue
-            if event_type in ("ADDED", "MODIFIED"):
-                _logger.debug(
-                    "job %s for %s status %s", job_kind, build_name, job.status
-                )
+            if event_type in (None, "ADDED", "MODIFIED"):
                 # Look for build in local db and also in k8s api.
                 # This is necessary because job events may come before build events
                 # have arrived.

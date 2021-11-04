@@ -15,5 +15,5 @@ root:
   level: DEBUG
   handlers: [console]
 loggers:
-  kubernetes_asyncio.client.rest:
+  kubernetes.client.rest:
     level: INFO

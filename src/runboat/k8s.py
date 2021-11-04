@@ -1,21 +1,26 @@
 import asyncio
+import logging
 import shutil
 import subprocess
 import tempfile
+import time
 from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, AsyncGenerator, Generator, Optional
+from typing import Any, Generator, Optional
 
+import urllib3
 from jinja2 import Template
-from kubernetes_asyncio import client, config, watch
-from kubernetes_asyncio.client.api_client import ApiClient
-from kubernetes_asyncio.client.models.v1_deployment import V1Deployment
-from kubernetes_asyncio.client.models.v1_job import V1Job
+from kubernetes import client, config, watch
+from kubernetes.client.api_client import ApiClient
+from kubernetes.client.models.v1_deployment import V1Deployment
 from pydantic import BaseModel
 
 from .settings import settings
+from .utils import sync_to_async, sync_to_async_iterator
+
+_logger = logging.getLogger(__name__)
 
 
 def _split_image_name_tag(img: str) -> tuple[str, str]:
@@ -24,51 +29,80 @@ def _split_image_name_tag(img: str) -> tuple[str, str]:
     return (img, "latest")
 
 
-async def load_kube_config() -> None:
-    await config.load_kube_config()
+@sync_to_async
+def load_kube_config() -> None:
+    config.load_kube_config()
 
 
-async def read_deployment(name: str) -> Optional[V1Deployment]:
-    async with ApiClient() as api:
+@sync_to_async
+def read_deployment(name: str) -> Optional[V1Deployment]:
+    with ApiClient() as api:
         appsv1 = client.AppsV1Api(api)
-        ret = await appsv1.list_namespaced_deployment(
-            namespace=settings.build_namespace, label_selector=f"runboat/build={name}"
-        )
-        for item in ret.items:
-            return item  # return first
-        return None  # None found
+        items = appsv1.list_namespaced_deployment(
+            namespace=settings.build_namespace,
+            label_selector=f"runboat/build={name}",
+        ).items
+        return items[0] if items else None
 
 
-async def patch_deployment(deployment_name: str, ops: list[dict["str", Any]]) -> None:
-    async with ApiClient() as api:
+@sync_to_async
+def patch_deployment(deployment_name: str, ops: list[dict["str", Any]]) -> None:
+    with ApiClient() as api:
         appsv1 = client.AppsV1Api(api)
-        await appsv1.patch_namespaced_deployment(
+        appsv1.patch_namespaced_deployment(
             name=deployment_name,
             namespace=settings.build_namespace,
             body=ops,
         )
 
 
-async def watch_deployments() -> AsyncGenerator[tuple[str, V1Deployment], None]:
-    w = watch.Watch()
-    # use the context manager to close http sessions automatically
-    async with ApiClient() as api:
-        appsv1 = client.AppsV1Api(api)
-        async for event in w.stream(
-            appsv1.list_namespaced_deployment, namespace=settings.build_namespace
-        ):
-            yield event["type"], event["object"]
+def _watch(list_method, *args, **kwargs):
+    while True:
+        try:
+            # perform a first query
+            res = list_method(*args, **kwargs)
+            resource_version = res.metadata.resource_version
+            for item in res.items:
+                yield None, item
+            # stream until timeout
+            while True:
+                try:
+                    for event in watch.Watch().stream(
+                        list_method,
+                        *args,
+                        **kwargs,
+                        resource_version=resource_version,
+                        _request_timeout=60,
+                    ):
+                        if event["type"] == "ERROR":
+                            raise RuntimeError("Kubernetes watch error")
+                        resource_version = event["object"].metadata.resource_version
+                        yield event["type"], event["object"]
+                except urllib3.exceptions.TimeoutError:
+                    continue
+                except TimeoutError:
+                    continue
+        except Exception as e:
+            delay = 5
+            _logger.info(
+                f"Error {e} watching {list_method.__name__}. Retrying in {delay} sec."
+            )
+            time.sleep(delay)
+            continue
 
 
-async def watch_jobs() -> AsyncGenerator[tuple[str, V1Job], None]:
-    w = watch.Watch()
-    # use the context manager to close http sessions automatically
-    async with ApiClient() as api:
-        appsv1 = client.BatchV1Api(api)
-        async for event in w.stream(
-            appsv1.list_namespaced_job, namespace=settings.build_namespace
-        ):
-            yield event["type"], event["object"]
+@sync_to_async_iterator
+def watch_deployments():
+    appsv1 = client.AppsV1Api()
+    yield from _watch(
+        appsv1.list_namespaced_deployment, namespace=settings.build_namespace
+    )
+
+
+@sync_to_async_iterator
+def watch_jobs():
+    batchv1 = client.BatchV1Api()
+    yield from _watch(batchv1.list_namespaced_job, namespace=settings.build_namespace)
 
 
 class DeploymentMode(str, Enum):
