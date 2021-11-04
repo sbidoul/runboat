@@ -69,6 +69,10 @@ class Controller:
     def max_deployed(self) -> int:
         return settings.max_deployed
 
+    @property
+    def undeploying(self) -> int:
+        return self.db.count_by_status(BuildStatus.undeploying)
+
     async def deploy_or_delay_start(
         self, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> None:
@@ -117,7 +121,7 @@ class Controller:
         self.reset()  # empty the local db each time we start watching
         async for event_type, deployment in k8s.watch_deployments():
             _logger.debug(
-                "%s %s %s dr=%s/rr=%s",
+                "Event %s %s %s dr=%s/rr=%s",
                 event_type,
                 deployment.metadata.name,
                 deployment.metadata.resource_version,
@@ -129,7 +133,14 @@ class Controller:
                 continue
             should_wakeup = False
             if event_type in (None, "ADDED", "MODIFIED"):
-                should_wakeup = self.db.add(Build.from_deployment(deployment))
+                prev_build = self.db.get(build_name)
+                build = Build.from_deployment(deployment)
+                should_wakeup = self.db.add(build)
+                if build.status == BuildStatus.undeploying and (
+                    prev_build is None or prev_build.status != BuildStatus.undeploying
+                ):
+                    _logger.info(f"{build} has deletionTimestamp. Undeploying.")
+                    await build.cleanup()
             elif event_type == "DELETED":
                 should_wakeup = self.db.remove(build_name)
             else:
@@ -140,7 +151,7 @@ class Controller:
     async def job_watcher(self) -> None:
         async for event_type, job in k8s.watch_jobs():
             _logger.debug(
-                "%s %s %s a=%s/s=%s/f=%s",
+                "Event %s %s %s a=%s/s=%s/f=%s",
                 event_type,
                 job.metadata.name,
                 job.metadata.resource_version,

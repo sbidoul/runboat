@@ -20,7 +20,7 @@ class BuildStatus(str, Enum):
     starting = "starting"  # to initialize or initializing or scaling up
     started = "started"  # running
     failed = "failed"  # initialization failed
-    cleaning = "cleaning"  # cleaning up, will be undeployed soon
+    undeploying = "undeploying"  # undeploying, will be deleted after cleanup
 
 
 class BuildInitStatus(str, Enum):
@@ -28,7 +28,6 @@ class BuildInitStatus(str, Enum):
     started = "started"  # initialization job running
     succeeded = "succeeded"  # initialization job succeeded
     failed = "failed"  # initialization job failed
-    cleaning = "cleaning"  # cleanup job running
 
 
 class Build(BaseModel):
@@ -92,11 +91,11 @@ class Build(BaseModel):
 
     @classmethod
     def _status_from_deployment(cls, deployment: V1Deployment) -> BuildStatus:
+        if deployment.metadata.deletion_timestamp:
+            return BuildStatus.undeploying
         init_status = deployment.metadata.annotations["runboat/init-status"]
         if init_status in (BuildInitStatus.todo, BuildInitStatus.started):
             return BuildStatus.starting
-        elif init_status == BuildInitStatus.cleaning:
-            return BuildStatus.cleaning
         elif init_status == BuildInitStatus.failed:
             return BuildStatus.failed
         elif init_status == BuildInitStatus.succeeded:
@@ -157,6 +156,9 @@ class Build(BaseModel):
                 "that is already started or starting."
             )
             return
+        elif self.status == BuildStatus.undeploying:
+            _logger.info(f"Ignoring start command for {self} that is undeploying.")
+            return
         elif self.status == BuildStatus.failed:
             _logger.info(f"Marking failed {self} for reinitialization.")
             await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
@@ -172,8 +174,16 @@ class Build(BaseModel):
         else:
             _logger.info(f"Ignoring stop command for {self} that is not started.")
 
+    async def undeploy(self) -> None:
+        # To undeploy, we delete the deployment. Due to the finalizer, the deletion
+        # will not be immediate, but the controller will notice the deletionTimestamp
+        # and launch the cleanup job. When the cleanup job succeeds, the controller
+        # removes all resources, and also removes the finalizer which allows kubernetes
+        # to remove the deployment.
+        await k8s.delete_deployment(self.deployment_name)
+
     async def initialize(self) -> None:
-        """Initialize a build."""
+        """Launch the initialization job."""
         # Start initizalization job. on_initialize_{started,succeeded,failed} callbacks
         # will follow from job events.
         _logger.info(f"Deploying initialize job for {self}.")
@@ -189,12 +199,12 @@ class Build(BaseModel):
         )
         await k8s.deploy(deployment_vars)
 
-    async def undeploy(self) -> None:
-        """Undeploy a build."""
+    async def cleanup(self) -> None:
+        """Launch the clenaup job."""
         # Delete the initialization job to reduce conflict with the cleanup job.
         await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
-        # Be sure it is stopped.
-        await self._patch(desired_replicas=0)
+        # Be sure the deployment is stopped.
+        await self._patch(desired_replicas=0, not_found_ok=True)
         # Start cleanup job. on_cleanup_{started,succeeded,failed} callbacks will follow
         # from job events.
         _logger.info(f"Deploying cleanup job for {self}.")
@@ -233,24 +243,23 @@ class Build(BaseModel):
         await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0)
 
     async def on_cleanup_started(self) -> None:
-        if self.init_status == BuildInitStatus.cleaning:
-            return
         _logger.info(f"Cleanup job started for {self}.")
-        await self._patch(init_status=BuildInitStatus.cleaning, desired_replicas=0)
 
     async def on_cleanup_succeeded(self) -> None:
         _logger.info(f"Cleanup job succeeded for {self}, deleting resources.")
         await k8s.delete_resources(self.name)
+        _logger.debug("Removing finalizer for %s.", self)
+        await self._patch(remove_finalizers=True, not_found_ok=True)
 
     async def on_cleanup_failed(self) -> None:
-        _logger.error(
-            f"Cleanup job failed for {self}, " f"manual intervention required."
-        )
+        _logger.error(f"Cleanup job failed for {self}, manual intervention required.")
 
     async def _patch(
         self,
         init_status: BuildInitStatus | None = None,
         desired_replicas: int | None = None,
+        remove_finalizers: bool = False,
+        not_found_ok: bool = False,
     ) -> None:
         ops = []
         if init_status is not None and init_status != self.init_status:
@@ -281,7 +290,14 @@ class Build(BaseModel):
                     },
                 ]
             )
-        await k8s.patch_deployment(self.deployment_name, ops)
+        if remove_finalizers:
+            ops.append(
+                {
+                    "op": "remove",
+                    "path": "/metadata/finalizers",
+                }
+            )
+        await k8s.patch_deployment(self.deployment_name, ops, not_found_ok)
 
 
 class Repo(BaseModel):

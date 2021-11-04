@@ -4,6 +4,8 @@ metadata:
   name: odoo
   annotations:
     runboat/init-status: "todo"  # ask controller to initialize when there is capacity
+  finalizers:
+    - runboat/cleanup
 spec:
   replicas: 0  # deploy idle
   selector:

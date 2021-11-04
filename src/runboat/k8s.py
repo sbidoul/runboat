@@ -13,7 +13,7 @@ from typing import Any, Generator, Optional
 import urllib3
 from jinja2 import Template
 from kubernetes import client, config, watch
-from kubernetes.client.api_client import ApiClient
+from kubernetes.client.exceptions import ApiException
 from kubernetes.client.models.v1_deployment import V1Deployment
 from pydantic import BaseModel
 
@@ -36,24 +36,37 @@ def load_kube_config() -> None:
 
 @sync_to_async
 def read_deployment(name: str) -> Optional[V1Deployment]:
-    with ApiClient() as api:
-        appsv1 = client.AppsV1Api(api)
-        items = appsv1.list_namespaced_deployment(
-            namespace=settings.build_namespace,
-            label_selector=f"runboat/build={name}",
-        ).items
-        return items[0] if items else None
+    appsv1 = client.AppsV1Api()
+    items = appsv1.list_namespaced_deployment(
+        namespace=settings.build_namespace,
+        label_selector=f"runboat/build={name}",
+    ).items
+    return items[0] if items else None
 
 
 @sync_to_async
-def patch_deployment(deployment_name: str, ops: list[dict["str", Any]]) -> None:
-    with ApiClient() as api:
-        appsv1 = client.AppsV1Api(api)
+def delete_deployment(deployment_name: str) -> None:
+    appsv1 = client.AppsV1Api()
+    appsv1.delete_namespaced_deployment(
+        deployment_name, namespace=settings.build_namespace
+    )
+
+
+@sync_to_async
+def patch_deployment(
+    deployment_name: str, ops: list[dict["str", Any]], not_found_ok: bool
+) -> None:
+    appsv1 = client.AppsV1Api()
+    try:
         appsv1.patch_namespaced_deployment(
             name=deployment_name,
             namespace=settings.build_namespace,
             body=ops,
         )
+    except ApiException as e:
+        if e.status == 404 and not_found_ok:
+            return
+        raise
 
 
 def _watch(list_method, *args, **kwargs):

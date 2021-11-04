@@ -21,6 +21,7 @@ class Status(BaseModel):
     to_initialize: int
     initializing: int
     max_initializing: int
+    undeploying: int
 
     class Config:
         orm_mode = True
