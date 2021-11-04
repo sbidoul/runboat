@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 
 class BuildStatus(str, Enum):
     stopped = "stopped"  # initialization succeeded and 0 replicas
+    stopping = "stopping"  # 0 desired replicas but some are still running
     starting = "starting"  # to initialize or initializing or scaling up
     started = "started"  # running
     failed = "failed"  # initialization failed
@@ -101,7 +102,10 @@ class Build(BaseModel):
         elif init_status == BuildInitStatus.succeeded:
             replicas = deployment.spec.replicas
             if not replicas:
-                return BuildStatus.stopped
+                if deployment.status.replicas:
+                    return BuildStatus.stopping
+                else:
+                    return BuildStatus.stopped
             else:
                 if deployment.status.ready_replicas == replicas:
                     return BuildStatus.started
@@ -163,7 +167,7 @@ class Build(BaseModel):
             _logger.info(f"Marking failed {self} for reinitialization.")
             await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
             await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0)
-        elif self.status == BuildStatus.stopped:
+        elif self.status in (BuildStatus.stopped, BuildStatus.stopping):
             _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
             await self._patch(desired_replicas=1)
 
