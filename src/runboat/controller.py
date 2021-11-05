@@ -139,7 +139,9 @@ class Controller:
                 if build.status == BuildStatus.undeploying and (
                     prev_build is None or prev_build.status != BuildStatus.undeploying
                 ):
-                    _logger.info(f"{build} has deletionTimestamp. Undeploying.")
+                    _logger.info(
+                        f"{build} has deletionTimestamp. Launching cleanup job."
+                    )
                     await build.cleanup()
             elif event_type == "DELETED":
                 should_wakeup = self.db.remove(build_name)
@@ -208,7 +210,7 @@ class Controller:
                 continue  # nothing startable, back to sleep
             _logger.info(
                 f"{self.initializing} builds of max {self.max_initializing} "
-                f"are initializing. Initializing {len(to_initialize)} more."
+                f"are initializing. Launching {len(to_initialize)} initialization jobs."
             )
             for build in to_initialize:
                 await build.initialize()
