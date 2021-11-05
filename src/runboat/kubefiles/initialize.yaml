@@ -32,3 +32,4 @@ spec:
             name: runboat-scripts
       restartPolicy: Never
   backoffLimit: 0
+  activeDeadlineSeconds: 1200

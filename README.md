@@ -125,7 +125,6 @@ MVP:
 - build/log and build/init-log api endpoints
 - report build status to github
 - secure github webhooks
-- k8s init container timeout
 - better error handling in API (return 400 on user errors)
 - basic tests
 - publish runboat container image
