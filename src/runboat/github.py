@@ -1,24 +1,25 @@
 from dataclasses import dataclass
 from typing import Any
 
-import requests
+import httpx
 
-from .exceptions import NotFoundOnGithub
+from .exceptions import NotFoundOnGitHub
 from .settings import settings
 
 
-def _github_get(url: str) -> Any:
-    full_url = f"https://api.github.com{url}"
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-    }
-    if settings.github_token:
-        headers["Authorization"] = f"token {settings.github_token}"
-    response = requests.get(full_url, headers=headers)
-    if response.status_code == 404:
-        raise NotFoundOnGithub(f"GitHub URL not found: {full_url}.")
-    response.raise_for_status()
-    return response.json()
+async def _github_get(url: str) -> Any:
+    async with httpx.AsyncClient() as client:
+        full_url = f"https://api.github.com{url}"
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+        }
+        if settings.github_token:
+            headers["Authorization"] = f"token {settings.github_token}"
+        response = await client.get(full_url, headers=headers)
+        if response.status_code == 404:
+            raise NotFoundOnGitHub(f"GitHub URL not found: {full_url}.")
+        response.raise_for_status()
+        return response.json()
 
 
 @dataclass
@@ -28,8 +29,8 @@ class BranchInfo:
     head_sha: str
 
 
-def get_branch_info(repo: str, branch: str) -> BranchInfo:
-    branch_data = _github_get(f"/repos/{repo}/git/ref/heads/{branch}")
+async def get_branch_info(repo: str, branch: str) -> BranchInfo:
+    branch_data = await _github_get(f"/repos/{repo}/git/ref/heads/{branch}")
     return BranchInfo(
         repo=repo,
         name=branch,
@@ -45,8 +46,8 @@ class PullInfo:
     target_branch: str
 
 
-def get_pull_info(repo: str, pr: int) -> PullInfo:
-    pr_data = _github_get(f"/repos/{repo}/pulls/{pr}")
+async def get_pull_info(repo: str, pr: int) -> PullInfo:
+    pr_data = await _github_get(f"/repos/{repo}/pulls/{pr}")
     return PullInfo(
         repo=repo,
         number=pr,

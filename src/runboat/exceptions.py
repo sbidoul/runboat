@@ -10,7 +10,7 @@ class BranchNotFound(ClientError):
     pass
 
 
-class NotFoundOnGithub(ClientError):
+class NotFoundOnGitHub(ClientError):
     pass
 
 

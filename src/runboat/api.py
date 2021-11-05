@@ -79,8 +79,7 @@ async def builds(repo: Optional[str] = None):
 )
 async def trigger_branch(repo: str, branch: str):
     """Trigger build for a branch."""
-    # TODO async github call
-    branch_info = github.get_branch_info(repo, branch)
+    branch_info = await github.get_branch_info(repo, branch)
     await controller.deploy_or_delay_start(
         repo=branch_info.repo,
         target_branch=branch_info.name,
@@ -95,8 +94,7 @@ async def trigger_branch(repo: str, branch: str):
 )
 async def trigger_pull(repo: str, pr: int):
     """Trigger build for a pull request."""
-    # TODO async github call
-    pull_info = github.get_pull_info(repo, pr)
+    pull_info = await github.get_pull_info(repo, pr)
     await controller.deploy_or_delay_start(
         repo=pull_info.repo,
         target_branch=pull_info.target_branch,

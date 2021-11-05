@@ -12,9 +12,9 @@ classifiers = [
 dependencies = [
     "fastapi",
     "gunicorn",
+    "httpx",
     "jinja2",
     "kubernetes",
-    "requests",  # TODO for github, to replace by aiohttp or httpx
     "rich",
     "uvicorn",
 ]
