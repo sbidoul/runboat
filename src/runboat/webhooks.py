@@ -29,7 +29,7 @@ async def receive_payload(
     if x_github_event == "pull_request":
         if action in ("opened", "synchronize"):
             background_tasks.add_task(
-                controller.deploy_or_delay_start,
+                controller.deploy_or_start,
                 repo=repo,
                 target_branch=payload["pull_request"]["base"]["ref"],
                 pr=payload["pull_request"]["number"],
@@ -37,7 +37,7 @@ async def receive_payload(
             )
     elif x_github_event == "push":
         background_tasks.add_task(
-            controller.deploy_or_delay_start,
+            controller.deploy_or_start,
             repo=repo,
             target_branch=payload["ref"].split("/")[-1],
             pr=None,

@@ -73,7 +73,7 @@ class Controller:
     def undeploying(self) -> int:
         return self.db.count_by_status(BuildStatus.undeploying)
 
-    async def deploy_or_delay_start(
+    async def deploy_or_start(
         self, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> None:
         build = self.db.get_for_commit(
