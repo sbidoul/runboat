@@ -141,6 +141,7 @@ class DeploymentVars(BaseModel):
     pgdatabase: str
     admin_passwd: str
     hostname: str
+    build_env: dict[str, str]
 
 
 def make_deployment_vars(
@@ -171,6 +172,7 @@ def make_deployment_vars(
         pgdatabase=build_name,
         admin_passwd=settings.build_admin_passwd,
         hostname=f"{slug}.{settings.build_domain}",
+        build_env=settings.build_env or {},
     )
 
 

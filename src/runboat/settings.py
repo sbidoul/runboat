@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     build_pgpassword: str
     build_admin_passwd: str
     build_domain: str
+    build_env: Optional[dict[str, str]]
     github_token: Optional[str]
     log_config: Optional[str]
 

@@ -44,6 +44,9 @@ configMapGenerator:
       - ADDONS_DIR=/build
       - RUNBOAT_GIT_REPO=https://github.com/{{ repo }}
       - RUNBOAT_GIT_REF={{ git_commit }}
+      {%- for key, value in build_env.items() %}
+      - {{ key }}={{ value }}
+      {%- endfor %}
   - name: runboat-scripts
     files:
       - runboat-clone-and-install.sh
