@@ -11,11 +11,11 @@ security = HTTPBasic()
 def authenticated(credentials: HTTPBasicCredentials = Depends(security)) -> None:
     correct_username = secrets.compare_digest(
         credentials.username,
-        settings.admin_user,
+        settings.api_admin_user,
     )
     correct_password = secrets.compare_digest(
         credentials.password,
-        settings.admin_passwd,
+        settings.api_admin_passwd,
     )
     if not (correct_username and correct_password):
         raise HTTPException(

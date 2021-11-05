@@ -68,7 +68,7 @@ in a different cluster.
 
 - setup environment variables (start from `.env.sample`)
 - create a virtualenv, make sure to have pip>=21.3.1 and `pip install -e .`
-- run with `uvicorn runboat.app:app --log-config=log-config-dev.yaml`
+- run with `uvicorn runboat.app:app --log-config=log-config.yaml`
 
 ## Running in production
 
@@ -128,7 +128,7 @@ MVP:
 - k8s init container timeout
 - better error handling in API (return 400 on user errors)
 - basic tests
-- build and publish runboat container image
+- publish runboat container image
 - look at other TODO in code to see if anything important remains
 - basic UI (single page with a combo box to select repo and show builds by branch/pr,
   with start/stop buttons)

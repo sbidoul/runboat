@@ -4,8 +4,8 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    admin_user: str
-    admin_passwd: str
+    api_admin_user: str
+    api_admin_passwd: str
     supported_repos: set[str]
     max_initializing: int = 2
     max_started: int = 6
