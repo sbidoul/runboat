@@ -122,7 +122,6 @@ resources:
 
 Prototype (min required to open the project):
 
-- report build status to github
 - plug it on a bunch of OCA and shopinvader repos to test load
 - basic tests
 
@@ -142,6 +141,8 @@ More:
 
 - shiny UI
 - websocket stream of build changes, for a dynamic UI
+- better target_url in GitHub status: instead of providing the link to the ingress,
+  provide a link to the build, which redirects to the ingress if the build is started
 - handle PR close (delete all builds for PR)
 - handle branch delete (delete all builds for branch)
 - create builds for all supported repos on startup (goes with sticky branches)
