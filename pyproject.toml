@@ -24,9 +24,7 @@ dynamic = ["version", "description"]
 test = [
     "pytest",
     "pytest-cov",
-]
-mypy = [
-    "mypy",
+    "pytest-dotenv",
 ]
 
 [project.urls]
@@ -34,5 +32,8 @@ Home = "https://github.com/sbidoul/runboat"
 
 [tool.isort]
 profile = 'black'
+
+[tool.pytest.ini_options]
+env_files = [".env.test"]
 
 # flake8 config is in .flake8

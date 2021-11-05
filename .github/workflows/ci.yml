@@ -22,8 +22,8 @@ jobs:
       - name: Install project
         run: |
           pip install -U "pip>=21.3.1"
-          pip install -e .[test] -c requirements.txt
+          pip install -e .[test] -c requirements.txt -c requirements-test.txt
       - name: Run tests
         run: |
-          pytest -v --cov --cov-report=xml
+          pytest -v --cov --cov-report=xml ./tests
       - uses: codecov/codecov-action@v1

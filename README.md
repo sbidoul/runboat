@@ -68,8 +68,10 @@ in a different cluster.
 
 - setup environment variables (start from `.env.sample`)
 - create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
-  requirements.txt -e .`
+  requirements.txt -e .[test]`
 - run with `uvicorn runboat.app:app --log-config=log-config.yaml`
+- run tests with `pytest` (environment variables used in tests are declared in
+  `.env.test`)
 
 ## Running in production
 
