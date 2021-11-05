@@ -2,6 +2,47 @@
 
 A simple Odoo runbot lookalike on kubernetes. Main goal is replacing the OCA runbot.
 
+## Principle of operation
+
+This program is a Kubernetes operator that manages Odoo instances with pre-installed
+addons. The addons come from commits on branches and pull requests in GitHub
+repositories. A deployment of a given commit of a given branch or pull request of a
+given repository is known as a build.
+
+Runboat has the following main components:
+
+- An in-memory database of builds, with their current status.
+- A REST API to list builds and trigger new deployments as well as start, stop, redeploy
+  or undeploy builds.
+- A GitHub webhook to automatically trigger new builds on pushes to branches and pull
+  requests of supported repositories.
+- A controller that performs the following tasks:
+
+  - monitor deployments in a kubernetes namespaces to maintain the in-memory database;
+  - on new deployments, trigger an initialization job to create the corresponding
+    postgres database and install the addons in it;
+  - initialization jobs are started concurrently up to a configured limit;
+  - when the initialization job succeeds, scale up the deployment, so it becomes
+    accessible;
+  - when the initializaiton job fails, flag the deployment as failed;
+  - when there are too many deployments started, stop the oldest started;
+  - when there are too many deployments, deleted the oldest created;
+  - when a deployment is deleted, run a cleanp job to destroy the database and delete
+    all kubernetes resources associated with the deployment.
+
+When a deployment is stopped, the corresponding postgres database remains present, so
+deployments can restart almost instantly.
+
+This approach allows the deployment of a very large number of builds which consume no
+memory nor CPU until they are started. The number of started deployment can also be
+high, by reserving limited CPU and memory resources for each, taking advantage of the
+fact that they are typically used infrequently. The number of concurrent initialization
+jobs is limited strongly, and they are queued, as these are typically the more
+resource-intensive part of the lifecycle of builds.
+
+All state is stored in kubernetes resources (labels and annotations on deployments). The
+controller can be stopped and restarted without losing state.
+
 ## Requirements
 
 For running the builds:
@@ -11,13 +52,17 @@ For running the builds:
 - A postgres database, accessible from within the cluster namespace with a user with
   permissions to create database.
 
-For running the controller:
+For running the controller (runboat itself):
 
 - Python 3.10
 - `kubectl`
 - A `KUBECONFIG` that provides access to the namespace where the builds are deployed,
   with permissions to create and delete Service, Job, Deployment, Ingress, Secret and
   ConfigMap resources.
+- Some sort of reverse proxy to expose the REST API.
+
+The controller can be run outside the kubernetes cluster or deployed inside it, or even
+in a different cluster.
 
 ## Developing
 
@@ -32,14 +77,40 @@ For running the controller:
 One and only one worker process !
 
 Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
-`run_in_executor`, SIGINT/SIGTERM handling does not work very well in python, and
-gunicorn makes it more robust. https://bugs.python.org/issue29309
+`run_in_executor`, SIGINT/SIGTERM handling does not work very well, and gunicorn makes
+it more robust. https://bugs.python.org/issue29309
 
-## Author and contributors
+## Kubernetes resources
 
-Authored by Stéphane Bidoul (@sbidoul).
+All resources to be deployed in kubernetes for a build are in `src/runboat/kubefiles`.
+They are gathered together from a `kustomization.yaml` jinja template that leads to
+three possible resource groups depending on a mode variable in the jinja rendering context:
 
-Contributions welcome.
+- the deployment with its associated service and ingress;
+- the initialization job that creates the database;
+- the cleanup job that drops the database;
+
+Besides the three modes, the controller as little of what the kubefiles actually deploy.
+
+It expect and does the following about the kubernetes resources:
+
+- a deployment starts with 0 replicas and must initially have a
+  `runboat/init-status=todo` label, as well as a finalizer;
+- the intialization job starts with a `runboat/job-kind=initialize` label;
+- the cleanup job starts with a `runboat/job-kind=cleanup` label.
+
+The controller sets the following labels on resources:
+
+- `runboat/build`, with the unique build name as identifier.
+
+The controller sets the following annotations on resources:
+
+- `runboat/repo`: the repository in owner/repo format;
+- `runboat/target-branch`: the branch or pull request base branch;
+- `runboat/pr`: the pull request number or "";
+- `runboat/git-commit`: the commit sha.
+
+It also sets a `runboat/init-status` annotation to track the outcome of initialization jobs (`todo`, `started`, `succeeded`, `failed`).
 
 ## TODO
 
@@ -72,56 +143,8 @@ More:
 - never undeploy last build of sticky branches
 - make build images configurable (see `build_images.py`)
 
+## Author and contributors
 
-## Kubefiles
+Authored by Stéphane Bidoul (@sbidoul).
 
-Kustomize template with 3 modes (deploy, initialize, cleanup).
-
-## Synchronous actions on builds (fast)
-
-- deploy
-
-  - create deployment with 0 replicas and runboat/init-status="todo"
-
-- start:
-
-  - if runboat/init-status=="ready", scale to 1
-  - elif runboat/init-status in ("todo", "initializing"), do nothing
-  - elif runboat/init-status=="failed", set runboat/init-status="todo"
-
-- stop:
-
-  - scale deployment to 0
-
-- undeploy:
-
-  - scale deployment to 0
-  - set runboat/init-status to "dropping"
-  - start dropdb job (restart=Never, backoffLimit=6)
-
-## Workers
-
-- initializer (works on deployments with runboat/init-status="todo", ordered by
-  runboat/init-status-timestamp), obeying max_initializing:
-
-  - set runboat/init-status to "initializing"
-  - (re)create init job which will drop and init db (restart=Never, backoffLimit=0)
-
-- job-watcher:
-
-  - on successful termination of initdb job: set runboat/init-status to "ready", scale
-    deployment to 1
-  - on failure of initdb job: set runboat/init-status to "failed"
-  - on success of dropdb job: delete all resources
-
-- deployment-watcher:
-
-  - maintains an in-memory db of deployments
-
-- stopper:
-
-  - stop old started, to reach max_running
-
-- undeployer:
-
-  - undeploy old stopped, to reach max_deployed
+Contributions welcome.
