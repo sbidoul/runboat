@@ -8,7 +8,7 @@ click==8.0.3
 colorama==0.4.4
 commonmark==0.9.1
 fastapi==0.70.0
-google-auth==2.3.2
+google-auth==2.3.3
 gunicorn==20.1.0
 h11==0.12.0
 idna==3.3
