@@ -2,6 +2,8 @@
 
 A simple Odoo runbot lookalike on kubernetes. Main goal is replacing the OCA runbot.
 
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/sbidoul/runboat/main.svg)](https://results.pre-commit.ci/latest/github/sbidoul/runboat/main)
+
 ## Principle of operation
 
 This program is a Kubernetes operator that manages Odoo instances with pre-installed
