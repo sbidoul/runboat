@@ -123,7 +123,6 @@ resources:
 Prototype (min required to open the project):
 
 - plug it on a bunch of OCA and shopinvader repos to test load
-- basic tests
 
 MVP:
 
@@ -149,6 +148,7 @@ More:
 - never undeploy last build of sticky branches
 - make build images configurable (see `build_images.py`)
 - configurable kubefiles directory
+- even more tests
 
 ## Author and contributors
 
