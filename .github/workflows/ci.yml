@@ -27,3 +27,17 @@ jobs:
         run: |
           pytest -v --cov --cov-report=xml ./tests
       - uses: codecov/codecov-action@v1
+  build-image:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
+          cache-to: type=inline
+          push: true
