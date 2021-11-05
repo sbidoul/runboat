@@ -11,7 +11,7 @@ given repository is known as a build.
 
 Runboat has the following main components:
 
-- An in-memory database of builds, with their current status.
+- An in-memory database of deployed builds, with their current status.
 - A REST API to list builds and trigger new deployments as well as start, stop, redeploy
   or undeploy builds.
 - A GitHub webhook to automatically trigger new builds on pushes to branches and pull
@@ -27,7 +27,7 @@ Runboat has the following main components:
   - when the initializaiton job fails, flag the deployment as failed;
   - when there are too many deployments started, stop the oldest started;
   - when there are too many deployments, deleted the oldest created;
-  - when a deployment is deleted, run a cleanp job to destroy the database and delete
+  - when a deployment is deleted, run a cleanp job to drop the database and delete
     all kubernetes resources associated with the deployment.
 
 When a deployment is stopped, the corresponding postgres database remains present, so
@@ -67,7 +67,8 @@ in a different cluster.
 ## Developing
 
 - setup environment variables (start from `.env.sample`)
-- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -e .`
+- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
+  requirements.txt -e .`
 - run with `uvicorn runboat.app:app --log-config=log-config.yaml`
 
 ## Running in production
@@ -90,43 +91,48 @@ three possible resource groups depending on a mode variable in the jinja renderi
 - the initialization job that creates the database;
 - the cleanup job that drops the database;
 
-Besides the three modes, the controller as little of what the kubefiles actually deploy.
+Besides the three modes, the controller has limited knowledge of what the kubefiles
+actually deploy. It expects the following to hold true:
 
-It expect and does the following about the kubernetes resources:
-
+- the `runboat/build` label is set on all resources, with the unique build name as
+  value;
 - a deployment starts with 0 replicas and must initially have a
-  `runboat/init-status=todo` label, as well as a finalizer;
-- the intialization job starts with a `runboat/job-kind=initialize` label;
-- the cleanup job starts with a `runboat/job-kind=cleanup` label.
+  `runboat/init-status=todo` label, as well as a `runboat/cleanup` finalizer;
+- the intialization job has a `runboat/job-kind=initialize` label;
+- the cleanup job has a `runboat/job-kind=cleanup` label.
+- the following annotations are set on deployments:
 
-The controller sets the following labels on resources:
+  - `runboat/repo`: the repository in owner/repo format;
+  - `runboat/target-branch`: the branch or pull request target branch;
+  - `runboat/pr`: the pull request number if this build is for a pull request;
+  - `runboat/git-commit`: the commit sha.
 
-- `runboat/build`, with the unique build name as identifier.
+During the lifecycle of a build, the controller does the following on the deployed
+resources:
 
-The controller sets the following annotations on resources:
-
-- `runboat/repo`: the repository in owner/repo format;
-- `runboat/target-branch`: the branch or pull request base branch;
-- `runboat/pr`: the pull request number or "";
-- `runboat/git-commit`: the commit sha.
-
-It also sets a `runboat/init-status` annotation to track the outcome of initialization jobs (`todo`, `started`, `succeeded`, `failed`).
+- it sets the `runboat/init-status` annotation (`todo`, `started`, `succeeded`,
+  `failed`) on deployments to track the outcome of the initialization jobs ;
+- it sets the deployment's `specs.replica` to 1 or 0 to start or stop it;
+- it deletes the deployment when an undeploy is requested (the actual delete occurs
+  later due to the finalizer);
+- it removes the deployment finalizers and deletes resources matching the
+  `runboat/build` label after the cleanup job succeeded.
 
 ## TODO
 
-Prototype (min required to do load testing):
+Prototype (min required to open the project):
 
+- report build status to github
 - plug it on a bunch of OCA and shopinvader repos to test load
-- configuring many repos in a .env file may be difficult, switch to a toml file ?
+- basic tests
 
 MVP:
 
 - deployment and more load testing
 - build/log and build/init-log api endpoints
-- report build status to github
 - secure github webhooks
 - better error handling in API (return 400 on user errors)
-- basic tests
+- more tests
 - publish runboat container image
 - look at other TODO in code to see if anything important remains
 - basic UI (single page with a combo box to select repo and show builds by branch/pr,

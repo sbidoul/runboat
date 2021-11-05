@@ -79,7 +79,7 @@ class Build(BaseModel):
             deployment_name=deployment.metadata.name,
             repo=deployment.metadata.annotations["runboat/repo"],
             target_branch=deployment.metadata.annotations["runboat/target-branch"],
-            pr=deployment.metadata.annotations["runboat/pr"] or None,
+            pr=deployment.metadata.annotations.get("runboat/pr") or None,
             git_commit=deployment.metadata.annotations["runboat/git-commit"],
             image=deployment.spec.template.spec.containers[0].image,
             init_status=deployment.metadata.annotations["runboat/init-status"],
