@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -7,8 +6,6 @@ import httpx
 
 from .exceptions import NotFoundOnGitHub
 from .settings import settings
-
-_logger = logging.getLogger(__name__)
 
 
 async def _github_request(method: str, url: str, json: Any = None) -> Any:
@@ -19,7 +16,6 @@ async def _github_request(method: str, url: str, json: Any = None) -> Any:
         }
         if settings.github_token:
             headers["Authorization"] = f"token {settings.github_token}"
-        _logger.debug("%s %s", method, full_url)
         response = await client.request(method, full_url, headers=headers, json=json)
         if response.status_code == 404:
             raise NotFoundOnGitHub(f"GitHub URL not found: {full_url}.")

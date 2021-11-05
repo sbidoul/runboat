@@ -173,13 +173,13 @@ class Build(BaseModel):
         elif self.status == BuildStatus.failed:
             _logger.info(f"Marking failed {self} for reinitialization.")
             await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
-            await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0)
-            await github.notify_status(
-                self.repo,
-                self.git_commit,
-                GitHubStatusState.pending,
-                target_url=None,
-            )
+            if await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0):
+                await github.notify_status(
+                    self.repo,
+                    self.git_commit,
+                    GitHubStatusState.pending,
+                    target_url=None,
+                )
         elif self.status in (BuildStatus.stopped, BuildStatus.stopping):
             _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
             await self._patch(desired_replicas=1)
@@ -241,13 +241,13 @@ class Build(BaseModel):
         if self.init_status == BuildInitStatus.started:
             return
         _logger.info(f"Initialization job started for {self}.")
-        await self._patch(init_status=BuildInitStatus.started, desired_replicas=0)
-        await github.notify_status(
-            self.repo,
-            self.git_commit,
-            GitHubStatusState.pending,
-            target_url=None,
-        )
+        if await self._patch(init_status=BuildInitStatus.started, desired_replicas=0):
+            await github.notify_status(
+                self.repo,
+                self.git_commit,
+                GitHubStatusState.pending,
+                target_url=None,
+            )
 
     async def on_initialize_succeeded(self) -> None:
         if self.init_status == BuildInitStatus.succeeded:
@@ -255,13 +255,13 @@ class Build(BaseModel):
             # succeeded old initialization jobs after a controller restart.
             return
         _logger.info(f"Initialization job succeded for {self}, starting.")
-        await self._patch(init_status=BuildInitStatus.succeeded, desired_replicas=1)
-        await github.notify_status(
-            self.repo,
-            self.git_commit,
-            GitHubStatusState.success,
-            target_url=self.link,
-        )
+        if await self._patch(init_status=BuildInitStatus.succeeded, desired_replicas=1):
+            await github.notify_status(
+                self.repo,
+                self.git_commit,
+                GitHubStatusState.success,
+                target_url=self.link,
+            )
 
     async def on_initialize_failed(self) -> None:
         if self.init_status == BuildInitStatus.failed:
@@ -269,13 +269,13 @@ class Build(BaseModel):
             # restarting, and is notified of existing initialization jobs.
             return
         _logger.info(f"Initialization job failed for {self}.")
-        await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0)
-        await github.notify_status(
-            self.repo,
-            self.git_commit,
-            GitHubStatusState.failure,
-            target_url=None,
-        )
+        if await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0):
+            await github.notify_status(
+                self.repo,
+                self.git_commit,
+                GitHubStatusState.failure,
+                target_url=None,
+            )
 
     async def on_cleanup_started(self) -> None:
         _logger.info(f"Cleanup job started for {self}.")
@@ -332,7 +332,10 @@ class Build(BaseModel):
                     "path": "/metadata/finalizers",
                 }
             )
-        await k8s.patch_deployment(self.deployment_name, ops, not_found_ok)
+        if ops:
+            await k8s.patch_deployment(self.deployment_name, ops, not_found_ok)
+            return True
+        return False
 
 
 class Repo(BaseModel):
