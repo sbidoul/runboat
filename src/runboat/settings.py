@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     build_admin_passwd: str
     build_domain: str
     build_env: Optional[dict[str, str]]
+    build_images: dict[str, str] = {
+        "15.0": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest",
+        "14.0": "ghcr.io/oca/oca-ci/py3.6-odoo14.0:latest",
+        "13.0": "ghcr.io/oca/oca-ci/py3.6-odoo13.0:latest",
+        "12.0": "ghcr.io/oca/oca-ci/py3.6-odoo12.0:latest",
+        "11.0": "ghcr.io/oca/oca-ci/py3.5-odoo11.0:latest",
+        "10.0": "ghcr.io/oca/oca-ci/py2.7-odoo10.0:latest",
+    }
     github_token: Optional[str]
     log_config: Optional[str]
 

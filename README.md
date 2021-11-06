@@ -152,7 +152,6 @@ More:
 - handle branch delete (delete all builds for branch)
 - create builds for all supported repos on startup (goes with sticky branches)
 - never undeploy last build of sticky branches
-- make build images configurable (see `build_images.py`)
 - configurable kubefiles directory
 - even more tests
 
