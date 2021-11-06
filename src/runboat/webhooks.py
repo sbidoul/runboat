@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/webhook/github")
+@router.post("/webhooks/github")
 async def receive_payload(
     background_tasks: BackgroundTasks,
     request: Request,
@@ -23,7 +23,7 @@ async def receive_payload(
         return
     repo = repo.lower()
     if repo not in settings.supported_repos:
-        _logger.info(f"Ignoring webhook delivery for unsupported repo {repo}.")
+        _logger.debug(f"Ignoring webhook delivery for unsupported repo {repo}.")
         return
     action = payload.get("action")
     if x_github_event == "pull_request":

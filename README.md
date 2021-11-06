@@ -72,6 +72,7 @@ in a different cluster.
 - create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
   requirements.txt -e .[test]`
 - run with `uvicorn runboat.app:app --log-config=log-config.yaml`
+- api documentation is at `http://localhost:8000/docs`
 - run tests with `pytest` (environment variables used in tests are declared in
   `.env.test`)
 
@@ -126,6 +127,7 @@ resources:
 
 Prototype (min required to open the project):
 
+- ignore non-main branches in webhook
 - plug it on a bunch of OCA and shopinvader repos to test load
 
 MVP:
