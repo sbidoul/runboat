@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseSettings
+from pydantic import BaseSettings, validator
 
 
 class Settings(BaseSettings):
@@ -23,6 +23,11 @@ class Settings(BaseSettings):
 
     class Config:
         env_prefix = "RUNBOAT_"
+
+    @validator("supported_repos")
+    @classmethod
+    def validate_supported_repos(v) -> set[str]:
+        return {item.lower() for item in v}
 
 
 settings = Settings()
