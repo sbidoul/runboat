@@ -74,6 +74,6 @@ async def notify_status(
         json={
             "state": state,
             "target_url": target_url,
-            "context": "ci/runboat",
+            "context": "runboat/build",
         },
     )
