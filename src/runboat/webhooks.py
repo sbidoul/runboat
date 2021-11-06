@@ -2,6 +2,8 @@ import logging
 
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
+from runboat.build_images import is_branch_supported, is_main_branch
+
 from .controller import controller
 from .settings import settings
 
@@ -28,18 +30,38 @@ async def receive_payload(
     action = payload.get("action")
     if x_github_event == "pull_request":
         if action in ("opened", "synchronize"):
+            target_branch = payload["pull_request"]["base"]["ref"]
+            if not is_branch_supported(target_branch):
+                _logger.debug(
+                    f"Ignoring webhook delivery for pull request "
+                    f"to unsupported branch {target_branch}"
+                )
+                return
             background_tasks.add_task(
                 controller.deploy_or_start,
                 repo=repo,
-                target_branch=payload["pull_request"]["base"]["ref"],
+                target_branch=target_branch,
                 pr=payload["pull_request"]["number"],
                 git_commit=payload["pull_request"]["head"]["sha"],
             )
     elif x_github_event == "push":
+        target_branch = payload["ref"].split("/")[-1]
+        if not is_branch_supported(target_branch):
+            _logger.debug(
+                f"Ignoring webhook delivery for push "
+                f"to unsupported branch {target_branch}"
+            )
+            return
+        if not is_main_branch(target_branch):
+            _logger.debug(
+                f"Ignoring webhook delivery for push "
+                f"to non-main branch {target_branch}"
+            )
+            return
         background_tasks.add_task(
             controller.deploy_or_start,
             repo=repo,
-            target_branch=payload["ref"].split("/")[-1],
+            target_branch=target_branch,
             pr=None,
             git_commit=payload["after"],
         )

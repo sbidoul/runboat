@@ -127,7 +127,6 @@ resources:
 
 Prototype (min required to open the project):
 
-- ignore non-main branches in webhook
 - plug it on a bunch of OCA and shopinvader repos to test load
 
 MVP:
