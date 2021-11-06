@@ -68,7 +68,8 @@ in a different cluster.
 
 ## Developing
 
-- setup environment variables (start from `.env.sample`)
+- setup environment variables (start from `.env.sample`, the meaning of the environment
+  variables is documented in [settings.py](./src/runboat/settings.py))
 - create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
   requirements.txt -e .[test]`
 - run with `uvicorn runboat.app:app --log-config=log-config.yaml`

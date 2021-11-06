@@ -128,19 +128,16 @@ class DeploymentVars(BaseModel):
     namespace: str
     mode: DeploymentMode
     build_name: str
+    build_slug: str
+    build_domain: str
     repo: str
     target_branch: str
     pr: Optional[int]
     git_commit: str
     image_name: str
     image_tag: str
-    pghost: str
-    pgport: str
-    pguser: str
-    pgpassword: str
-    pgdatabase: str
-    hostname: str
     build_env: dict[str, str]
+    build_secret_env: dict[str, str]
 
 
 def make_deployment_vars(
@@ -158,19 +155,16 @@ def make_deployment_vars(
         mode=mode,
         namespace=settings.build_namespace,
         build_name=build_name,
+        build_slug=slug,
+        build_domain=settings.build_domain,
         repo=repo,
         target_branch=target_branch,
         pr=pr,
         git_commit=git_commit,
         image_name=image_name,
         image_tag=image_tag,
-        pghost=settings.build_pghost,
-        pgport=settings.build_pgport,
-        pguser=settings.build_pguser,
-        pgpassword=settings.build_pgpassword,
-        pgdatabase=build_name,
-        hostname=f"{slug}.{settings.build_domain}",
         build_env=settings.build_env or {},
+        build_secret_env=settings.build_secret_env or {},
     )
 
 

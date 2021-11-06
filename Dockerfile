@@ -12,15 +12,13 @@ ENV PYTHONPATH=/app
 
 COPY log-config.yaml /etc/runboat-log-config.yaml
 
-ENV RUNBOAT_SUPPORTED_REPOS='["oca/server-env", "oca/mis-builder"]'
+ENV RUNBOAT_SUPPORTED_REPOS='["OCA/mis-builder", "shopinvader/odoo-shopinvader", "OCA/server-env"]''
 ENV RUNBOAT_API_ADMIN_USER="admin"
-ENV RUNBOAT_API_ADMIN_PASSWD=
+ENV RUNBOAT_API_ADMIN_PASSWD="admin"
 ENV RUNBOAT_BUILD_NAMESPACE=runboat-builds
-ENV RUNBOAT_BUILD_PGHOST=postgres14.runboat-builds-db
-ENV RUNBOAT_BUILD_PGPORT=5432
-ENV RUNBOAT_BUILD_PGUSER=runboat-build
-ENV RUNBOAT_BUILD_PGPASSWORD=
 ENV RUNBOAT_BUILD_DOMAIN=runboat.example.com
+ENV RUNBOAT_BUILD_ENV='{"PGHOST": "postgres14.runboat-builds-db", "PGPORT": "5432", "PGUSER": "runboat-build"}'
+ENV RUNBOAT_BUILD_SECRET_ENV='{"PGPASSWORD": "..."}'
 ENV RUNBOAT_GITHUB_TOKEN=
 ENV RUNBOAT_LOG_CONFIG=/etc/runboat-log-config.yaml
 
