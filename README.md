@@ -88,20 +88,21 @@ it more robust. https://bugs.python.org/issue29309
 
 ## Kubernetes resources
 
-All resources to be deployed in kubernetes for a build are in `src/runboat/kubefiles`.
-They are gathered together from a `kustomization.yaml` jinja template that leads to
-three possible resource groups depending on a mode variable in the jinja rendering context:
+All resources to be deployed in kubernetes for a build are in
+[src/runboat/kubefiles](./src/runboat/kubefiles). They are gathered together from a
+`kustomization.yaml` jinja template that leads to three possible resource groups
+depending on a `mode` variable in the jinja rendering context:
 
-- the deployment with its associated service and ingress;
-- the initialization job that creates the database;
-- the cleanup job that drops the database;
+- `deployment` creates a kubernetes deployment with its associated service and ingress;
+- `initialization` creates a job that creates the database;
+- `cleanup` creates a job that drops the database;
 
 Besides the three modes, the controller has limited knowledge of what the kubefiles
 actually deploy. It expects the following to hold true:
 
 - the `runboat/build` label is set on all resources, with the unique build name as
   value;
-- a deployment starts with 0 replicas and must initially have a
+- a deployment starts with 0 replicas and is created with a
   `runboat/init-status=todo` label, as well as a `runboat/cleanup` finalizer;
 - the intialization job has a `runboat/job-kind=initialize` label;
 - the cleanup job has a `runboat/job-kind=cleanup` label.
@@ -116,7 +117,7 @@ During the lifecycle of a build, the controller does the following on the deploy
 resources:
 
 - it sets the `runboat/init-status` annotation (`todo`, `started`, `succeeded`,
-  `failed`) on deployments to track the outcome of the initialization jobs ;
+  `failed`) on deployments to track the outcome of the initialization jobs;
 - it sets the deployment's `specs.replica` to 1 or 0 to start or stop it;
 - it deletes the deployment when an undeploy is requested (the actual delete occurs
   later due to the finalizer);
@@ -125,7 +126,7 @@ resources:
 
 ## TODO
 
-Prototype (min required to open the project):
+Advanced prototype (min required to open the project):
 
 - plug it on a bunch of OCA and shopinvader repos to test load
 

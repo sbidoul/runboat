@@ -119,7 +119,7 @@ def watch_jobs():
 
 
 class DeploymentMode(str, Enum):
-    deploy = "deploy"
+    deployment = "deployment"
     initialize = "initialize"
     cleanup = "cleanup"
 

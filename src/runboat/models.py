@@ -142,7 +142,7 @@ class Build(BaseModel):
         _logger.info(f"Deploying {slug} ({name}).")
         image = get_build_image(target_branch)
         deployment_vars = k8s.make_deployment_vars(
-            k8s.DeploymentMode.deploy,
+            k8s.DeploymentMode.deployment,
             name,
             slug,
             repo.lower(),

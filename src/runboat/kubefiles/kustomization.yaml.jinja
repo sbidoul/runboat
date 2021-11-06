@@ -1,5 +1,5 @@
 resources:
-  {% if mode == 'deploy' -%}
+  {% if mode == 'deployment' -%}
   - deployment.yaml
   - service.yaml
   - ingress.yaml
@@ -53,7 +53,7 @@ configMapGenerator:
       - runboat-initialize.sh
       - runboat-cleanup.sh
       - runboat-start.sh
-  {% if mode == 'deploy' -%}
+  {% if mode == 'deployment' -%}
   - name: vars
     literals:
       - HOSTNAME={{ hostname }}
@@ -62,7 +62,7 @@ configMapGenerator:
 generatorOptions:
   disableNameSuffixHash: true
 
-{% if mode == 'deploy' -%}
+{% if mode == 'deployment' -%}
 vars:
   - name: HOSTNAME
     objref:
