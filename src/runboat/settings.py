@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     github_token: Optional[str]
     # The file with the python logging configuration to use for the runboat controller.
     log_config: Optional[str]
+    # The base url where the runboat UI and API is exposed on internet.
+    # Used to generate backlinks in GitHub statuses
+    base_url: str = "http://localhost:8000"
 
     class Config:
         env_prefix = "RUNBOAT_"

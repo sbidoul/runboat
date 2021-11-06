@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <title>Runboat build {{ build.name }} for {{ build.repo }}</title>
+        <script>
+            build_name = "{{ build.name }}";
+            function start() {
+                fetch(`/api/v1/builds/${build_name}/start`, options={method: 'POST'})
+            }
+            function stop() {
+                fetch(`/api/v1/builds/${build_name}/stop`, options={method: 'POST'})
+            }
+        </script>
+    <body>
+        <p>Repo: {{ build.repo }}</p>
+        {% if build.pr %}
+        <p>PR: <a href="{{ build.repo_link }}">{{ build.pr }}</a> to {{ build.target_branch }}</p>
+        {% else %}
+        <p>Branch: <a href="{{ build.repo_link }}">{{ build.target_branch }}</a></p>
+        {% endif %}
+        <p>Commit: {{ build.git_commit }}</p>
+        <p>Status: {{ build.status }}</p>
+        {% if build.status == 'started' %}
+        <p><a href="{{ build.live_link }}">=> live</a></p>
+        <button onclick="stop()">stop</button>
+        {% else %}
+        <button onclick="start()">start</button>
+        {% endif %}
+    </body>
+</html>

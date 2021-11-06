@@ -132,6 +132,18 @@ class Build(BaseModel):
     def link(self) -> str:
         return f"http://{self.slug}.{settings.build_domain}"
 
+    @property
+    def repo_link(self) -> str:
+        link = f"https://github.com/{self.repo}"
+        if self.pr:
+            return f"{link}/pull/{self.pr}"
+        else:
+            return f"{link}/tree/{self.target_branch}"
+
+    @property
+    def live_link(self) -> str:
+        return f"{settings.base_url}/builds/{self.name}?live"
+
     @classmethod
     async def deploy(
         cls, repo: str, target_branch: str, pr: int | None, git_commit: str
@@ -178,7 +190,7 @@ class Build(BaseModel):
                     self.repo,
                     self.git_commit,
                     GitHubStatusState.pending,
-                    target_url=None,
+                    target_url=self.live_link,
                 )
         elif self.status in (BuildStatus.stopped, BuildStatus.stopping):
             _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
@@ -246,7 +258,7 @@ class Build(BaseModel):
                 self.repo,
                 self.git_commit,
                 GitHubStatusState.pending,
-                target_url=None,
+                target_url=self.live_link,
             )
 
     async def on_initialize_succeeded(self) -> None:
@@ -260,7 +272,7 @@ class Build(BaseModel):
                 self.repo,
                 self.git_commit,
                 GitHubStatusState.success,
-                target_url=self.link,
+                target_url=self.live_link,
             )
 
     async def on_initialize_failed(self) -> None:
@@ -274,7 +286,7 @@ class Build(BaseModel):
                 self.repo,
                 self.git_commit,
                 GitHubStatusState.failure,
-                target_url=None,
+                target_url=self.live_link,
             )
 
     async def on_cleanup_started(self) -> None:

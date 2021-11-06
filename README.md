@@ -28,7 +28,7 @@ Runboat has the following main components:
     accessible;
   - when the initializaiton job fails, flag the deployment as failed;
   - when there are too many deployments started, stop the oldest started;
-  - when there are too many deployments, deleted the oldest created;
+  - when there are too many deployments, delete the oldest created;
   - when a deployment is deleted, run a cleanp job to drop the database and delete
     all kubernetes resources associated with the deployment.
 
@@ -114,6 +114,8 @@ actually deploy. It expects the following to hold true:
   - `runboat/pr`: the pull request number if this build is for a pull request;
   - `runboat/git-commit`: the commit sha.
 
+- the home page of a running build is exposed at `http://{build_slug}.{build_domain}`.
+
 During the lifecycle of a build, the controller does the following on the deployed
 resources:
 
@@ -139,9 +141,6 @@ MVP:
 - look at other TODO in code to see if anything important remains
 - basic UI (single page with a combo box to select repo and show builds by branch/pr,
   with start/stop buttons)
-- better target_url in GitHub status: instead of providing the link to the ingress,
-  provide a link to the build, which redirects to the ingress if the build is started,
-  or to a build details page with action buttons (start, stop, view log, etc)
 - secure github webhooks
 - deployment and more load testing
 

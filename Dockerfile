@@ -16,11 +16,12 @@ ENV RUNBOAT_SUPPORTED_REPOS='["OCA/mis-builder", "shopinvader/odoo-shopinvader",
 ENV RUNBOAT_API_ADMIN_USER="admin"
 ENV RUNBOAT_API_ADMIN_PASSWD="admin"
 ENV RUNBOAT_BUILD_NAMESPACE=runboat-builds
-ENV RUNBOAT_BUILD_DOMAIN=runboat.example.com
+ENV RUNBOAT_BUILD_DOMAIN=runboat-builds.example.com
 ENV RUNBOAT_BUILD_ENV='{"PGHOST": "postgres14.runboat-builds-db", "PGPORT": "5432", "PGUSER": "runboat-build"}'
 ENV RUNBOAT_BUILD_SECRET_ENV='{"PGPASSWORD": "..."}'
 ENV RUNBOAT_GITHUB_TOKEN=
 ENV RUNBOAT_LOG_CONFIG=/etc/runboat-log-config.yaml
+ENV RUNBOAT_BASE_URL=https://runboat.example.com
 
 ENV KUBECONFIG=/run/kubeconfig
 
