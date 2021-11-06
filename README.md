@@ -131,22 +131,22 @@ Prototype (min required to open the project):
 
 MVP:
 
-- deployment and more load testing
 - build/log and build/init-log api endpoints
-- secure github webhooks
 - better error handling in API (return 400 on user errors)
 - more tests
-- publish runboat container image
 - look at other TODO in code to see if anything important remains
 - basic UI (single page with a combo box to select repo and show builds by branch/pr,
   with start/stop buttons)
+- better target_url in GitHub status: instead of providing the link to the ingress,
+  provide a link to the build, which redirects to the ingress if the build is started,
+  or to a build details page with action buttons (start, stop, view log, etc)
+- secure github webhooks
+- deployment and more load testing
 
 More:
 
 - shiny UI
 - websocket stream of build changes, for a dynamic UI
-- better target_url in GitHub status: instead of providing the link to the ingress,
-  provide a link to the build, which redirects to the ingress if the build is started
 - handle PR close (delete all builds for PR)
 - handle branch delete (delete all builds for branch)
 - create builds for all supported repos on startup (goes with sticky branches)
