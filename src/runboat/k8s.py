@@ -139,7 +139,6 @@ class DeploymentVars(BaseModel):
     pguser: str
     pgpassword: str
     pgdatabase: str
-    admin_passwd: str
     hostname: str
     build_env: dict[str, str]
 
@@ -170,7 +169,6 @@ def make_deployment_vars(
         pguser=settings.build_pguser,
         pgpassword=settings.build_pgpassword,
         pgdatabase=build_name,
-        admin_passwd=settings.build_admin_passwd,
         hostname=f"{slug}.{settings.build_domain}",
         build_env=settings.build_env or {},
     )

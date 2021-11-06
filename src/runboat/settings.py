@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     build_pgport: str
     build_pguser: str
     build_pgpassword: str
-    build_admin_passwd: str
     build_domain: str
     build_env: Optional[dict[str, str]]
     build_images: dict[str, str] = {
