@@ -2,7 +2,10 @@ FROM python:3.10
 
 LABEL maintainer="Stéphane Bidoul"
 
-RUN pip install --no-cache-dir --upgrade "pip>=21.3.1"
+RUN curl -L \
+  "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+  -o /usr/local/bin/kubectl \
+  && chmod +x /usr/local/bin/kubectl
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
@@ -12,7 +15,7 @@ ENV PYTHONPATH=/app
 
 COPY log-config.yaml /etc/runboat-log-config.yaml
 
-ENV RUNBOAT_SUPPORTED_REPOS='["OCA/mis-builder", "shopinvader/odoo-shopinvader", "OCA/server-env"]''
+ENV RUNBOAT_SUPPORTED_REPOS='["OCA/mis-builder", "shopinvader/odoo-shopinvader", "OCA/server-env"]'
 ENV RUNBOAT_API_ADMIN_USER="admin"
 ENV RUNBOAT_API_ADMIN_PASSWD="admin"
 ENV RUNBOAT_BUILD_NAMESPACE=runboat-builds
