@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
@@ -31,7 +32,10 @@ def _split_image_name_tag(img: str) -> tuple[str, str]:
 
 @sync_to_async
 def load_kube_config() -> None:
-    config.load_kube_config()
+    if "KUBECONFIG" in os.environ:
+        config.load_kube_config()
+    else:
+        config.load_incluster_config()
 
 
 @sync_to_async

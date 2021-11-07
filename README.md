@@ -58,9 +58,10 @@ For running the controller (runboat itself):
 
 - Python 3.10
 - `kubectl`
-- A `KUBECONFIG` that provides access to the namespace where the builds are deployed,
-  with permissions to create and delete Service, Job, Deployment, Ingress, Secret and
-  ConfigMap resources.
+- A `KUBECONFIG` or an in-cluster service account that provides access to the namespace
+  where the builds are deployed, with permissions to create and delete Service, Job,
+  Deployment, Ingress, Secret and ConfigMap resources as well as read and watch
+  Deployments and Jobs.
 - Some sort of reverse proxy to expose the REST API.
 
 The controller can be run outside the kubernetes cluster or deployed inside it, or even
