@@ -1,13 +1,13 @@
 resources:
-  {% if mode == 'deployment' -%}
+  {%- if mode == 'deployment' %}
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-  {% elif mode == "initialize" -%}
+  {%- elif mode == "initialize" %}
   - initialize.yaml
-  {% elif mode == "cleanup" -%}
+  {%- elif mode == "cleanup" %}
   - cleanup.yaml
-  {% endif %}
+  {%- endif %}
 
 namespace: {{ namespace }}
 
@@ -50,11 +50,11 @@ configMapGenerator:
       - runboat-initialize.sh
       - runboat-cleanup.sh
       - runboat-start.sh
-  {% if mode == 'deployment' -%}
+  {%- if mode == 'deployment' %}
   - name: vars
     literals:
       - HOSTNAME={{ build_slug }}.{{ build_domain }}
-  {% endif %}
+  {%- endif %}
 
 generatorOptions:
   disableNameSuffixHash: true
