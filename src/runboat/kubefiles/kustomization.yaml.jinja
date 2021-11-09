@@ -1,9 +1,11 @@
 resources:
   {%- if mode == 'deployment' %}
+  - pvc.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml
   {%- elif mode == "initialize" %}
+  - pvc.yaml
   - initialize.yaml
   {%- elif mode == "cleanup" %}
   - cleanup.yaml

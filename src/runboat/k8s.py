@@ -188,6 +188,7 @@ def _render_kubefiles(deployment_vars: DeploymentVars) -> Generator[Path, None, 
 
 
 async def _kubectl(args: list[str]) -> None:
+    _logger.debug("kubectl %s", " ".join(args))
     proc = await asyncio.create_subprocess_exec(
         "kubectl", *args, stdout=subprocess.DEVNULL
     )
@@ -198,9 +199,10 @@ async def _kubectl(args: list[str]) -> None:
 
 async def deploy(deployment_vars: DeploymentVars) -> None:
     with _render_kubefiles(deployment_vars) as tmp_path:
-        # Dry-run first to avoid creaing some resources when the creation of the
-        # deployment fails. In such cases, we would have resource leak as the existence
-        # of deployment is how the controller knows it has something to manage.
+        # Dry-run first to avoid creating some resources when the creation of the
+        # deployment itself fails. In such cases, we would have resource leak as the
+        # existence of deployment is how the controller knows it has something to
+        # manage.
         await _kubectl(
             [
                 "apply",
@@ -220,12 +222,13 @@ async def deploy(deployment_vars: DeploymentVars) -> None:
 
 
 async def delete_resources(build_name: str) -> None:
+    # TODO delete all resources with runboat/build label
     await _kubectl(
         [
             "-n",
             settings.build_namespace,
             "delete",
-            "configmap,deployment,ingress,job,secret,service",
+            "configmap,deployment,ingress,job,secret,service,pvc",
             "-l",
             f"runboat/build={build_name}",
             "--wait=false",
@@ -234,6 +237,7 @@ async def delete_resources(build_name: str) -> None:
 
 
 async def delete_job(build_name: str, job_kind: DeploymentMode) -> None:
+    # TODO delete all resources with runboat/build and runboat/job-kind label
     await _kubectl(
         [
             "-n",

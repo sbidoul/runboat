@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: odoo-data
+spec:
+  storageClassName: openebs-zfs-localpv-slow  # TODO make this configurable
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+    limits:
+      storage: 100Mi

@@ -2,6 +2,7 @@ from runboat.k8s import DeploymentMode, _render_kubefiles, make_deployment_vars
 
 EXPECTED = """\
 resources:
+  - pvc.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml
