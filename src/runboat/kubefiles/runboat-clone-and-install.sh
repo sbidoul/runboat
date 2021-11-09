@@ -13,6 +13,3 @@ git fetch origin $RUNBOAT_GIT_REF:build
 git checkout build
 
 oca_install_addons
-
-# disable the database manager
-echo "list_db = False" >> $ODOO_RC
