@@ -3,7 +3,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: odoo-data
 spec:
-  storageClassName: openebs-zfs-localpv-slow  # TODO make this configurable
   accessModes:
     - ReadWriteOnce
   resources:

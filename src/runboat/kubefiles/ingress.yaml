@@ -4,8 +4,7 @@ metadata:
   name: odoo
 spec:
   rules:
-    - host: $(HOSTNAME)
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

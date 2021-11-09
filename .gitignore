@@ -1,4 +1,5 @@
 tmp/
+src/runboat/kubefiles/kustomization.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

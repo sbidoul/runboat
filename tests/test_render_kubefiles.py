@@ -43,21 +43,25 @@ configMapGenerator:
       - runboat-initialize.sh
       - runboat-cleanup.sh
       - runboat-start.sh
-  - name: vars
-    literals:
-      - HOSTNAME=build-slug.runboat.odoo-community.org
 
 generatorOptions:
   disableNameSuffixHash: true
 
-vars:
-  - name: HOSTNAME
-    objref:
-      name: vars
-      kind: ConfigMap
-      apiVersion: v1
-    fieldref:
-      fieldpath: data.HOSTNAME
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: odoo-data
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: my-storage-class
+  - target:
+      kind: Ingress
+      name: odoo
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: build-slug.runboat.odoo-community.org
 """
 
 
@@ -76,4 +80,4 @@ def test_render_kubefiles():
         assert (tmp_path / "kustomization.yaml").is_file()
         assert (tmp_path / "deployment.yaml").is_file()
         kustomization = (tmp_path / "kustomization.yaml").read_text()
-        assert kustomization == EXPECTED
+        assert kustomization.strip() == EXPECTED.strip()

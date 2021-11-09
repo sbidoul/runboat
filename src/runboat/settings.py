@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # A dictionary of secret environment variables to set in the build container and
     # jobs.
     build_secret_env: Optional[dict[str, str]]
+    # A dictionary of variables to be set in the jinja rendering context for the
+    # kubefiles.
+    build_template_vars: Optional[dict[str, str]]
     # A mapping of main branch names to container images used to run the builds.
     build_images: dict[str, str] = {
         "15.0": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest",

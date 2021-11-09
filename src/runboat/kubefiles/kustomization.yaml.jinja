@@ -52,22 +52,22 @@ configMapGenerator:
       - runboat-initialize.sh
       - runboat-cleanup.sh
       - runboat-start.sh
-  {%- if mode == 'deployment' %}
-  - name: vars
-    literals:
-      - HOSTNAME={{ build_slug }}.{{ build_domain }}
-  {%- endif %}
 
 generatorOptions:
   disableNameSuffixHash: true
 
-{% if mode == 'deployment' -%}
-vars:
-  - name: HOSTNAME
-    objref:
-      name: vars
-      kind: ConfigMap
-      apiVersion: v1
-    fieldref:
-      fieldpath: data.HOSTNAME
-{% endif %}
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: odoo-data
+    patch: |-
+      - op: replace
+        path: /spec/storageClassName
+        value: {{ build_template_vars["storageClassName"] }}
+  - target:
+      kind: Ingress
+      name: odoo
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: {{ build_slug }}.{{ build_domain }}
