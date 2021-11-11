@@ -1,9 +1,11 @@
 import datetime
 from typing import Optional
 
+from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from starlette.status import HTTP_404_NOT_FOUND
 
 from . import github, models
 from .controller import controller
@@ -120,22 +122,26 @@ async def build(name: str):
 
 @router.get(
     "/builds/{name}/init-log",
-    response_class=StreamingResponse,
-    responses={200: {"content": {"text/plain": {}}}},
+    response_class=HTMLResponse,
 )
 async def init_log(name: str):
-    # build = await _build_by_name(name)
-    ...
+    build = await _build_by_name(name)
+    log = await build.init_log()
+    if not log:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
+    return Ansi2HTMLConverter().convert(log)
 
 
 @router.get(
     "/builds/{name}/log",
-    response_class=StreamingResponse,
-    responses={200: {"content": {"text/plain": {}}}},
+    response_class=HTMLResponse,
 )
 async def log(name: str):
-    # build = _build_by_name(name)
-    ...
+    build = await _build_by_name(name)
+    log = await build.log()
+    if not log:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
+    return Ansi2HTMLConverter().convert(log)
 
 
 @router.post("/builds/{name}/start")

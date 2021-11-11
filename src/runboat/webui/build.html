@@ -19,6 +19,12 @@
         {% endif %}
         <p>Commit: <a href="{{ build.repo_commit_link }}">{{ build.git_commit }}</a></p>
         <p>Status: {{ build.status }}</p>
+        <p>
+            Logs:
+            <a href="/api/v1/builds/{{ build.name }}/init-log" target="_blank">build log</a>
+            |
+            <a href="/api/v1/builds/{{ build.name }}/log" target="_blank">run log</a>
+        </p>
         {% if build.status == 'started' %}
         <p><a href="{{ build.deploy_link }}">=> live</a></p>
         <button onclick="stop()">stop</button>

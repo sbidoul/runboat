@@ -10,6 +10,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
+    "ansi2html",
     "fastapi",
     "gunicorn",
     "httpx",

@@ -6,6 +6,9 @@ metadata:
     runboat/job-kind: initialize
 spec:
   template:
+    metadata:
+      labels:
+        runboat/job-kind: initialize
     spec:
       containers:
         - name: initalize

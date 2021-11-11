@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import re
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
@@ -12,8 +13,9 @@ def slugify(s: str | int) -> str:
 
 def sync_to_async(func):
     @wraps(func)
-    async def inner(*args):
-        return await asyncio.get_running_loop().run_in_executor(_pool, func, *args)
+    async def inner(*args, **kwargs):
+        f = functools.partial(func, *args, **kwargs)
+        return await asyncio.get_running_loop().run_in_executor(_pool, f)
 
     return inner
 
@@ -27,12 +29,12 @@ def sync_to_async_iterator(iterator_func):
             raise StopAsyncIteration()
 
     @sync_to_async
-    def async_iterator_func(*args):
-        return iterator_func(*args)
+    def async_iterator_func(*args, **kwargs):
+        return iterator_func(*args, **kwargs)
 
     @wraps(iterator_func)
-    async def inner(*args):
-        iterator = await async_iterator_func(*args)
+    async def inner(*args, **kwargs):
+        iterator = await async_iterator_func(*args, **kwargs)
         while True:
             try:
                 item = await async_next(iterator)

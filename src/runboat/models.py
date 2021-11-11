@@ -156,6 +156,12 @@ class Build(BaseModel):
     def live_link(self) -> str:
         return f"{self.webui_link}?live"
 
+    async def init_log(self) -> str:
+        return await k8s.log(self.name, job_kind=k8s.DeploymentMode.initialize)
+
+    async def log(self) -> str:
+        return await k8s.log(self.name, job_kind=None)
+
     @classmethod
     async def deploy(
         cls, repo: str, target_branch: str, pr: int | None, git_commit: str

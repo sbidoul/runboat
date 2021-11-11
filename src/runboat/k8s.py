@@ -255,3 +255,34 @@ async def delete_job(build_name: str, job_kind: DeploymentMode) -> None:
             "--wait=false",
         ]
     )
+
+
+@sync_to_async
+def log(build_name: str, job_kind: DeploymentMode | None) -> str:
+    """Return the buil log.
+
+    The pod for which the log is returned is the first that matches the
+    build_name (via its runboat/build label) and job_kind (via its
+    runboat/job-kind label).
+    """
+    corev1 = client.CoreV1Api()
+    pods = corev1.list_namespaced_pod(
+        namespace=settings.build_namespace, label_selector=f"runboat/build={build_name}"
+    ).items
+    pod = None
+    for pod in pods:
+        if job_kind is None:
+            if "runboat/job-kind" not in pod.metadata.labels:
+                break
+        else:
+            if pod.metadata.labels.get("runboat/job-kind") == job_kind:
+                break
+    else:
+        # no matching pod found
+        return
+    return corev1.read_namespaced_pod_log(
+        pod.metadata.name,
+        namespace=settings.build_namespace,
+        tail_lines=None if job_kind else None,
+        follow=False,
+    )

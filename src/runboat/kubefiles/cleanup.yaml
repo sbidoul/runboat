@@ -6,6 +6,9 @@ metadata:
     runboat/job-kind: cleanup
 spec:
   template:
+    metadata:
+      labels:
+        runboat/job-kind: cleanup
     spec:
       containers:
         - name: cleanup

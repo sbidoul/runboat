@@ -106,8 +106,8 @@ actually deploy. It expects the following to hold true:
   value;
 - a deployment starts with 0 replicas and is created with a
   `runboat/init-status=todo` label, as well as a `runboat/cleanup` finalizer;
-- the intialization job has a `runboat/job-kind=initialize` label;
-- the cleanup job has a `runboat/job-kind=cleanup` label.
+- the intialization job and pods have a `runboat/job-kind=initialize` label;
+- the cleanup job and pods have a `runboat/job-kind=cleanup` label.
 - the following annotations are set on deployments:
 
   - `runboat/repo`: the repository in owner/repo format;
@@ -136,7 +136,6 @@ Advanced prototype (min required to open the project):
 
 MVP:
 
-- build/log and build/init-log api endpoints
 - better error handling in API (return 400 on user errors)
 - more tests
 - look at other TODO in code to see if anything important remains
@@ -147,6 +146,7 @@ MVP:
 
 More:
 
+- streaming build/log and build/init-log api endpoints
 - shiny UI
 - websocket stream of build changes, for a dynamic UI
 - handle PR close (delete all builds for PR)
