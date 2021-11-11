@@ -30,4 +30,4 @@ ENV KUBECONFIG=/run/kubeconfig
 
 EXPOSE 8000
 
-CMD [ "gunicorn", "-w", "1", "-k", "runboat.uvicorn.RunboatUvicornWorker", "runboat.app:app"]
+CMD [ "gunicorn", "-w", "1", "--bind", ":8000", "-k", "runboat.uvicorn.RunboatUvicornWorker", "runboat.app:app"]
