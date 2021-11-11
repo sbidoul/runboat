@@ -143,8 +143,6 @@ class Controller:
                     await build.cleanup()
             elif event_type == "DELETED":
                 should_wakeup = self.db.remove(build_name)
-            else:
-                _logger.error(f"Unexpected k8s event type {event_type}.")
             if should_wakeup:
                 self._wakeup()
 
@@ -194,8 +192,6 @@ class Controller:
                         await build.on_cleanup_failed()
             elif event_type == "DELETED":
                 pass
-            else:
-                _logger.error(f"Unexpected k8s event type {event_type}.")
 
     async def initializer(self) -> None:
         while True:

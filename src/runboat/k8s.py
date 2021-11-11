@@ -79,6 +79,7 @@ def _watch(list_method, *args, **kwargs):
             # perform a first query
             res = list_method(*args, **kwargs)
             resource_version = res.metadata.resource_version
+            assert resource_version
             for item in res.items:
                 yield None, item
             # stream until timeout
@@ -91,13 +92,16 @@ def _watch(list_method, *args, **kwargs):
                         resource_version=resource_version,
                         _request_timeout=60,
                     ):
-                        if event["type"] == "ERROR":
-                            raise RuntimeError("Kubernetes watch error")
-                        resource_version = event["object"].metadata.resource_version
-                        yield event["type"], event["object"]
-                except urllib3.exceptions.TimeoutError:
-                    continue
-                except TimeoutError:
+                        event_type = event["type"]
+                        event_object = event["object"]
+                        if event_type == "ERROR":
+                            raise RuntimeError("Kubernetes watch ERROR")
+                        elif event_type not in ("ADDED", "MODIFIED", "DELETED"):
+                            raise RuntimeError(f"Unexpected event {event_type}")
+                        resource_version = event_object.metadata.resource_version
+                        assert resource_version
+                        yield event_type, event_object
+                except (urllib3.exceptions.TimeoutError, TimeoutError):
                     continue
         except Exception as e:
             delay = 5
