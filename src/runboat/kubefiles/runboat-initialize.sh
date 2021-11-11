@@ -16,7 +16,7 @@ dropdb --if-exists $PGDATABASE
 ADDONS=$(addons --addons-dir ${ADDONS_DIR} --include "${INCLUDE}" --exclude "${EXCLUDE}" list)
 
 unbuffer $(which odoo || which openerp-server) \
-  --data-dir=/opt/odoo-data \
+  --data-dir=/mnt/data/odoo-data-dir \
   -d ${PGDATABASE} \
   -i ${ADDONS:-base} \
   --stop-after-init

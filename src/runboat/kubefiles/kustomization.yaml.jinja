@@ -40,7 +40,7 @@ configMapGenerator:
   - name: odooenv
     literals:
       - PGDATABASE={{ build_name }}
-      - ADDONS_DIR=/build
+      - ADDONS_DIR=/mnt/data/odoo-data-dir
       - RUNBOAT_GIT_REPO=https://github.com/{{ repo }}
       - RUNBOAT_GIT_REF={{ git_commit }}
       {%- for key, value in build_env.items() %}
@@ -59,7 +59,7 @@ generatorOptions:
 patches:
   - target:
       kind: PersistentVolumeClaim
-      name: odoo-data
+      name: data
     patch: |-
       - op: replace
         path: /spec/storageClassName

@@ -16,8 +16,8 @@ spec:
           volumeMounts:
             - name: runboat-scripts
               mountPath: /runboat
-            - name: odoo-data
-              mountPath: /opt/odoo-data
+            - name: data
+              mountPath: /mnt/data
           envFrom:
             - secretRef:
                 name: odoosecretenv
@@ -35,9 +35,9 @@ spec:
         - name: runboat-scripts
           configMap:
             name: runboat-scripts
-        - name: odoo-data
+        - name: data
           persistentVolumeClaim:
-            claimName: odoo-data
+            claimName: data
       restartPolicy: Never
   backoffLimit: 0
   activeDeadlineSeconds: 1200

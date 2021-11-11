@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: odoo-data
+  name: data
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Mi
+      storage: 200Mi
     limits:
-      storage: 100Mi
+      storage: 250Mi

@@ -11,6 +11,6 @@ bash /runboat/runboat-clone-and-install.sh
 oca_wait_for_postgres
 
 unbuffer $(which odoo || which openerp-server) \
-  --data-dir=/opt/odoo-data \
+  --data-dir=/mnt/data/odoo-data-dir \
   --no-database-list \
   -d ${PGDATABASE}
