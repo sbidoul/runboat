@@ -129,7 +129,7 @@ class Build(BaseModel):
         return self.make_slug(self.repo, self.target_branch, self.pr, self.git_commit)
 
     @property
-    def link(self) -> str:
+    def deploy_link(self) -> str:
         return f"http://{self.slug}.{settings.build_domain}"
 
     @property
@@ -141,8 +141,20 @@ class Build(BaseModel):
             return f"{link}/tree/{self.target_branch}"
 
     @property
+    def repo_commit_link(self) -> str:
+        link = f"https://github.com/{self.repo}"
+        if self.pr:
+            return f"{link}/pull/{self.pr}/commits/{self.git_commit}"
+        else:
+            return f"{link}/commit/{self.git_commit}"
+
+    @property
+    def webui_link(self) -> str:
+        return f"{settings.base_url}/builds/{self.name}"
+
+    @property
     def live_link(self) -> str:
-        return f"{settings.base_url}/builds/{self.name}?live"
+        return f"{self.webui_link}?live"
 
     @classmethod
     async def deploy(

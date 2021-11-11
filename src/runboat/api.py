@@ -44,7 +44,10 @@ class Build(BaseModel):
     pr: Optional[int]
     git_commit: str
     image: str
-    link: str
+    deploy_link: str
+    repo_link: str
+    repo_commit_link: str
+    webui_link: str
     status: models.BuildStatus
     created: datetime.datetime
     last_scaled: Optional[datetime.datetime]

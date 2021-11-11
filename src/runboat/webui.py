@@ -18,7 +18,7 @@ async def build(request: Request, name: str, live: Optional[str] = None):
     if not build:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     if live is not None and build.status == BuildStatus.started:
-        return RedirectResponse(url=build.link)
+        return RedirectResponse(url=build.deploy_link)
     return templates.TemplateResponse(
         "build.html", {"request": request, "build": build}
     )
