@@ -46,8 +46,9 @@ resource-intensive part of the lifecycle of builds.
 All state is stored in kubernetes resources (labels and annotations on deployments). The
 controller can be stopped and restarted without losing state.
 
-All the knowledge about *what* is deployed is in the
-[src/runboat/kubefiles](./src/runboat/kubefiles) directory. The kubefile must implement
+In practice the runboat controller does not know that it is deploying Odoo. All the
+knowledge about *what* is deployed is in the
+[src/runboat/kubefiles](./src/runboat/kubefiles) directory. The kubefiles must implement
 a specific contract to be managed by the runboat controller. This contract is described
 in the [Kubernetes resources](#kubernetes-resources) section below.
 
