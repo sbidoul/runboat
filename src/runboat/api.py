@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from ansi2html import Ansi2HTMLConverter
+from ansi2html import Ansi2HTMLConverter  # type: ignore
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel

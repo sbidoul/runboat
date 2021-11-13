@@ -4,7 +4,7 @@ import uuid
 from enum import Enum
 from typing import Optional
 
-from kubernetes.client.models.v1_deployment import V1Deployment
+from kubernetes.client.models.v1_deployment import V1Deployment  # type: ignore
 from pydantic import BaseModel
 
 from . import github, k8s

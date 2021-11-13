@@ -9,14 +9,14 @@ from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Generator, Optional, TypedDict, cast
+from typing import Any, Callable, Generator, Optional, TypedDict, cast
 
-import urllib3
+import urllib3  # type: ignore
 from jinja2 import Template
-from kubernetes import client, config, watch
-from kubernetes.client.exceptions import ApiException
-from kubernetes.client.models.v1_deployment import V1Deployment
-from kubernetes.client.models.v1_job import V1Job
+from kubernetes import client, config, watch  # type: ignore
+from kubernetes.client.exceptions import ApiException  # type: ignore
+from kubernetes.client.models.v1_deployment import V1Deployment  # type: ignore
+from kubernetes.client.models.v1_job import V1Job  # type: ignore
 from pydantic import BaseModel
 
 from .settings import settings
@@ -79,7 +79,9 @@ def patch_deployment(
         raise
 
 
-def _watch(list_method, *args, **kwargs):
+def _watch(
+    list_method: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Generator[tuple[str | None, Any], None, None]:
     while True:
         try:
             # perform a first query
