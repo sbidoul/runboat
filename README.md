@@ -21,19 +21,20 @@ Runboat has the following main components:
 - A controller that performs the following tasks:
 
   - monitor deployments in a kubernetes namespaces to maintain the in-memory database;
-  - on new deployments, trigger an initialization job to create the corresponding
-    postgres database and install the addons in it;
+  - on new deployments, trigger an initialization job to check out the GitHub repo,
+    install dependencies, create the corresponding postgres database and install the
+    addons in it;
   - initialization jobs are started concurrently up to a configured limit;
   - when the initialization job succeeds, scale up the deployment, so it becomes
     accessible;
   - when the initializaiton job fails, flag the deployment as failed;
   - when there are too many deployments started, stop the oldest started;
   - when there are too many deployments, delete the oldest created;
-  - when a deployment is deleted, run a cleanp job to drop the database and delete
+  - when a deployment is deleted, run a cleanup job to drop the database and delete
     all kubernetes resources associated with the deployment.
 
-When a deployment is stopped, the corresponding postgres database remains present, so
-deployments can restart almost instantly.
+When a deployment is stopped, the corresponding postgres  database and filesystem volume
+remains present, so deployments can restart almost instantly.
 
 This approach allows the deployment of a very large number of builds which consume no
 memory nor CPU until they are started. The number of started deployment can also be
@@ -44,6 +45,11 @@ resource-intensive part of the lifecycle of builds.
 
 All state is stored in kubernetes resources (labels and annotations on deployments). The
 controller can be stopped and restarted without losing state.
+
+All the knowledge about *what* is deployed is in the
+[src/runboat/kubefiles](./src/runboat/kubefiles) directory. The kubefile must implement
+a specific contract to be managed by the runboat controller. This contract is described
+in the [Kubernetes resources](#kubernetes-resources) section below.
 
 ## Requirements
 
@@ -66,27 +72,6 @@ For running the controller (runboat itself):
 
 The controller can be run outside the kubernetes cluster or deployed inside it, or even
 in a different cluster.
-
-## Developing
-
-- setup environment variables (start from `.env.sample`, the meaning of the environment
-  variables is documented in [settings.py](./src/runboat/settings.py))
-- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
-  requirements.txt -e .[test]`
-- run with `uvicorn runboat.app:app --log-config=log-config.yaml`
-- api documentation is at `http://localhost:8000/docs`
-- run tests with `pytest` (environment variables used in tests are declared in
-  `.env.test`)
-
-## Running in production
-
-`gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app`.
-
-One and only one worker process !
-
-Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
-`run_in_executor`, SIGINT/SIGTERM handling does not work very well, and gunicorn makes
-it more robust. https://bugs.python.org/issue29309
 
 ## Kubernetes resources
 
@@ -128,36 +113,39 @@ resources:
 - it removes the deployment finalizers and deletes resources matching the
   `runboat/build` label after the cleanup job succeeded.
 
-## TODO
+## Developing
 
-Advanced prototype (min required to open the project):
+- setup environment variables (start from `.env.sample`, the meaning of the environment
+  variables is documented in [settings.py](./src/runboat/settings.py))
+- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
+  requirements.txt -e .[test]`
+- run with `uvicorn runboat.app:app --log-config=log-config.yaml`
+- api documentation is at `http://localhost:8000/docs`
+- run tests with `pytest` (environment variables used in tests are declared in
+  `.env.test`)
 
-- plug it on a bunch of OCA and shopinvader repos to test load
+## Running in production
 
-MVP:
+`gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app`.
 
-- better error handling in API (return 400 on user errors)
-- more tests
-- look at other TODO in code to see if anything important remains
-- basic UI (single page with a combo box to select repo and show builds by branch/pr,
-  with start/stop buttons)
-- secure github webhooks
-- deployment and more load testing
+One and only one worker process is allowed at the moment (although nothing really bad
+should happen if there is more).
 
-More:
+Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
+`run_in_executor`, SIGINT/SIGTERM handling does not work very well, and gunicorn makes
+it more robust. https://bugs.python.org/issue29309
 
-- streaming build/log and build/init-log api endpoints
-- shiny UI
-- websocket stream of build changes, for a dynamic UI
-- handle PR close (delete all builds for PR)
-- handle branch delete (delete all builds for branch)
-- create builds for all supported repos on startup (goes with sticky branches)
-- never undeploy last build of sticky branches
-- configurable kubefiles directory
-- even more tests
+
+## Configuration
+
+See environment variables examples in [Dockerfile](./Dockerfile),
+[.env.sample](./.env.sample) and their documentation in
+[settings.py](./src/runboat/settings.py).
 
 ## Author and contributors
 
 Authored by Stéphane Bidoul (@sbidoul).
 
 Contributions welcome.
+
+Do not hesitate to reach out for help on how to get started.

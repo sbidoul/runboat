@@ -184,7 +184,7 @@ def _render_kubefiles(deployment_vars: DeploymentVars) -> Generator[Path, None, 
         __package__, "kubefiles"
     ) as kubefiles_path, tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
-        # TODO async copytree, or make this whole _runder_kubefiles run_in_executor
+        # TODO async copytree, or make this whole _render_kubefiles run_in_executor
         shutil.copytree(kubefiles_path, tmp_path, dirs_exist_ok=True)
         template = Template((tmp_path / "kustomization.yaml.jinja").read_text())
         (tmp_path / "kustomization.yaml").write_text(
