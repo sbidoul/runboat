@@ -325,8 +325,8 @@ class Build(BaseModel):
         desired_replicas: int | None = None,
         remove_finalizers: bool = False,
         not_found_ok: bool = False,
-    ) -> None:
-        ops = []
+    ) -> bool:
+        ops: list[k8s.PatchOperation] = []
         if init_status is not None and init_status != self.init_status:
             ops.extend(
                 [

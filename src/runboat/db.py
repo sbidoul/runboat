@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from typing import Optional
+from typing import cast
 
 from .models import Build, BuildInitStatus, BuildStatus
 
@@ -59,7 +59,7 @@ class BuildsDb:
         self, repo: str, target_branch: str, pr: int | None, git_commit: str
     ) -> Build | None:
         query = "SELECT * FROM builds WHERE repo=? AND target_branch=? AND git_commit=?"
-        params = [repo.lower(), target_branch, git_commit]
+        params: list[str | int] = [repo.lower(), target_branch, git_commit]
         if pr:
             query += " AND pr=?"
             params.append(pr)
@@ -131,17 +131,20 @@ class BuildsDb:
         return True
 
     def count_by_status(self, status: BuildStatus) -> int:
-        return self._con.execute(
+        count = self._con.execute(
             "SELECT COUNT(name) FROM builds WHERE status=?", (status,)
         ).fetchone()[0]
+        return cast(int, count)
 
     def count_by_init_status(self, init_status: BuildInitStatus) -> int:
-        return self._con.execute(
+        count = self._con.execute(
             "SELECT COUNT(name) FROM builds WHERE init_status=?", (init_status,)
         ).fetchone()[0]
+        return cast(int, count)
 
     def count_all(self) -> int:
-        return self._con.execute("SELECT COUNT(name) FROM builds").fetchone()[0]
+        count = self._con.execute("SELECT COUNT(name) FROM builds").fetchone()[0]
+        return cast(int, count)
 
     def to_initialize(self, limit: int) -> list[Build]:
         """Return the list of builds to initialize, ordered by creation timestamp."""
@@ -168,7 +171,7 @@ class BuildsDb:
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
 
-    def search(self, repo: Optional[str] = None) -> list[Build]:
+    def search(self, repo: str | None = None) -> list[Build]:
         query = "SELECT * FROM builds "
         where = []
         params = []

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Any, Awaitable, Callable
 
 from . import k8s
 from .db import BuildsDb
@@ -247,7 +248,7 @@ class Controller:
     async def start(self) -> None:
         _logger.info("Starting controller tasks.")
 
-        async def walking_dead(func):
+        async def walking_dead(func: Callable[..., Awaitable[Any]]) -> None:
             while True:
                 _logger.info(f"(Re)starting {func.__name__}")
                 try:
@@ -275,7 +276,7 @@ class Controller:
             task.cancel()
         # Wait until all tasks are cancelled.
         await asyncio.gather(*self._tasks, return_exceptions=True)
-        self._task = []
+        self._tasks.clear()
 
 
 controller = Controller()

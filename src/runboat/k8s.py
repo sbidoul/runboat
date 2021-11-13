@@ -9,13 +9,14 @@ from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, Generator, Optional
+from typing import Generator, Optional, TypedDict, cast
 
 import urllib3
 from jinja2 import Template
 from kubernetes import client, config, watch
 from kubernetes.client.exceptions import ApiException
 from kubernetes.client.models.v1_deployment import V1Deployment
+from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
 
 from .settings import settings
@@ -24,10 +25,9 @@ from .utils import sync_to_async, sync_to_async_iterator
 _logger = logging.getLogger(__name__)
 
 
-def _split_image_name_tag(img: str) -> tuple[str, str]:
-    if ":" in img:
-        return img.split(":", 2)
-    return (img, "latest")
+def _split_image_name_tag(image: str) -> tuple[str, str]:
+    img, _, tag = image.partition(":")
+    return (img, tag or "latest")
 
 
 @sync_to_async
@@ -39,7 +39,7 @@ def load_kube_config() -> None:
 
 
 @sync_to_async
-def read_deployment(name: str) -> Optional[V1Deployment]:
+def read_deployment(name: str) -> V1Deployment | None:
     appsv1 = client.AppsV1Api()
     items = appsv1.list_namespaced_deployment(
         namespace=settings.build_namespace,
@@ -56,9 +56,15 @@ def delete_deployment(deployment_name: str) -> None:
     )
 
 
+class PatchOperation(TypedDict, total=False):
+    op: str
+    path: str
+    value: str | int  # maybe absent, hence total=False above
+
+
 @sync_to_async
 def patch_deployment(
-    deployment_name: str, ops: list[dict["str", Any]], not_found_ok: bool
+    deployment_name: str, ops: list[PatchOperation], not_found_ok: bool
 ) -> None:
     appsv1 = client.AppsV1Api()
     try:
@@ -113,7 +119,7 @@ def _watch(list_method, *args, **kwargs):
 
 
 @sync_to_async_iterator
-def watch_deployments():
+def watch_deployments() -> Generator[V1Deployment, None, None]:
     appsv1 = client.AppsV1Api()
     yield from _watch(
         appsv1.list_namespaced_deployment, namespace=settings.build_namespace
@@ -121,7 +127,7 @@ def watch_deployments():
 
 
 @sync_to_async_iterator
-def watch_jobs():
+def watch_jobs() -> Generator[V1Job, None, None]:
     batchv1 = client.BatchV1Api()
     yield from _watch(batchv1.list_namespaced_job, namespace=settings.build_namespace)
 
@@ -258,8 +264,8 @@ async def delete_job(build_name: str, job_kind: DeploymentMode) -> None:
 
 
 @sync_to_async
-def log(build_name: str, job_kind: DeploymentMode | None) -> str:
-    """Return the buil log.
+def log(build_name: str, job_kind: DeploymentMode | None) -> str | None:
+    """Return the build log.
 
     The pod for which the log is returned is the first that matches the
     build_name (via its runboat/build label) and job_kind (via its
@@ -269,20 +275,18 @@ def log(build_name: str, job_kind: DeploymentMode | None) -> str:
     pods = corev1.list_namespaced_pod(
         namespace=settings.build_namespace, label_selector=f"runboat/build={build_name}"
     ).items
-    pod = None
     for pod in pods:
-        if job_kind is None:
-            if "runboat/job-kind" not in pod.metadata.labels:
-                break
-        else:
-            if pod.metadata.labels.get("runboat/job-kind") == job_kind:
-                break
+        if pod.metadata.labels.get("runboat/job-kind") == job_kind:
+            break
     else:
         # no matching pod found
-        return
-    return corev1.read_namespaced_pod_log(
-        pod.metadata.name,
-        namespace=settings.build_namespace,
-        tail_lines=None if job_kind else None,
-        follow=False,
+        return None
+    return cast(
+        str,
+        corev1.read_namespaced_pod_log(
+            pod.metadata.name,
+            namespace=settings.build_namespace,
+            tail_lines=None if job_kind else None,
+            follow=False,
+        ),
     )

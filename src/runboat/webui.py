@@ -9,7 +9,7 @@ from .controller import controller
 from .models import BuildStatus
 
 router = APIRouter()
-templates = Jinja2Templates(directory=Path(__file__).parent / "webui")
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "webui"))
 
 
 @router.get("/builds/{name}", response_class=HTMLResponse)

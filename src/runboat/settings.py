@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     @validator("supported_repos")
     @classmethod
-    def validate_supported_repos(v) -> set[str]:
+    def validate_supported_repos(cls, v: set[str]) -> set[str]:
         return {item.lower() for item in v}
 
 
