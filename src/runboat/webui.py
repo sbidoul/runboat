@@ -20,5 +20,5 @@ async def build(request: Request, name: str, live: Optional[str] = None):
     if live is not None and build.status == BuildStatus.started:
         return RedirectResponse(url=build.deploy_link)
     return templates.TemplateResponse(
-        "build.html", {"request": request, "build": build}
+        "build.html.jinja", {"request": request, "build": build}
     )
