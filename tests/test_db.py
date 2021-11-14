@@ -29,14 +29,14 @@ def _make_build(
     )
 
 
-def test_add():
+def test_add() -> None:
     db = BuildsDb()
     assert db.add(_make_build())  # new
     assert not db.add(_make_build())  # no change
     assert db.add(_make_build(status=BuildStatus.failed))
 
 
-def test_remove():
+def test_remove() -> None:
     db = BuildsDb()
     assert not db.remove("not-a-build")
     build = _make_build()
@@ -44,7 +44,7 @@ def test_remove():
     assert db.remove(build.name)
 
 
-def test_get_for_commit():
+def test_get_for_commit() -> None:
     db = BuildsDb()
     build = _make_build()
     db.add(build)
@@ -62,7 +62,7 @@ def test_get_for_commit():
     )
 
 
-def test_search():
+def test_search() -> None:
     db = BuildsDb()
     db.add(build1 := _make_build(name="b1", repo="oca/repo1"))
     db.add(_make_build(name="b2", repo="oca/repo2"))
@@ -70,7 +70,7 @@ def test_search():
     assert db.search("oca/repo1") == [build1]
 
 
-def test_count_by_status():
+def test_count_by_status() -> None:
     db = BuildsDb()
     db.add(_make_build(name="b1", status=BuildStatus.started))
     db.add(_make_build(name="b2", status=BuildStatus.stopped))
@@ -79,7 +79,7 @@ def test_count_by_status():
     assert db.count_by_status(BuildStatus.failed) == 0
 
 
-def test_count_by_init_status():
+def test_count_by_init_status() -> None:
     db = BuildsDb()
     db.add(_make_build(name="b1", init_status=BuildInitStatus.started))
     db.add(_make_build(name="b2", init_status=BuildInitStatus.todo))
@@ -88,7 +88,7 @@ def test_count_by_init_status():
     assert db.count_by_init_status(BuildInitStatus.failed) == 0
 
 
-def test_count_all():
+def test_count_all() -> None:
     db = BuildsDb()
     assert db.count_all() == 0
     db.add(_make_build(name="b1"))

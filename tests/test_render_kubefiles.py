@@ -65,7 +65,7 @@ patches:
 """
 
 
-def test_render_kubefiles():
+def test_render_kubefiles() -> None:
     deployment_vars = make_deployment_vars(
         mode=DeploymentMode.deployment,
         build_name="build-name",

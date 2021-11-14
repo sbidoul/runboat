@@ -1,14 +1,14 @@
 import datetime
 from typing import Optional
 
-from ansi2html import Ansi2HTMLConverter  # type: ignore
+from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from starlette.status import HTTP_404_NOT_FOUND
 
 from . import github, models
-from .controller import controller
+from .controller import Controller, controller
 from .deps import authenticated
 from .settings import settings
 
@@ -60,12 +60,12 @@ class Build(BaseModel):
 
 
 @router.get("/status", response_model=Status)
-async def controller_status():
+async def controller_status() -> Controller:
     return controller
 
 
 @router.get("/repos", response_model=list[Repo])
-async def repos():
+async def repos() -> list[models.Repo]:
     return [models.Repo(name=name) for name in settings.supported_repos]
 
 
@@ -74,7 +74,7 @@ async def repos():
     response_model=list[Build],
     response_model_exclude_none=True,
 )
-async def builds(repo: Optional[str] = None):
+async def builds(repo: Optional[str] = None) -> list[models.Build]:
     return controller.db.search(repo)
 
 
@@ -82,7 +82,7 @@ async def builds(repo: Optional[str] = None):
     "/builds/trigger/branch",
     dependencies=[Depends(authenticated)],
 )
-async def trigger_branch(repo: str, branch: str):
+async def trigger_branch(repo: str, branch: str) -> None:
     """Trigger build for a branch."""
     branch_info = await github.get_branch_info(repo, branch)
     await controller.deploy_or_start(
@@ -97,7 +97,7 @@ async def trigger_branch(repo: str, branch: str):
     "/builds/trigger/pr",
     dependencies=[Depends(authenticated)],
 )
-async def trigger_pull(repo: str, pr: int):
+async def trigger_pull(repo: str, pr: int) -> None:
     """Trigger build for a pull request."""
     pull_info = await github.get_pull_info(repo, pr)
     await controller.deploy_or_start(
@@ -116,7 +116,7 @@ async def _build_by_name(name: str) -> models.Build:
 
 
 @router.get("/builds/{name}", response_model=Build)
-async def build(name: str):
+async def build(name: str) -> models.Build:
     return await _build_by_name(name)
 
 
@@ -124,42 +124,42 @@ async def build(name: str):
     "/builds/{name}/init-log",
     response_class=HTMLResponse,
 )
-async def init_log(name: str):
+async def init_log(name: str) -> str:
     build = await _build_by_name(name)
     log = await build.init_log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)
+    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
 
 
 @router.get(
     "/builds/{name}/log",
     response_class=HTMLResponse,
 )
-async def log(name: str):
+async def log(name: str) -> str:
     build = await _build_by_name(name)
     log = await build.log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)
+    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
 
 
 @router.post("/builds/{name}/start")
-async def start(name: str):
+async def start(name: str) -> None:
     """Start the deployment."""
     build = await _build_by_name(name)
     await build.start()
 
 
 @router.post("/builds/{name}/stop")
-async def stop(name: str):
+async def stop(name: str) -> None:
     """Stop the deployment."""
     build = await _build_by_name(name)
     await build.stop()
 
 
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])
-async def delete(name: str):
+async def delete(name: str) -> None:
     """Delete the deployment and drop the database."""
     build = await _build_by_name(name)
     await build.undeploy()

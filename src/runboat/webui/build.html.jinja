@@ -18,15 +18,18 @@
         <p>Branch: <a href="{{ build.repo_link }}">{{ build.target_branch }}</a></p>
         {% endif %}
         <p>Commit: <a href="{{ build.repo_commit_link }}">{{ build.git_commit }}</a></p>
-        <p>Status: {{ build.status }}</p>
+        <p>Status: {{ build.status.value }}</p>
         <p>
             Logs:
-            <a href="/api/v1/builds/{{ build.name }}/init-log" target="_blank">build log</a>
+            <a href="/api/v1/builds/{{ build.name }}/init-log" target="_blank">init log</a>
+            {% if build.status == 'started' %}
             |
-            <a href="/api/v1/builds/{{ build.name }}/log" target="_blank">run log</a>
+            <a href="/api/v1/builds/{{ build.name }}/log" target="_blank">log</a>
+            |
+            <a href="{{ build.deploy_link }}">=> live</a>
+            {% endif %}
         </p>
         {% if build.status == 'started' %}
-        <p><a href="{{ build.deploy_link }}">=> live</a></p>
         <button onclick="stop()">stop</button>
         {% else %}
         <button onclick="start()">start</button>

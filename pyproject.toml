@@ -27,6 +27,9 @@ test = [
     "pytest-cov",
     "pytest-dotenv",
 ]
+mypy = [
+    "mypy",
+]
 
 [project.urls]
 Home = "https://github.com/sbidoul/runboat"
@@ -39,3 +42,23 @@ env_override_existing_values = 1
 env_files = [".env.test"]
 
 # flake8 config is in .flake8
+
+[tool.mypy]
+strict = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "uvicorn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "urllib3.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "kubernetes.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "ansi2html"
+ignore_missing_imports = true

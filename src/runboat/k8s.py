@@ -11,12 +11,12 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional, TypedDict, cast
 
-import urllib3  # type: ignore
+import urllib3
 from jinja2 import Template
-from kubernetes import client, config, watch  # type: ignore
-from kubernetes.client.exceptions import ApiException  # type: ignore
-from kubernetes.client.models.v1_deployment import V1Deployment  # type: ignore
-from kubernetes.client.models.v1_job import V1Job  # type: ignore
+from kubernetes import client, config, watch
+from kubernetes.client.exceptions import ApiException
+from kubernetes.client.models.v1_deployment import V1Deployment
+from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
 
 from .settings import settings
