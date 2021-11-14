@@ -1,4 +1,4 @@
-from uvicorn.workers import UvicornWorker  # type: ignore
+from uvicorn.workers import UvicornWorker
 
 from .settings import settings
 

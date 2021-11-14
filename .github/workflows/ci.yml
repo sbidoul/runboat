@@ -16,10 +16,11 @@ jobs:
       - name: Install project
         run: |
           pip install -U "pip>=21.3.1"
-          pip install -e .[test] -c requirements.txt -c requirements-test.txt
+          pip install -e .[test,mypy] -c requirements.txt -c requirements-test.txt -c requirements-mypy.txt
       - name: Run tests
-        run: |
-          pytest -v --cov --cov-report=xml ./tests
+        run: pytest -v --cov --cov-report=xml ./tests
+      - name: Run mypy
+        run: mypy ./src/runboat ./tests
       - uses: codecov/codecov-action@v1
   build-image:
     runs-on: ubuntu-latest

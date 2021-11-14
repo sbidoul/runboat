@@ -30,7 +30,7 @@ class Controller:
     """
 
     db: BuildsDb
-    _tasks: list[asyncio.Task]
+    _tasks: list[asyncio.Task[None]]
     _wakeup_initializer: asyncio.Event
     _wakeup_stopper: asyncio.Event
     _wakeup_undeployer: asyncio.Event

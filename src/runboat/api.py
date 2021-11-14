@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from ansi2html import Ansi2HTMLConverter  # type: ignore
+from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -124,24 +124,24 @@ async def build(name: str) -> models.Build:
     "/builds/{name}/init-log",
     response_class=HTMLResponse,
 )
-async def init_log(name: str):
+async def init_log(name: str) -> str:
     build = await _build_by_name(name)
     log = await build.init_log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)
+    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
 
 
 @router.get(
     "/builds/{name}/log",
     response_class=HTMLResponse,
 )
-async def log(name: str):
+async def log(name: str) -> str:
     build = await _build_by_name(name)
     log = await build.log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)
+    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
 
 
 @router.post("/builds/{name}/start")
