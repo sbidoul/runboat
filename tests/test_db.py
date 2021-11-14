@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import MagicMock
 
 from runboat.db import BuildsDb
 from runboat.models import Build, BuildInitStatus, BuildStatus
@@ -31,17 +32,27 @@ def _make_build(
 
 def test_add() -> None:
     db = BuildsDb()
-    assert db.add(_make_build())  # new
-    assert not db.add(_make_build())  # no change
-    assert db.add(_make_build(status=BuildStatus.failed))
+    listener = MagicMock()
+    db.register_listener(listener)
+    db.add(_make_build())  # new
+    listener.build_updated.assert_called()
+    listener.reset_mock()
+    db.add(_make_build())  # no change
+    listener.build_updated.assert_not_called()
+    db.add(_make_build(status=BuildStatus.failed))
+    listener.build_updated.assert_called()
 
 
 def test_remove() -> None:
     db = BuildsDb()
-    assert not db.remove("not-a-build")
+    listener = MagicMock()
+    db.register_listener(listener)
+    db.remove("not-a-build")
+    listener.build_updated.assert_not_called()
     build = _make_build()
     db.add(build)
-    assert db.remove(build.name)
+    db.remove(build.name)
+    listener.build_updated.assert_called()
 
 
 def test_get_for_commit() -> None:

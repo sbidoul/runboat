@@ -3,7 +3,7 @@ import logging
 from typing import Any, Awaitable, Callable
 
 from . import k8s
-from .db import BuildsDb
+from .db import BuildEvent, BuildsDb
 from .models import Build, BuildInitStatus, BuildStatus
 from .settings import settings
 
@@ -40,10 +40,11 @@ class Controller:
         self._wakeup_initializer = asyncio.Event()
         self._wakeup_stopper = asyncio.Event()
         self._wakeup_undeployer = asyncio.Event()
-        self.reset()
-
-    def reset(self) -> None:
         self.db = BuildsDb()
+        self.db.register_listener(self)
+
+    def build_updated(self, build: Build, event: BuildEvent) -> None:
+        self._wakeup()
 
     @property
     def started(self) -> int:
@@ -111,13 +112,12 @@ class Controller:
             )
             build = await Build.from_name(build_name)
             if build is not None:
-                if self.db.add(build):
-                    self._wakeup()
+                self.db.add(build)
                 return build
         return None
 
     async def deployment_watcher(self) -> None:
-        self.reset()  # empty the local db each time we start watching
+        self.db.reset()  # empty the local db each time we start watching
         async for event_type, deployment in k8s.watch_deployments():
             _logger.debug(
                 "Event %s %s %s dr=%s/rr=%s",
@@ -130,11 +130,10 @@ class Controller:
             build_name = deployment.metadata.labels.get("runboat/build")
             if not build_name:
                 continue
-            should_wakeup = False
             if event_type in (None, "ADDED", "MODIFIED"):
                 prev_build = self.db.get(build_name)
                 build = Build.from_deployment(deployment)
-                should_wakeup = self.db.add(build)
+                self.db.add(build)
                 if build.status == BuildStatus.undeploying and (
                     prev_build is None or prev_build.status != BuildStatus.undeploying
                 ):
@@ -143,9 +142,7 @@ class Controller:
                     )
                     await build.cleanup()
             elif event_type == "DELETED":
-                should_wakeup = self.db.remove(build_name)
-            if should_wakeup:
-                self._wakeup()
+                self.db.remove(build_name)
 
     async def job_watcher(self) -> None:
         async for event_type, job in k8s.watch_jobs():

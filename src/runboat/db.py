@@ -1,10 +1,22 @@
 import logging
 import sqlite3
-from typing import cast
+from enum import Enum
+from typing import Protocol, cast
+from weakref import WeakSet
 
 from .models import Build, BuildInitStatus, BuildStatus
 
 _logger = logging.getLogger(__name__)
+
+
+class BuildEvent(Enum):
+    modified = 0
+    removed = 1
+
+
+class BuildListener(Protocol):
+    def build_updated(self, build: Build, event: BuildEvent) -> None:
+        ...
 
 
 class BuildsDb:
@@ -18,7 +30,11 @@ class BuildsDb:
     _con: sqlite3.Connection
 
     def __init__(self) -> None:
+        self._listeners: WeakSet[BuildListener] = WeakSet()
         self.reset()
+
+    def register_listener(self, listener: BuildListener) -> None:
+        self._listeners.add(listener)
 
     @classmethod
     def _build_from_row(cls, row: sqlite3.Row) -> Build:
@@ -70,18 +86,20 @@ class BuildsDb:
             return None
         return self._build_from_row(row)
 
-    def remove(self, name: str) -> bool:
-        if self.get(name) is None:
-            return False  # no change
+    def remove(self, name: str) -> None:
+        build = self.get(name)
+        if build is None:
+            return  # already removed
         with self._con:
             self._con.execute("DELETE FROM builds WHERE name=?", (name,))
         _logger.info("Noticed removal of %s", name)
-        return True
+        for listener in self._listeners:
+            listener.build_updated(build, BuildEvent.removed)
 
-    def add(self, build: Build) -> bool:
+    def add(self, build: Build) -> None:
         prev_build = self.get(build.name)
         if prev_build == build:
-            return False  # no change
+            return  # no change
         with self._con:
             self._con.execute(
                 "INSERT OR REPLACE INTO builds "
@@ -128,7 +146,8 @@ class BuildsDb:
             build.desired_replicas,
             build.last_scaled,
         )
-        return True
+        for listener in self._listeners:
+            listener.build_updated(build, BuildEvent.modified)
 
     def count_by_status(self, status: BuildStatus) -> int:
         count = self._con.execute(
