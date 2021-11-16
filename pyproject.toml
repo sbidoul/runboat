@@ -49,17 +49,5 @@ strict = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = "uvicorn.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "urllib3.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "kubernetes.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ansi2html"
+module = ["uvicorn.*", "urllib3.*", "kubernetes.*", "ansi2html"]
 ignore_missing_imports = true
