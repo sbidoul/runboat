@@ -1,10 +1,12 @@
+import asyncio
 import datetime
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from ansi2html import Ansi2HTMLConverter
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from sse_starlette.sse import EventSourceResponse
 from starlette.status import HTTP_404_NOT_FOUND
 
 from . import github, models
@@ -59,6 +61,11 @@ class Build(BaseModel):
         read_with_orm_mode = True
 
 
+class BuildEvent(BaseModel):
+    event: models.BuildEvent
+    build: Build
+
+
 @router.get("/status", response_model=Status)
 async def controller_status() -> Controller:
     return controller
@@ -75,7 +82,7 @@ async def repos() -> list[models.Repo]:
     response_model_exclude_none=True,
 )
 async def builds(repo: Optional[str] = None) -> list[models.Build]:
-    return controller.db.search(repo)
+    return list(controller.db.search(repo))
 
 
 @router.post(
@@ -163,3 +170,82 @@ async def delete(name: str) -> None:
     """Delete the deployment and drop the database."""
     build = await _build_by_name(name)
     await build.undeploy()
+
+
+class BuildEventSource:
+    def __init__(
+        self, request: Request, repo: str | None = None, build_name: str | None = None
+    ):
+        self.queue: asyncio.Queue[str] = asyncio.Queue()
+        self.request = request
+        self.repo = repo
+        self.build_name = build_name
+        controller.db.register_listener(self)
+
+    @classmethod
+    def _serialize(cls, event: models.BuildEvent, build: models.Build) -> str:
+        return BuildEvent(event=event, build=Build.from_orm(build)).json()
+
+    def on_build_event(self, event: models.BuildEvent, build: models.Build) -> None:
+        if self.repo and build.repo != self.repo:
+            return
+        if self.build_name and build.name != self.build_name:
+            return
+        self.queue.put_nowait(self._serialize(event, build))
+
+    async def events(self) -> AsyncGenerator[str, None]:
+        for build in controller.db.search(self.repo, self.build_name):
+            yield self._serialize(models.BuildEvent.modified, build)
+        while True:
+            try:
+                event = await asyncio.wait_for(self.queue.get(), timeout=10)
+            except asyncio.TimeoutError:
+                pass
+            else:
+                yield event
+            # Check if the client is still there and wait for events again.
+            if await self.request.is_disconnected():
+                break
+
+
+@router.get("/build-events")
+async def eventsource_endpoint(
+    request: Request,
+    repo: Optional[str] = None,
+    build_name: Optional[str] = None,
+) -> EventSourceResponse:
+    event_source = BuildEventSource(request, repo, build_name)
+    return EventSourceResponse(event_source.events())
+
+
+eshtml = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SSE Test</title>
+    </head>
+    <body>
+        <h1>SSE Test</h1>
+        <ul id='messages'>
+        </ul>
+        <script>
+            const evtSource = new EventSource("/api/v1/build-events");
+            evtSource.onmessage = function(event) {
+                var messages = document.getElementById('messages')
+                var message = document.createElement('li')
+                oEvent = JSON.parse(event.data);
+                var content = document.createTextNode(
+                    `${oEvent.event} - ${oEvent.build.name} ${oEvent.build.status}`
+                )
+                message.appendChild(content)
+                messages.insertBefore(message, messages.firstChild)
+            };
+        </script>
+    </body>
+</html>
+"""
+
+
+@router.get("/estest")
+async def get() -> HTMLResponse:
+    return HTMLResponse(eshtml)

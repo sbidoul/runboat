@@ -1,0 +1,74 @@
+<html>
+    <head>
+        <title>Runboat build</title>
+    </head>
+    <body>
+        <runboat-build id="build"></runboat-build>
+        <script type="module">
+            import {LitElement, html} from 'https://unpkg.com/lit@2.0.2?module';
+
+            class RunboatBuild extends LitElement {
+                static get properties() {
+                    return {
+                        build: {}
+                    }
+                }
+
+                constructor() {
+                    super();
+                    this.build = {};
+                }
+
+                render() {
+                    return html`
+                        <p>Build: ${this.build.name}
+                            ${this.build.status == "started"?
+                               html`<a href="${this.build.deploy_link}">=&gt; live</a>`:""
+                            }
+                        </p>
+                        <p>
+                            Repo: ${this.build.repo}
+                            ${this.build.pr?
+                                html`PR <a href="${this.build.repo_link}">${this.build.pr}</a> to`:""
+                            }
+                            <a href="${this.build.repo_link}">${this.build.target_branch}</a>
+                            ${this.build.git_commit?
+                                html`(<a href="${this.build.repo_commit_link}">${this.build.git_commit.substring(0, 8)}</a>)`:""
+                            }
+                        </p>
+                        <p>Status: ${this.build.status}</p>
+                        <p>Logs:
+                            <a href="/api/v1/builds/${this.build.name}/init-log">init log</a>
+                            ${this.build.status == "started"?
+                                html`| <a href="/api/v1/builds/${this.build.name}/log">log</a>`:""
+                            }
+                        </p>
+                        <p>
+                            <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
+                            <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped"}">start</button>
+                        </p>
+                    `;
+                }
+
+                startHandler(e) {
+                    fetch(`/api/v1/builds/${this.build.name}/start`, {method: 'POST'});
+                }
+
+                stopHandler(e) {
+                    fetch(`/api/v1/builds/${this.build.name}/stop`, {method: 'POST'});
+                }
+            }
+
+            customElements.define('runboat-build', RunboatBuild);
+
+            const buildName = new URLSearchParams(window.location.search).get("name");
+            const buildElement = document.getElementById("build");
+            const evtSource = new EventSource(`/api/v1/build-events?build_name=${buildName}`);
+            evtSource.onmessage = function(event) {
+                var oEvent = JSON.parse(event.data);
+                buildElement.build = oEvent.event == "upd" ? oEvent.build : {};
+            }
+            // TODO: evtSource error handling
+        </script>
+    </body>
+</html>

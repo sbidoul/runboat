@@ -16,6 +16,11 @@ from .utils import slugify
 _logger = logging.getLogger(__name__)
 
 
+class BuildEvent(str, Enum):
+    modified = "upd"
+    removed = "del"
+
+
 class BuildStatus(str, Enum):
     stopped = "stopped"  # initialization succeeded and 0 replicas
     stopping = "stopping"  # 0 desired replicas but some are still running

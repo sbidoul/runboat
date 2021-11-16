@@ -3,8 +3,8 @@ import logging
 from typing import Any, Awaitable, Callable
 
 from . import k8s
-from .db import BuildEvent, BuildsDb
-from .models import Build, BuildInitStatus, BuildStatus
+from .db import BuildsDb
+from .models import Build, BuildEvent, BuildInitStatus, BuildStatus
 from .settings import settings
 
 _logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class Controller:
         self.db = BuildsDb()
         self.db.register_listener(self)
 
-    def build_updated(self, build: Build, event: BuildEvent) -> None:
+    def on_build_event(self, event: BuildEvent, build: Build) -> None:
         self._wakeup()
 
     @property

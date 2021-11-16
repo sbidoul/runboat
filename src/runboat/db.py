@@ -1,21 +1,15 @@
 import logging
 import sqlite3
-from enum import Enum
-from typing import Protocol, cast
+from typing import Iterator, Protocol, cast
 from weakref import WeakSet
 
-from .models import Build, BuildInitStatus, BuildStatus
+from .models import Build, BuildEvent, BuildInitStatus, BuildStatus
 
 _logger = logging.getLogger(__name__)
 
 
-class BuildEvent(Enum):
-    modified = 0
-    removed = 1
-
-
 class BuildListener(Protocol):
-    def build_updated(self, build: Build, event: BuildEvent) -> None:
+    def on_build_event(self, event: BuildEvent, build: Build) -> None:
         ...
 
 
@@ -94,7 +88,7 @@ class BuildsDb:
             self._con.execute("DELETE FROM builds WHERE name=?", (name,))
         _logger.info("Noticed removal of %s", name)
         for listener in self._listeners:
-            listener.build_updated(build, BuildEvent.removed)
+            listener.on_build_event(BuildEvent.removed, build)
 
     def add(self, build: Build) -> None:
         prev_build = self.get(build.name)
@@ -147,7 +141,7 @@ class BuildsDb:
             build.last_scaled,
         )
         for listener in self._listeners:
-            listener.build_updated(build, BuildEvent.modified)
+            listener.on_build_event(BuildEvent.modified, build)
 
     def count_by_status(self, status: BuildStatus) -> int:
         count = self._con.execute(
@@ -190,15 +184,21 @@ class BuildsDb:
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
 
-    def search(self, repo: str | None = None) -> list[Build]:
+    def search(
+        self, repo: str | None = None, name: str | None = None
+    ) -> Iterator[Build]:
         query = "SELECT * FROM builds "
         where = []
         params = []
         if repo:
             where.append("repo=?")
             params.append(repo.lower())
+        if name:
+            where.append("name=?")
+            params.append(name)
         if where:
             query += "WHERE " + " AND ".join(where)
         query += "ORDER BY repo, target_branch, pr, created DESC"
         rows = self._con.execute(query, params).fetchall()
-        return [self._build_from_row(row) for row in rows]
+        for row in rows:
+            yield self._build_from_row(row)

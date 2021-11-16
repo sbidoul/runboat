@@ -35,12 +35,12 @@ def test_add() -> None:
     listener = MagicMock()
     db.register_listener(listener)
     db.add(_make_build())  # new
-    listener.build_updated.assert_called()
+    listener.on_build_event.assert_called()
     listener.reset_mock()
     db.add(_make_build())  # no change
-    listener.build_updated.assert_not_called()
+    listener.on_build_event.assert_not_called()
     db.add(_make_build(status=BuildStatus.failed))
-    listener.build_updated.assert_called()
+    listener.on_build_event.assert_called()
 
 
 def test_remove() -> None:
@@ -48,11 +48,11 @@ def test_remove() -> None:
     listener = MagicMock()
     db.register_listener(listener)
     db.remove("not-a-build")
-    listener.build_updated.assert_not_called()
+    listener.on_build_event.assert_not_called()
     build = _make_build()
     db.add(build)
     db.remove(build.name)
-    listener.build_updated.assert_called()
+    listener.on_build_event.assert_called()
 
 
 def test_get_for_commit() -> None:
@@ -77,8 +77,8 @@ def test_search() -> None:
     db = BuildsDb()
     db.add(build1 := _make_build(name="b1", repo="oca/repo1"))
     db.add(_make_build(name="b2", repo="oca/repo2"))
-    assert len(db.search()) == 2
-    assert db.search("oca/repo1") == [build1]
+    assert len(list(db.search())) == 2
+    assert list(db.search("oca/repo1")) == [build1]
 
 
 def test_count_by_status() -> None:

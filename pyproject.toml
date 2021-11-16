@@ -17,6 +17,7 @@ dependencies = [
     "jinja2",
     "kubernetes",
     "rich",
+    "sse-starlette",
     "uvicorn",
 ]
 dynamic = ["version", "description"]
