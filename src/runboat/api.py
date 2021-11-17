@@ -216,36 +216,3 @@ async def eventsource_endpoint(
 ) -> EventSourceResponse:
     event_source = BuildEventSource(request, repo, build_name)
     return EventSourceResponse(event_source.events())
-
-
-eshtml = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>SSE Test</title>
-    </head>
-    <body>
-        <h1>SSE Test</h1>
-        <ul id='messages'>
-        </ul>
-        <script>
-            const evtSource = new EventSource("/api/v1/build-events");
-            evtSource.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                oEvent = JSON.parse(event.data);
-                var content = document.createTextNode(
-                    `${oEvent.event} - ${oEvent.build.name} ${oEvent.build.status}`
-                )
-                message.appendChild(content)
-                messages.insertBefore(message, messages.firstChild)
-            };
-        </script>
-    </body>
-</html>
-"""
-
-
-@router.get("/estest")
-async def get() -> HTMLResponse:
-    return HTMLResponse(eshtml)
