@@ -185,7 +185,10 @@ class BuildsDb:
         return [self._build_from_row(row) for row in rows]
 
     def search(
-        self, repo: str | None = None, name: str | None = None
+        self,
+        repo: str | None = None,
+        target_branch: str | None = None,
+        name: str | None = None,
     ) -> Iterator[Build]:
         query = "SELECT * FROM builds "
         where = []
@@ -193,6 +196,9 @@ class BuildsDb:
         if repo:
             where.append("repo=?")
             params.append(repo.lower())
+        if target_branch:
+            where.append("target_branch=?")
+            params.append(target_branch)
         if name:
             where.append("name=?")
             params.append(name)
