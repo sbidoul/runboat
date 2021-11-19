@@ -10,8 +10,7 @@ RUN curl -L \
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-ENV RUNBOAT_SUPPORTED_REPOS='["OCA/mis-builder", "shopinvader/odoo-shopinvader", "OCA/server-env"]'
-ENV RUNBOAT_BUILD_IMAGES='{"15.0": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest"}'
+ENV RUNBOAT_REPOS='[{"repo": "^oca/.*", "branch": "^15.0$", "builds": [{"image": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest"}]}]'
 ENV RUNBOAT_API_ADMIN_USER="admin"
 ENV RUNBOAT_API_ADMIN_PASSWD="admin"
 ENV RUNBOAT_BUILD_NAMESPACE=runboat-builds
