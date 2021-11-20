@@ -112,7 +112,7 @@ class Build(BaseModel):
                 else:
                     return BuildStatus.stopped
             else:
-                if deployment.status.ready_replicas == replicas:
+                if deployment.status.available_replicas == replicas:
                     return BuildStatus.started
                 else:
                     return BuildStatus.starting

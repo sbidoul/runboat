@@ -125,7 +125,7 @@ class Controller:
                 deployment.metadata.name,
                 deployment.metadata.resource_version,
                 deployment.spec.replicas,
-                deployment.status.ready_replicas,
+                deployment.status.available_replicas,
             )
             build_name = deployment.metadata.labels.get("runboat/build")
             if not build_name:
