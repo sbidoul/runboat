@@ -14,7 +14,7 @@ class RunboatBuildElement extends LitElement {
 
     static styles = css`
         .build-card {
-            width: 15em;
+            width: 16em;
             padding: 0.5em;
             border-radius: 0.5em;
             background-color: lightgray;
@@ -54,12 +54,12 @@ class RunboatBuildElement extends LitElement {
             </p>
             <p>
                 ${this.build.status}
-                | <a href="/api/v1/builds/${this.build.name}/init-log">init log</a>
+                ⦙ <a href="/api/v1/builds/${this.build.name}/init-log">🗒 init log</a>
                 ${this.build.status == "started"?
-                    html`| <a href="/api/v1/builds/${this.build.name}/log">log</a>`:""
+                    html`⦙ <a href="/api/v1/builds/${this.build.name}/log">🗒 log</a>`:""
                 }
                 ${this.build.status == "started"?
-                   html`| <a href="${this.build.deploy_link}">🚪 live</a>`:""
+                   html`⦙ <a href="${this.build.deploy_link}">🚪 live</a>`:""
                 }
             </p>
             <p>
