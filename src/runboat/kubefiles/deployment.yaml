@@ -43,7 +43,7 @@ spec:
             periodSeconds: 2
           livenessProbe:
             tcpSocket:
-              port: web
+              port: 8069
             initialDelaySeconds: 30
             periodSeconds: 30
           args: ["bash", "/runboat/runboat-start.sh"]
