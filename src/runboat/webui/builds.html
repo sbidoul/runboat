@@ -2,12 +2,15 @@
     <head>
         <title>Runboat builds</title>
         <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+            }
             .row {
                 display: flex;
                 flex-direction: row;
             }
             runboat-build {
-                flex: 0 0 15em;
+                margin: 0.25em;
             }
         </style>
     </head>
@@ -27,8 +30,8 @@
             const evtSource = new EventSource(url);
             evtSource.onmessage = function(event) {
                 var oEvent = JSON.parse(event.data);
+                var buildElement = document.getElementById(oEvent.build.name);
                 if (oEvent.event == "upd") {
-                    var buildElement = document.getElementById(oEvent.build.name);
                     if (buildElement) {
                         // update event element
                         buildElement.build = oEvent.build;
@@ -53,7 +56,6 @@
                         rowElement.insertBefore(buildElement, rowElement.firstChild);
                     }
                 } else if (oEvent.event == "del") {
-                    const buildElement = document.getElementById(oEvent.build.name);
                     if (buildElement) {
                         buildElement.remove();
                     }
