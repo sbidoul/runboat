@@ -289,11 +289,11 @@ class Build(BaseModel):
 
     async def on_initialize_succeeded(self) -> None:
         if self.init_status == BuildInitStatus.succeeded:
-            # Avoid restarting stopped deployments when the controller is notified of
-            # succeeded old initialization jobs after a controller restart.
+            # Already marked as succeeded. We are probably here because the controller
+            # is restarting, and is notified of existing initialization jobs.
             return
-        _logger.info(f"Initialization job succeded for {self}, starting.")
-        if await self._patch(init_status=BuildInitStatus.succeeded, desired_replicas=1):
+        _logger.info(f"Initialization job succeded for {self}, ready to start.")
+        if await self._patch(init_status=BuildInitStatus.succeeded):
             await github.notify_status(
                 self.repo,
                 self.git_commit,
