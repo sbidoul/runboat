@@ -17,6 +17,7 @@ class RunboatBuildElement extends LitElement {
             padding: 0.5em;
             width: 15em;
             background-color: lightgray;
+            border-radius: 0.5em;
         }
         .build-name {
             font-size: x-small;
