@@ -15,9 +15,9 @@ class RunboatBuildElement extends LitElement {
     render() {
         return html`
         <div>
-            <p>Build: ${this.build.name}</p>
+            <p>${this.build.name}</p>
             <p>
-                Repo: ${this.build.repo}
+                ${this.build.repo}
                 ${this.build.pr?
                     html`PR <a href="${this.build.repo_link}">${this.build.pr}</a> to`:""
                 }
