@@ -1,6 +1,15 @@
 <html>
     <head>
         <title>Runboat builds</title>
+        <style>
+            .row {
+                display: flex;
+                flex-direction: row;
+            }
+            runboat-build {
+                flex: 0 0 15em;
+            }
+        </style>
     </head>
     <body>
         <div id="builds"></div>
@@ -30,6 +39,7 @@
                         var rowElement = document.getElementById(rowId);
                         if (!rowElement) {
                             rowElement = document.createElement("div");
+                            rowElement.class = "row";
                             rowElement.id = rowId;
                             document.getElementById("builds").appendChild(rowElement);
                         }
