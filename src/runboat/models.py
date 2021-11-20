@@ -23,7 +23,8 @@ class BuildEvent(str, Enum):
 class BuildStatus(str, Enum):
     stopped = "stopped"  # initialization succeeded and 0 replicas
     stopping = "stopping"  # 0 desired replicas but some are still running
-    starting = "starting"  # to initialize or initializing or scaling up
+    initializing = "initializing"  # to initialize or initializing
+    starting = "starting"  # scaling up
     started = "started"  # running
     failed = "failed"  # initialization failed
     undeploying = "undeploying"  # undeploying, will be deleted after cleanup
@@ -101,7 +102,7 @@ class Build(BaseModel):
             return BuildStatus.undeploying
         init_status = deployment.metadata.annotations["runboat/init-status"]
         if init_status in (BuildInitStatus.todo, BuildInitStatus.started):
-            return BuildStatus.starting
+            return BuildStatus.initializing
         elif init_status == BuildInitStatus.failed:
             return BuildStatus.failed
         elif init_status == BuildInitStatus.succeeded:
@@ -199,7 +200,11 @@ class Build(BaseModel):
 
     async def start(self) -> None:
         """Start build if init succeeded, or reinitialize if failed."""
-        if self.status in (BuildStatus.started, BuildStatus.starting):
+        if self.status in (
+            BuildStatus.initializing,
+            BuildStatus.started,
+            BuildStatus.starting,
+        ):
             _logger.info(
                 f"Ignoring start command for {self} "
                 "that is already started or starting."

@@ -20,8 +20,8 @@ class Controller:
       initializer, stopper and undeployer when the state of deployments change.
     - The 'job_watcher' listens to kubernetes events on jobs, to maintain the
       runboat/init-status annotation on deployments, and act on such events (such as
-      starting when an initialization succeeded or undeploying when a cleanup
-      succeeded).
+      changing the init-status when an initialization succeeded or failed or undeploying
+      when a cleanup succeeded).
     - The 'initializer' starts initialization jobs for deployment that have been marked
       with 'runboat/init-status=todo', while making sure that the maximum number of
       deployments initializing concurrently does not exceed the limit.
