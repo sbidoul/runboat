@@ -11,6 +11,7 @@ def _make_build(
     status: BuildStatus | None = None,
     init_status: BuildInitStatus | None = None,
     repo: str | None = None,
+    target_branch: str | None = None,
     pr: int | None = None,
 ) -> Build:
     name = name or "build-a"
@@ -18,7 +19,7 @@ def _make_build(
         name=name,
         deployment_name=name + "-odoo",
         repo=repo or "oca/mis-builder",
-        target_branch="15.0",
+        target_branch=target_branch or "15.0",
         pr=pr or None,
         git_commit="0d35a10f161b410f2baa3d416a338d191b6dabc0",
         image="ghcr.io/oca/oca-ci:py3.8-odoo15.0",
@@ -79,6 +80,18 @@ def test_search() -> None:
     db.add(_make_build(name="b2", repo="oca/repo2"))
     assert len(list(db.search())) == 2
     assert list(db.search("oca/repo1")) == [build1]
+
+
+def test_search_by_branch_and_pr() -> None:
+    db = BuildsDb()
+    db.add(build1 := _make_build(name="b1", target_branch="15.0", pr=None))
+    db.add(build2 := _make_build(name="b2", target_branch="15.0", pr=1))
+    # Searching on branch returns build for branch (and not pull requests).
+    assert list(db.search(branch="15.0")) == [build1]
+    # Searching on target_branch returns builds for branch and pull requests to branch.
+    assert list(db.search(target_branch="15.0")) == [build1, build2]
+    # Search on pr.
+    assert list(db.search(pr=1)) == [build2]
 
 
 def test_count_by_status() -> None:

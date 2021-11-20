@@ -13,9 +13,6 @@ class BuildListener(Protocol):
         ...
 
 
-NoPr = 0
-
-
 class BuildsDb:
     """An in-memory database of builds.
 
@@ -213,17 +210,17 @@ class BuildsDb:
             params.append(branch)
             where.append("pr IS NULL")
         if pr is not None:
-            if pr == NoPr:
-                where.append("pr IS NULL")
-            else:
-                where.append("pr=?")
-                params.append(pr)
+            where.append("pr=?")
+            params.append(pr)
         if name:
             where.append("name=?")
             params.append(name)
         if where:
             query += "WHERE " + " AND ".join(where)
-        query += "ORDER BY repo, target_branch, pr, created DESC"
+        query += (
+            " ORDER BY"
+            " repo, target_branch DESC, COALESCE(pr, 999999) DESC, created DESC"
+        )
         rows = self._con.execute(query, params).fetchall()
         for row in rows:
             yield self._build_from_row(row)
