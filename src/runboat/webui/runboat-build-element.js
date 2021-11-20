@@ -14,10 +14,10 @@ class RunboatBuildElement extends LitElement {
 
     static styles = css`
         .build-card {
-            padding: 0.5em;
             width: 15em;
-            background-color: lightgray;
+            padding: 0.5em;
             border-radius: 0.5em;
+            background-color: lightgray;
         }
         .build-name {
             font-size: x-small;
@@ -63,8 +63,8 @@ class RunboatBuildElement extends LitElement {
                 }
             </p>
             <p>
-                <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
                 <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped"}">start</button>
+                <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
             </p>
         </div>
         `;
