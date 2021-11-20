@@ -39,7 +39,7 @@
                         var rowElement = document.getElementById(rowId);
                         if (!rowElement) {
                             rowElement = document.createElement("div");
-                            rowElement.class = "row";
+                            rowElement.classList.add("row");
                             rowElement.id = rowId;
                             document.getElementById("builds").appendChild(rowElement);
                         }
