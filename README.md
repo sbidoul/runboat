@@ -34,7 +34,7 @@ Runboat has the following main components:
     all kubernetes resources associated with the deployment.
 
 When a deployment is stopped, the corresponding postgres  database and filesystem volume
-remains present, so deployments can restart almost instantly.
+remain present, so deployments can restart almost instantly.
 
 This approach allows the deployment of a very large number of builds which consume no
 memory nor CPU until they are started. The number of started deployment can also be
