@@ -30,6 +30,7 @@
                 if (oEvent.event == "upd") {
                     var buildElement = document.getElementById(oEvent.build.name);
                     if (buildElement) {
+                        // update event element
                         buildElement.build = oEvent.build;
                     } else {
                         var rowId = `branch-${oEvent.build.target_branch}`;
@@ -38,20 +39,23 @@
                         }
                         var rowElement = document.getElementById(rowId);
                         if (!rowElement) {
+                            // create row
                             rowElement = document.createElement("div");
                             rowElement.classList.add("row");
                             rowElement.id = rowId;
                             document.getElementById("builds").appendChild(rowElement);
                         }
+                        // add build element to row
                         buildElement = document.createElement("runboat-build");
                         buildElement.id = oEvent.build.name;
                         rowElement.appendChild(buildElement);
                     }
-                } else {
+                } else if (oEvent.event == "del") {
                     const buildElement = document.getElementById(oEvent.build.name);
-                    buildElement.remove();
+                    if (buildElement) {
+                        buildElement.remove();
+                    }
                 }
-                buildElement.build = oEvent.event == "upd" ? oEvent.build : {};
             }
         </script>
     </body>
