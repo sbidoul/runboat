@@ -28,7 +28,7 @@ class RunboatBuildElement extends LitElement {
             background-color: palegreen;
         }
         .build-status-failed {
-            background-color: palevioletred;
+            background-color: lightcoral;
         }
         p {
             margin-top: 0.5em;
