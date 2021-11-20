@@ -1,10 +1,6 @@
-import logging
-
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
 from .controller import controller
-
-_logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
