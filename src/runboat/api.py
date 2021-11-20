@@ -12,7 +12,6 @@ from starlette.status import HTTP_404_NOT_FOUND
 from . import github, models
 from .controller import Controller, controller
 from .deps import authenticated
-from .settings import settings
 
 router = APIRouter()
 
@@ -73,7 +72,7 @@ async def controller_status() -> Controller:
 
 @router.get("/repos", response_model=list[Repo])
 async def repos() -> list[models.Repo]:
-    return [models.Repo(name=name) for name in settings.supported_repos]
+    return controller.db.repos()
 
 
 @router.get(

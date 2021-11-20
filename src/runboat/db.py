@@ -3,7 +3,7 @@ import sqlite3
 from typing import Iterator, Protocol, cast
 from weakref import WeakSet
 
-from .models import Build, BuildEvent, BuildInitStatus, BuildStatus
+from .models import Build, BuildEvent, BuildInitStatus, BuildStatus, Repo
 
 _logger = logging.getLogger(__name__)
 
@@ -183,6 +183,10 @@ class BuildsDb:
             (BuildStatus.stopping, BuildStatus.stopped, BuildStatus.failed, limit),
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
+
+    def repos(self) -> list[Repo]:
+        rows = self._con.execute("SELECT DISTINCT repo FROM builds ORDER BY repo")
+        return [Repo(name=row[0]) for row in rows]
 
     def search(
         self,

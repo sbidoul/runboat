@@ -8,9 +8,8 @@ from kubernetes.client.models.v1_deployment import V1Deployment
 from pydantic import BaseModel
 
 from . import github, k8s
-from .build_images import get_build_image
 from .github import GitHubStatusState
-from .settings import settings
+from .settings import get_build_settings, settings
 from .utils import slugify
 
 _logger = logging.getLogger(__name__)
@@ -175,7 +174,11 @@ class Build(BaseModel):
         name = f"b{uuid.uuid4()}"
         slug = cls.make_slug(repo, target_branch, pr, git_commit)
         _logger.info(f"Deploying {slug} ({name}).")
-        image = get_build_image(target_branch)
+        build_settings = get_build_settings(repo, target_branch)
+        if len(build_settings) > 1:
+            raise NotImplementedError(
+                "Having more than one build per commit is not supported yet."
+            )
         deployment_vars = k8s.make_deployment_vars(
             k8s.DeploymentMode.deployment,
             name,
@@ -184,7 +187,7 @@ class Build(BaseModel):
             target_branch,
             pr,
             git_commit,
-            image,
+            build_settings[0].image,
         )
         await k8s.deploy(deployment_vars)
         await github.notify_status(

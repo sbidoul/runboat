@@ -1,14 +1,28 @@
+import re
 from typing import Optional
 
-from pydantic import BaseSettings, validator
+from pydantic import BaseSettings
+from pydantic.main import BaseModel
+
+from .exceptions import RepoOrBranchNotSupported
+
+
+class BuildSettings(BaseModel):
+    image: str  # container image:tag
+
+
+class RepoSettings(BaseModel):
+    repo: str  # regex
+    branch: str  # regex
+    builds: list[BuildSettings]
 
 
 class Settings(BaseSettings):
+    # Configuration for supported repositories and branches.
+    repos: list[RepoSettings]
     # A user and password to protect the most sensitive operations of the API.
     api_admin_user: str
     api_admin_passwd: str
-    # A JSON list of supported repositories in the form owner/repo.
-    supported_repos: set[str]
     # The maximum number of concurrent initialization jobs.
     max_initializing: int = 2
     # The maximum number of builds that are started.
@@ -27,15 +41,6 @@ class Settings(BaseSettings):
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
     build_template_vars: Optional[dict[str, str]]
-    # A mapping of main branch names to container images used to run the builds.
-    build_images: dict[str, str] = {
-        "15.0": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest",
-        "14.0": "ghcr.io/oca/oca-ci/py3.6-odoo14.0:latest",
-        "13.0": "ghcr.io/oca/oca-ci/py3.6-odoo13.0:latest",
-        "12.0": "ghcr.io/oca/oca-ci/py3.6-odoo12.0:latest",
-        "11.0": "ghcr.io/oca/oca-ci/py3.5-odoo11.0:latest",
-        "10.0": "ghcr.io/oca/oca-ci/py2.7-odoo10.0:latest",
-    }
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
     github_token: Optional[str]
@@ -48,10 +53,15 @@ class Settings(BaseSettings):
     class Config:
         env_prefix = "RUNBOAT_"
 
-    @validator("supported_repos")
-    @classmethod
-    def validate_supported_repos(cls, v: set[str]) -> set[str]:
-        return {item.lower() for item in v}
-
 
 settings = Settings()
+
+
+def get_build_settings(repo: str, target_branch: str) -> list[BuildSettings]:
+    for repo_settings in settings.repos:
+        if not re.match(repo_settings.repo, repo, re.IGNORECASE):
+            continue
+        if not re.match(repo_settings.branch, target_branch):
+            continue
+        return repo_settings.builds
+    raise RepoOrBranchNotSupported(f"Branch {target_branch} of {repo} not supported.")

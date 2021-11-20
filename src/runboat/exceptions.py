@@ -14,5 +14,5 @@ class NotFoundOnGitHub(ClientError):
     pass
 
 
-class BranchNotSupported(ClientError):
+class RepoOrBranchNotSupported(ClientError):
     pass

@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import MagicMock
 
 from runboat.db import BuildsDb
-from runboat.models import Build, BuildInitStatus, BuildStatus
+from runboat.models import Build, BuildInitStatus, BuildStatus, Repo
 
 
 def _make_build(
@@ -106,3 +106,10 @@ def test_count_all() -> None:
     assert db.count_all() == 1
     db.add(_make_build(name="b2"))
     assert db.count_all() == 2
+
+
+def test_repos() -> None:
+    db = BuildsDb()
+    db.add(_make_build(name="b1", repo="oca/repo1"))
+    db.add(_make_build(name="b2", repo="oca/repo2"))
+    assert db.repos() == [Repo(name="oca/repo1"), Repo(name="oca/repo2")]
