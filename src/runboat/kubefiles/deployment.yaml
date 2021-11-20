@@ -36,6 +36,16 @@ spec:
               containerPort: 8069
             - name: longpolling
               containerPort: 8072
+          readinessProbe:
+            tcpSocket:
+              port: 8069
+            initialDelaySeconds: 2
+            periodSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 30
           args: ["bash", "/runboat/runboat-start.sh"]
           resources:
             limits:
