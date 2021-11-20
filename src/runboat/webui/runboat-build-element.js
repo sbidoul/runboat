@@ -14,11 +14,8 @@ class RunboatBuildElement extends LitElement {
 
     render() {
         return html`
-            <p>Build: ${this.build.name}
-                ${this.build.status == "started"?
-                   html`<a href="${this.build.deploy_link}">=&gt; live</a>`:""
-                }
-            </p>
+        <div>
+            <p>Build: ${this.build.name}</p>
             <p>
                 Repo: ${this.build.repo}
                 ${this.build.pr?
@@ -39,7 +36,11 @@ class RunboatBuildElement extends LitElement {
             <p>
                 <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
                 <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped"}">start</button>
+                ${this.build.status == "started"?
+                   html`<a href="${this.build.deploy_link}">=&gt; live</a>`:""
+                }
             </p>
+        <div>
         `;
     }
 

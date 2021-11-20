@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <title>Runboat builds</title>
+    </head>
+    <body>
+        <div id="builds"></div>
+        <script type="module">
+            import {RunboatBuildElement} from './runboat-build-element.js'
+            customElements.define('runboat-build', RunboatBuildElement);
+
+            const repo = new URLSearchParams(window.location.search).get("repo");
+            const target_branch = new URLSearchParams(window.location.search).get("target_branch");
+            var url = `/api/v1/build-events?repo=${repo}`
+            if (target_branch) {
+                url += `&target_branch=${target_branch}`
+            }
+            // TODO: evtSource error handling
+            const evtSource = new EventSource(url);
+            evtSource.onmessage = function(event) {
+                var oEvent = JSON.parse(event.data);
+                if (oEvent.event == "upd") {
+                    var buildElement = document.getElementById(oEvent.build.name);
+                    if (buildElement) {
+                        buildElement.build = oEvent.build;
+                    } else {
+                        var rowId = `branch-${oEvent.build.target_branch}`;
+                        if (oEvent.build.pr) {
+                            rowId += `-pr-${oEvent.build.pr}`
+                        }
+                        var rowElement = document.getElementById(rowId);
+                        if (!rowElement) {
+                            rowElement = document.createElement("div");
+                            rowElement.id = rowId;
+                            document.getElementById("builds").appendChild(rowElement);
+                        }
+                        buildElement = document.createElement("runboat-build");
+                        buildElement.id = oEvent.build.name;
+                        rowElement.appendChild(buildElement);
+                    }
+                } else {
+                    const buildElement = document.getElementById(oEvent.build.name);
+                    buildElement.remove();
+                }
+                buildElement.build = oEvent.event == "upd" ? oEvent.build : {};
+            }
+        </script>
+    </body>
+</html>
