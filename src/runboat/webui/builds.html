@@ -48,6 +48,7 @@
                         // add build element to row
                         buildElement = document.createElement("runboat-build");
                         buildElement.id = oEvent.build.name;
+                        buildElement.build = oEvent.build;
                         rowElement.appendChild(buildElement);
                     }
                 } else if (oEvent.event == "del") {
