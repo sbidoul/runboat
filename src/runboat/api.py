@@ -11,6 +11,7 @@ from starlette.status import HTTP_404_NOT_FOUND
 
 from . import github, models
 from .controller import Controller, controller
+from .db import SortOrder
 from .deps import authenticated
 
 router = APIRouter()
@@ -239,6 +240,7 @@ class BuildEventSource:
             branch=self.branch,
             pr=self.pr,
             name=self.build_name,
+            sort=SortOrder.asc,
         ):
             yield self._serialize(models.BuildEvent.modified, build)
         while True:

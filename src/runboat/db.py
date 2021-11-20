@@ -1,11 +1,19 @@
 import logging
 import sqlite3
+from enum import Enum
 from typing import Iterator, Protocol, cast
 from weakref import WeakSet
 
 from .models import Build, BuildEvent, BuildInitStatus, BuildStatus, Repo
 
 _logger = logging.getLogger(__name__)
+
+
+class SortOrder(Enum):
+    # commits of pr, then commits of branches, oldest first
+    asc = 1
+    # commit os branches, then commits of prs, newest first
+    desc = 2
 
 
 class BuildListener(Protocol):
@@ -195,6 +203,7 @@ class BuildsDb:
         branch: str | None = None,
         pr: int | None = None,
         name: str | None = None,
+        sort: SortOrder = SortOrder.desc,
     ) -> Iterator[Build]:
         query = "SELECT * FROM builds "
         where = []
@@ -217,10 +226,22 @@ class BuildsDb:
             params.append(name)
         if where:
             query += "WHERE " + " AND ".join(where)
-        query += (
-            " ORDER BY"
-            " repo, target_branch DESC, COALESCE(pr, 999999) DESC, created DESC"
-        )
+        if sort == SortOrder.desc:
+            query += (
+                " ORDER BY"
+                " repo DESC,"
+                " COALESCE(pr, 999999) DESC,"
+                " target_branch DESC,"
+                " created DESC"
+            )
+        elif sort == SortOrder.asc:
+            query += (
+                " ORDER BY"
+                " repo ASC,"
+                " COALESCE(pr, 999999) ASC,"
+                " target_branch ASC,"
+                " created ASC"
+            )
         rows = self._con.execute(query, params).fetchall()
         for row in rows:
             yield self._build_from_row(row)

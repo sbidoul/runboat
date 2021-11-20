@@ -1,7 +1,7 @@
 import datetime
 from unittest.mock import MagicMock
 
-from runboat.db import BuildsDb
+from runboat.db import BuildsDb, SortOrder
 from runboat.models import Build, BuildInitStatus, BuildStatus, Repo
 
 
@@ -92,6 +92,29 @@ def test_search_by_branch_and_pr() -> None:
     assert list(db.search(target_branch="15.0")) == [build1, build2]
     # Search on pr.
     assert list(db.search(pr=1)) == [build2]
+
+
+def test_search_sort() -> None:
+    db = BuildsDb()
+    db.add(build1 := _make_build(name="b1", target_branch="15.0", pr=None))
+    db.add(build2 := _make_build(name="b2", target_branch="15.0", pr=1))
+    db.add(build3 := _make_build(name="b3", target_branch="14.0", pr=None))
+    db.add(build4 := _make_build(name="b4", target_branch="14.0", pr=2))
+    db.add(build5 := _make_build(name="b5", target_branch="10.0", pr=3))
+    assert [b.name for b in db.search(sort=SortOrder.asc)] == [
+        build2.name,
+        build4.name,
+        build5.name,
+        build3.name,
+        build1.name,
+    ]
+    assert [b.name for b in db.search()] == [
+        build1.name,
+        build3.name,
+        build5.name,
+        build4.name,
+        build2.name,
+    ]
 
 
 def test_count_by_status() -> None:

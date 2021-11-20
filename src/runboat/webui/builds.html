@@ -43,13 +43,14 @@
                             rowElement = document.createElement("div");
                             rowElement.classList.add("row");
                             rowElement.id = rowId;
-                            document.getElementById("builds").appendChild(rowElement);
+                            const buildsElement = document.getElementById("builds");
+                            buildsElement.insertBefore(rowElement, buildsElement.firstChild);
                         }
                         // add build element to row
                         buildElement = document.createElement("runboat-build");
                         buildElement.id = oEvent.build.name;
                         buildElement.build = oEvent.build;
-                        rowElement.appendChild(buildElement);
+                        rowElement.insertBefore(buildElement, rowElement.firstChild);
                     }
                 } else if (oEvent.event == "del") {
                     const buildElement = document.getElementById(oEvent.build.name);
