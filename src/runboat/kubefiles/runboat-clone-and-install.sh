@@ -11,6 +11,10 @@ if [ -f /mnt/data/initialized ] ; then
     exit 0
 fi
 
+# Remove addons dir, in case we are reinitializing after a previously
+# failed installation.
+rm -fr $ADDONS_DIR
+
 #
 # Clone an addons repository at git reference in $ADDONS_DIR.
 # Run oca_install_addons on it.
