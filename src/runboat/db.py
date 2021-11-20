@@ -13,6 +13,9 @@ class BuildListener(Protocol):
         ...
 
 
+NoPr = 0
+
+
 class BuildsDb:
     """An in-memory database of builds.
 
@@ -192,17 +195,29 @@ class BuildsDb:
         self,
         repo: str | None = None,
         target_branch: str | None = None,
+        branch: str | None = None,
+        pr: int | None = None,
         name: str | None = None,
     ) -> Iterator[Build]:
         query = "SELECT * FROM builds "
         where = []
-        params = []
+        params: list[str | int] = []
         if repo:
             where.append("repo=?")
             params.append(repo.lower())
         if target_branch:
             where.append("target_branch=?")
             params.append(target_branch)
+        if branch:
+            where.append("target_branch=?")
+            params.append(branch)
+            where.append("pr IS NULL")
+        if pr is not None:
+            if pr == NoPr:
+                where.append("pr IS NULL")
+            else:
+                where.append("pr=?")
+                params.append(pr)
         if name:
             where.append("name=?")
             params.append(name)

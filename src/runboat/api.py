@@ -80,8 +80,33 @@ async def repos() -> list[models.Repo]:
     response_model=list[Build],
     response_model_exclude_none=True,
 )
-async def builds(repo: Optional[str] = None) -> list[models.Build]:
-    return list(controller.db.search(repo))
+async def builds(
+    repo: Optional[str] = None,
+    target_branch: Optional[str] = None,
+    branch: Optional[str] = None,
+    pr: Optional[int] = None,
+) -> list[models.Build]:
+    return list(
+        controller.db.search(
+            repo=repo, target_branch=target_branch, branch=branch, pr=pr
+        )
+    )
+
+
+@router.delete(
+    "/builds",
+    dependencies=[Depends(authenticated)],
+)
+async def undeploy_builds(
+    repo: Optional[str] = None,
+    target_branch: Optional[str] = None,
+    branch: Optional[str] = None,
+    pr: Optional[int] = None,
+) -> None:
+    for build in controller.db.search(
+        repo=repo, target_branch=target_branch, branch=branch, pr=pr
+    ):
+        await build.undeploy()
 
 
 @router.post(
@@ -151,21 +176,21 @@ async def log(name: str) -> str:
 
 
 @router.post("/builds/{name}/start")
-async def start(name: str) -> None:
+async def start_build(name: str) -> None:
     """Start the deployment."""
     build = await _build_by_name(name)
     await build.start()
 
 
 @router.post("/builds/{name}/stop")
-async def stop(name: str) -> None:
+async def stop_build(name: str) -> None:
     """Stop the deployment."""
     build = await _build_by_name(name)
     await build.stop()
 
 
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])
-async def delete(name: str) -> None:
+async def undeploy_build(name: str) -> None:
     """Delete the deployment and drop the database."""
     build = await _build_by_name(name)
     await build.undeploy()
@@ -177,12 +202,16 @@ class BuildEventSource:
         request: Request,
         repo: str | None = None,
         target_branch: str | None = None,
+        branch: str | None = None,
+        pr: int | None = None,
         build_name: str | None = None,
     ):
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self.request = request
         self.repo = repo
         self.target_branch = target_branch
+        self.branch = branch
+        self.pr = pr
         self.build_name = build_name
         controller.db.register_listener(self)
 
@@ -195,13 +224,21 @@ class BuildEventSource:
             return
         if self.target_branch and build.target_branch != self.target_branch:
             return
+        if self.branch and (build.target_branch != self.branch or build.pr):
+            return
+        if self.pr and build.pr != self.pr:
+            return
         if self.build_name and build.name != self.build_name:
             return
         self.queue.put_nowait(self._serialize(event, build))
 
     async def events(self) -> AsyncGenerator[str, None]:
         for build in controller.db.search(
-            self.repo, self.target_branch, self.build_name
+            repo=self.repo,
+            target_branch=self.target_branch,
+            branch=self.branch,
+            pr=self.pr,
+            name=self.build_name,
         ):
             yield self._serialize(models.BuildEvent.modified, build)
         while True:
@@ -217,11 +254,15 @@ class BuildEventSource:
 
 
 @router.get("/build-events")
-async def eventsource_endpoint(
+async def build_events(
     request: Request,
     repo: Optional[str] = None,
     target_branch: Optional[str] = None,
+    branch: Optional[str] = None,
+    pr: Optional[int] = None,
     build_name: Optional[str] = None,
 ) -> EventSourceResponse:
-    event_source = BuildEventSource(request, repo, target_branch, build_name)
+    event_source = BuildEventSource(
+        request, repo, target_branch, branch, pr, build_name
+    )
     return EventSourceResponse(event_source.events())

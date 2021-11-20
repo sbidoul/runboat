@@ -17,3 +17,5 @@ root:
 loggers:
   kubernetes.client.rest:
     level: INFO
+  sse_starlette.sse:
+    level: INFO
