@@ -53,12 +53,12 @@ class RunboatBuildElement extends LitElement {
             </p>
             <p>
                 ${this.build.status}
-                ⦙ <a href="/api/v1/builds/${this.build.name}/init-log">🗒 init log</a>
+                ⦙ 🗒 <a href="/api/v1/builds/${this.build.name}/init-log">init log</a>
                 ${this.build.status == "started"?
-                    html`⦙ <a href="/api/v1/builds/${this.build.name}/log">🗒 log</a>`:""
+                    html`⦙ 🗒 <a href="/api/v1/builds/${this.build.name}/log">log</a>`:""
                 }
                 ${this.build.status == "started"?
-                   html`⦙ <a href="${this.build.deploy_link}">🚪 live</a>`:""
+                   html`⦙ 🚪 <a href="${this.build.deploy_link}">live</a>`:""
                 }
             </p>
             <p>
