@@ -15,10 +15,17 @@
             runboat-build {
                 margin: 0.25em;
             }
+            #footer {
+                color: gray;
+                font-size: small;
+            }
         </style>
     </head>
     <body>
         <div id="builds"></div>
+        <div id="footer">
+            <p>Runboat - Created with love for <a href="https://odoo-community.org"><img src="https://odoo-community.org/logo.png" style="height: 1em; vertical-align: text-top;"></a> by Stéphane Bidoul with support of <a href="https://acsone.eu"><img src="https://acsone.eu/logo.png" style="height: 1em; vertical-align:   text-top;"></a>. Copyright © Runboat <a href="https://github.com/sbidoul/runboat/graphs/contributors">contributors</a>.</p>
+        </div>
         <script type="module">
             import {RunboatBuildElement} from './runboat-build-element.js'
             customElements.define('runboat-build', RunboatBuildElement);
