@@ -17,7 +17,7 @@ spec:
         app: odoo
     spec:
       # let Odoo stop gracefully to disconnect from postgres
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 10
       containers:
         - name: odoo
           image: odoo
