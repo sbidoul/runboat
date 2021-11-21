@@ -138,12 +138,14 @@ class Build(BaseModel):
         return f"http://{self.slug}.{settings.build_domain}"
 
     @property
-    def repo_link(self) -> str:
-        link = f"https://github.com/{self.repo}"
-        if self.pr:
-            return f"{link}/pull/{self.pr}"
-        else:
-            return f"{link}/tree/{self.target_branch}"
+    def repo_target_branch_link(self) -> str:
+        return f"https://github.com/{self.repo}/tree/{self.target_branch}"
+
+    @property
+    def repo_pr_link(self) -> str | None:
+        if not self.pr:
+            return None
+        return f"https://github.com/{self.repo}/pull/{self.pr}"
 
     @property
     def repo_commit_link(self) -> str:

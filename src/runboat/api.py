@@ -49,7 +49,8 @@ class Build(BaseModel):
     git_commit: str
     image: str
     deploy_link: str
-    repo_link: str
+    repo_target_branch_link: str
+    repo_pr_link: Optional[str]
     repo_commit_link: str
     webui_link: str
     status: models.BuildStatus
