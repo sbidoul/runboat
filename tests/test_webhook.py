@@ -34,8 +34,25 @@ def test_webhook_github_push(mocker: MockerFixture) -> None:
     )
 
 
+def test_webhook_github_push_unsupported_repo(mocker: MockerFixture) -> None:
+    mock = mocker.patch("fastapi.BackgroundTasks.add_task")
+    response = client.post(
+        "/webhooks/github",
+        headers={
+            "X-GitHub-Event": "push",
+        },
+        json={
+            "repository": {"full_name": "org/not-a-repo"},  # repo not in .env.test
+            "ref": "refs/heads/15.0",
+            "after": "abcde",
+        },
+    )
+    response.raise_for_status()
+    mock.assert_not_called()
+
+
 @pytest.mark.parametrize("action", ["opened", "synchronize"])
-def test_webhook_github_pr_open_synchronize(action: str, mocker: MockerFixture) -> None:
+def test_webhook_github_pr(action: str, mocker: MockerFixture) -> None:
     mock = mocker.patch("fastapi.BackgroundTasks.add_task")
     response = client.post(
         "/webhooks/github",
@@ -66,3 +83,31 @@ def test_webhook_github_pr_open_synchronize(action: str, mocker: MockerFixture) 
             git_commit="abcde",
         ),
     )
+
+
+@pytest.mark.parametrize("action", ["opened", "synchronize"])
+def test_webhook_github_pr_unsupported_branch(
+    action: str, mocker: MockerFixture
+) -> None:
+    mock = mocker.patch("fastapi.BackgroundTasks.add_task")
+    response = client.post(
+        "/webhooks/github",
+        headers={
+            "X-GitHub-Event": "pull_request",
+        },
+        json={
+            "action": action,
+            "repository": {"full_name": "oca/mis-builder"},
+            "pull_request": {
+                "base": {
+                    "ref": "14.0",  # branch 14.0 not declared in .env.test
+                },
+                "number": 381,
+                "head": {
+                    "sha": "abcde",
+                },
+            },
+        },
+    )
+    response.raise_for_status()
+    mock.assert_not_called()

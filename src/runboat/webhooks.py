@@ -1,7 +1,12 @@
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
 from .controller import controller
 from .github import CommitInfo
+from .settings import settings
+
+_logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -16,21 +21,41 @@ async def receive_payload(
     payload = await request.json()
     if x_github_event == "pull_request":
         if payload["action"] in ("opened", "synchronize"):
+            repo = payload["repository"]["full_name"]
+            target_branch = payload["pull_request"]["base"]["ref"]
+            if not settings.is_repo_and_branch_supported(repo, target_branch):
+                _logger.debug(
+                    "Ignoring %s payload for unsupported repo %s or target branch %s",
+                    x_github_event,
+                    repo,
+                    target_branch,
+                )
+                return
             background_tasks.add_task(
                 controller.deploy_or_start,
                 CommitInfo(
-                    repo=payload["repository"]["full_name"],
-                    target_branch=payload["pull_request"]["base"]["ref"],
+                    repo=repo,
+                    target_branch=target_branch,
                     pr=payload["pull_request"]["number"],
                     git_commit=payload["pull_request"]["head"]["sha"],
                 ),
             )
     elif x_github_event == "push":
+        repo = payload["repository"]["full_name"]
+        target_branch = payload["ref"].split("/")[-1]
+        if not settings.is_repo_and_branch_supported(repo, target_branch):
+            _logger.debug(
+                "Ignoring %s payload for unsupported repo %s or target branch %s",
+                x_github_event,
+                repo,
+                target_branch,
+            )
+            return
         background_tasks.add_task(
             controller.deploy_or_start,
             CommitInfo(
-                repo=payload["repository"]["full_name"],
-                target_branch=payload["ref"].split("/")[-1],
+                repo=repo,
+                target_branch=target_branch,
                 pr=None,
                 git_commit=payload["after"],
             ),
