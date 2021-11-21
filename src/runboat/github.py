@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Optional
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from .exceptions import NotFoundOnGitHub
 from .settings import settings
@@ -28,6 +28,11 @@ class CommitInfo(BaseModel):
     target_branch: str
     pr: Optional[int]
     git_commit: str
+
+    @validator("repo")
+    @classmethod
+    def validate_repo(cls, v: str) -> str:
+        return v.lower()
 
 
 async def get_branch_info(repo: str, branch: str) -> CommitInfo:
