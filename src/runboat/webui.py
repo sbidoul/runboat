@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import jinja2
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, FastAPI, HTTPException, Response, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -34,7 +34,7 @@ FOOTER_HTML = """\
 """
 
 
-def mount(app) -> None:
+def mount(app: FastAPI) -> None:
     """Render and and mount the webui templates.
 
     Files and Jinja templates are rendered and copied to a working
