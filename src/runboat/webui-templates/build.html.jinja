@@ -13,6 +13,7 @@
     </head>
     <body>
         <runboat-build id="build"></runboat-build>
+        <p>Other builds for <a href="" id="repolink">this repo</a>.</p>
         <div id="footer">
             {{ footer_html }}
             {{ additional_footer_html }}
@@ -26,7 +27,11 @@
             const evtSource = new EventSource(`/api/v1/build-events?build_name=${buildName}`);
             evtSource.onmessage = function(event) {
                 var oEvent = JSON.parse(event.data);
-                buildElement.build = oEvent.event == "upd" ? oEvent.build : {};
+                const build = oEvent.build;
+                buildElement.build = oEvent.event == "upd" ? build : {};
+                const repolinkElement = document.getElementById("repolink");
+                repolinkElement.href = `./builds.html?repo=${build.repo}`;
+                repolinkElement.text = build.repo;
             }
             // TODO: evtSource error handling
         </script>
