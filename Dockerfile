@@ -20,6 +20,7 @@ ENV RUNBOAT_BUILD_SECRET_ENV='{"PGPASSWORD": "..."}'
 ENV RUNBOAT_BUILD_TEMPLATE_VARS='{}'
 ENV RUNBOAT_GITHUB_TOKEN=
 ENV RUNBOAT_BASE_URL=https://runboat.example.com
+ENV RUNBOAT_ADDITIONAL_FOOTER_HTML=''
 
 # KUBECONFIG to be provided by user, unless running in cluster with a service account
 # having the necessary permissions.

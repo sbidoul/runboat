@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     # The base url where the runboat UI and API is exposed on internet.
     # Used to generate backlinks in GitHub statuses
     base_url: str = "http://localhost:8000"
+    # HTML fragment for second footer.
+    additional_footer_html: str = ""
 
     class Config:
         env_prefix = "RUNBOAT_"
