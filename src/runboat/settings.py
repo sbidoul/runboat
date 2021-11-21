@@ -52,18 +52,27 @@ class Settings(BaseSettings):
     # HTML fragment for second footer.
     additional_footer_html: str = ""
 
+    def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
+        for repo_settings in self.repos:
+            if not re.match(repo_settings.repo, repo, re.IGNORECASE):
+                continue
+            if not re.match(repo_settings.branch, target_branch):
+                continue
+            return repo_settings.builds
+        raise RepoOrBranchNotSupported(
+            f"Branch {target_branch} of {repo} not supported."
+        )
+
+    def is_repo_and_branch_supported(self, repo: str, target_branch: str) -> bool:
+        try:
+            self.get_build_settings(repo, target_branch)
+        except RepoOrBranchNotSupported:
+            return False
+        else:
+            return True
+
     class Config:
         env_prefix = "RUNBOAT_"
 
 
 settings = Settings()
-
-
-def get_build_settings(repo: str, target_branch: str) -> list[BuildSettings]:
-    for repo_settings in settings.repos:
-        if not re.match(repo_settings.repo, repo, re.IGNORECASE):
-            continue
-        if not re.match(repo_settings.branch, target_branch):
-            continue
-        return repo_settings.builds
-    raise RepoOrBranchNotSupported(f"Branch {target_branch} of {repo} not supported.")

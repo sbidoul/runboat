@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from . import github, k8s
 from .github import CommitInfo, GitHubStatusState
-from .settings import get_build_settings, settings
+from .settings import settings
 from .utils import slugify
 
 _logger = logging.getLogger(__name__)
@@ -181,7 +181,9 @@ class Build(BaseModel):
         name = f"b{uuid.uuid4()}"
         slug = cls.make_slug(commit_info)
         _logger.info(f"Deploying {slug} ({name}).")
-        build_settings = get_build_settings(commit_info.repo, commit_info.target_branch)
+        build_settings = settings.get_build_settings(
+            commit_info.repo, commit_info.target_branch
+        )
         if len(build_settings) > 1:
             raise NotImplementedError(
                 "Having more than one build per commit is not supported yet."
