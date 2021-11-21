@@ -17,7 +17,7 @@ router = APIRouter()
 
 FOOTER_HTML = """\
 <p>
-    Runboat -
+    <a href="https://github.com/sbidoul/runboat">Runboat</a> ☸️ -
     Created with love for
     <a href="https://odoo-community.org">
         <img src="https://odoo-community.org/logo.png"
