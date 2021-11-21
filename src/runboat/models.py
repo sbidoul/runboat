@@ -8,7 +8,7 @@ from kubernetes.client.models.v1_deployment import V1Deployment
 from pydantic import BaseModel
 
 from . import github, k8s
-from .github import GitHubStatusState
+from .github import CommitInfo, GitHubStatusState
 from .settings import get_build_settings, settings
 from .utils import slugify
 
@@ -40,10 +40,7 @@ class BuildInitStatus(str, Enum):
 class Build(BaseModel):
     name: str
     deployment_name: str
-    repo: str
-    target_branch: str
-    pr: Optional[int]
-    git_commit: str
+    commit_info: CommitInfo
     image: str
     status: BuildStatus
     init_status: BuildInitStatus
@@ -83,10 +80,12 @@ class Build(BaseModel):
         return Build(
             name=deployment.metadata.labels["runboat/build"],
             deployment_name=deployment.metadata.name,
-            repo=deployment.metadata.annotations["runboat/repo"],
-            target_branch=deployment.metadata.annotations["runboat/target-branch"],
-            pr=deployment.metadata.annotations.get("runboat/pr") or None,
-            git_commit=deployment.metadata.annotations["runboat/git-commit"],
+            commit_info=CommitInfo(
+                repo=deployment.metadata.annotations["runboat/repo"],
+                target_branch=deployment.metadata.annotations["runboat/target-branch"],
+                pr=deployment.metadata.annotations.get("runboat/pr") or None,
+                git_commit=deployment.metadata.annotations["runboat/git-commit"],
+            ),
             image=deployment.spec.template.spec.containers[0].image,
             init_status=deployment.metadata.annotations["runboat/init-status"],
             status=cls._status_from_deployment(deployment),
@@ -121,17 +120,18 @@ class Build(BaseModel):
 
     @classmethod
     def make_slug(
-        cls, repo: str, target_branch: str, pr: int | None, git_commit: str
+        cls,
+        commit_info: CommitInfo,
     ) -> str:
-        slug = f"{slugify(repo)}-{slugify(target_branch)}"
-        if pr:
-            slug = f"{slug}-pr{slugify(pr)}"
-        slug = f"{slug}-{git_commit[:12]}"
+        slug = f"{slugify(commit_info.repo)}-{slugify(commit_info.target_branch)}"
+        if commit_info.pr:
+            slug = f"{slug}-pr{slugify(commit_info.pr)}"
+        slug = f"{slug}-{commit_info.git_commit[:12]}"
         return slug
 
     @property
     def slug(self) -> str:
-        return self.make_slug(self.repo, self.target_branch, self.pr, self.git_commit)
+        return self.make_slug(self.commit_info)
 
     @property
     def deploy_link(self) -> str:
@@ -139,21 +139,27 @@ class Build(BaseModel):
 
     @property
     def repo_target_branch_link(self) -> str:
-        return f"https://github.com/{self.repo}/tree/{self.target_branch}"
+        return (
+            f"https://github.com/{self.commit_info.repo}"
+            f"/tree/{self.commit_info.target_branch}"
+        )
 
     @property
     def repo_pr_link(self) -> str | None:
-        if not self.pr:
+        if not self.commit_info.pr:
             return None
-        return f"https://github.com/{self.repo}/pull/{self.pr}"
+        return f"https://github.com/{self.commit_info.repo}/pull/{self.commit_info.pr}"
 
     @property
     def repo_commit_link(self) -> str:
-        link = f"https://github.com/{self.repo}"
-        if self.pr:
-            return f"{link}/pull/{self.pr}/commits/{self.git_commit}"
+        link = f"https://github.com/{self.commit_info.repo}"
+        if self.commit_info.pr:
+            return (
+                f"{link}/pull/{self.commit_info.pr}"
+                f"/commits/{self.commit_info.git_commit}"
+            )
         else:
-            return f"{link}/commit/{self.git_commit}"
+            return f"{link}/commit/{self.commit_info.git_commit}"
 
     @property
     def webui_link(self) -> str:
@@ -170,14 +176,12 @@ class Build(BaseModel):
         return await k8s.log(self.name, job_kind=None)
 
     @classmethod
-    async def deploy(
-        cls, repo: str, target_branch: str, pr: int | None, git_commit: str
-    ) -> None:
+    async def deploy(cls, commit_info: CommitInfo) -> None:
         """Deploy a build, without starting it."""
         name = f"b{uuid.uuid4()}"
-        slug = cls.make_slug(repo, target_branch, pr, git_commit)
+        slug = cls.make_slug(commit_info)
         _logger.info(f"Deploying {slug} ({name}).")
-        build_settings = get_build_settings(repo, target_branch)
+        build_settings = get_build_settings(commit_info.repo, commit_info.target_branch)
         if len(build_settings) > 1:
             raise NotImplementedError(
                 "Having more than one build per commit is not supported yet."
@@ -186,16 +190,13 @@ class Build(BaseModel):
             k8s.DeploymentMode.deployment,
             name,
             slug,
-            repo.lower(),
-            target_branch,
-            pr,
-            git_commit,
+            commit_info,
             build_settings[0].image,
         )
         await k8s.deploy(deployment_vars)
         await github.notify_status(
-            repo,
-            git_commit,
+            commit_info.repo,
+            commit_info.git_commit,
             GitHubStatusState.pending,
             target_url=None,
         )
@@ -220,8 +221,8 @@ class Build(BaseModel):
             await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
             if await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0):
                 await github.notify_status(
-                    self.repo,
-                    self.git_commit,
+                    self.commit_info.repo,
+                    self.commit_info.git_commit,
                     GitHubStatusState.pending,
                     target_url=self.live_link,
                 )
@@ -253,10 +254,7 @@ class Build(BaseModel):
             k8s.DeploymentMode.initialize,
             self.name,
             self.slug,
-            self.repo,
-            self.target_branch,
-            self.pr,
-            self.git_commit,
+            self.commit_info,
             self.image,
         )
         await k8s.deploy(deployment_vars)
@@ -274,10 +272,7 @@ class Build(BaseModel):
             k8s.DeploymentMode.cleanup,
             self.name,
             self.slug,
-            self.repo,
-            self.target_branch,
-            self.pr,
-            self.git_commit,
+            self.commit_info,
             self.image,
         )
         await k8s.deploy(deployment_vars)
@@ -288,8 +283,8 @@ class Build(BaseModel):
         _logger.info(f"Initialization job started for {self}.")
         if await self._patch(init_status=BuildInitStatus.started, desired_replicas=0):
             await github.notify_status(
-                self.repo,
-                self.git_commit,
+                self.commit_info.repo,
+                self.commit_info.git_commit,
                 GitHubStatusState.pending,
                 target_url=self.live_link,
             )
@@ -302,8 +297,8 @@ class Build(BaseModel):
         _logger.info(f"Initialization job succeded for {self}, ready to start.")
         if await self._patch(init_status=BuildInitStatus.succeeded):
             await github.notify_status(
-                self.repo,
-                self.git_commit,
+                self.commit_info.repo,
+                self.commit_info.git_commit,
                 GitHubStatusState.success,
                 target_url=self.live_link,
             )
@@ -316,8 +311,8 @@ class Build(BaseModel):
         _logger.info(f"Initialization job failed for {self}.")
         if await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0):
             await github.notify_status(
-                self.repo,
-                self.git_commit,
+                self.commit_info.repo,
+                self.commit_info.git_commit,
                 GitHubStatusState.failure,
                 target_url=self.live_link,
             )

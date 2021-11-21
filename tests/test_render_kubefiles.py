@@ -1,3 +1,4 @@
+from runboat.github import CommitInfo
 from runboat.k8s import DeploymentMode, _render_kubefiles, make_deployment_vars
 
 EXPECTED = """\
@@ -70,10 +71,12 @@ def test_render_kubefiles() -> None:
         mode=DeploymentMode.deployment,
         build_name="build-name",
         slug="build-slug",
-        repo="oca/mis-builder",
-        target_branch="15.0",
-        pr=None,
-        git_commit="abcdef123456789",
+        commit_info=CommitInfo(
+            repo="oca/mis-builder",
+            target_branch="15.0",
+            pr=None,
+            git_commit="abcdef123456789",
+        ),
         image="ghcr.io/oca/oca-ci:py3.8-odoo15.0",
     )
     with _render_kubefiles(deployment_vars) as tmp_path:

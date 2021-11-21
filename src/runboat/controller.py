@@ -4,6 +4,7 @@ from typing import Any, Awaitable, Callable
 
 from . import k8s
 from .db import BuildsDb
+from .github import CommitInfo
 from .models import Build, BuildEvent, BuildInitStatus, BuildStatus
 from .settings import settings
 
@@ -78,24 +79,17 @@ class Controller:
     def undeploying(self) -> int:
         return self.db.count_by_status(BuildStatus.undeploying)
 
-    async def deploy_or_start(
-        self, repo: str, target_branch: str, pr: int | None, git_commit: str
-    ) -> None:
+    async def deploy_or_start(self, commit_info: CommitInfo) -> None:
         build = self.db.get_for_commit(
-            repo=repo,
-            target_branch=target_branch,
-            pr=pr,
-            git_commit=git_commit,
+            repo=commit_info.repo,
+            target_branch=commit_info.target_branch,
+            pr=commit_info.pr,
+            git_commit=commit_info.git_commit,
         )
         if build is not None:
             await build.start()
             return
-        await Build.deploy(
-            repo=repo,
-            target_branch=target_branch,
-            pr=pr,
-            git_commit=git_commit,
-        )
+        await Build.deploy(commit_info)
 
     def _wakeup(self) -> None:
         self._wakeup_initializer.set()

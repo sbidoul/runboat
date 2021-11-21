@@ -19,10 +19,10 @@ commonLabels:
   runboat/build: "{{ build_name }}"
 
 commonAnnotations:
-  runboat/repo: "{{ repo }}"
-  runboat/target-branch: "{{ target_branch }}"
-  runboat/pr: "{{ pr if pr else '' }}"
-  runboat/git-commit: "{{ git_commit }}"
+  runboat/repo: "{{ commit_info.repo }}"
+  runboat/target-branch: "{{ commit_info.target_branch }}"
+  runboat/pr: "{{ commit_info.pr if commit_info.pr else '' }}"
+  runboat/git-commit: "{{ commit_info.git_commit }}"
 
 images:
   - name: odoo
@@ -41,8 +41,8 @@ configMapGenerator:
     literals:
       - PGDATABASE={{ build_name }}
       - ADDONS_DIR=/mnt/data/odoo-addons-dir
-      - RUNBOAT_GIT_REPO=https://github.com/{{ repo }}
-      - RUNBOAT_GIT_REF={{ git_commit }}
+      - RUNBOAT_GIT_REPO=https://github.com/{{ commit_info.repo }}
+      - RUNBOAT_GIT_REF={{ commit_info.git_commit }}
       {%- for key, value in build_env.items() %}
       - {{ key }}={{ value }}
       {%- endfor %}

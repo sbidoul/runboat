@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, TypedDict, cast
+from typing import Any, Callable, Generator, TypedDict, cast
 
 import urllib3
 from jinja2 import Template
@@ -19,6 +19,7 @@ from kubernetes.client.models.v1_deployment import V1Deployment
 from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
 
+from .github import CommitInfo
 from .settings import settings
 from .utils import sync_to_async, sync_to_async_iterator
 
@@ -146,10 +147,7 @@ class DeploymentVars(BaseModel):
     build_name: str
     build_slug: str
     build_domain: str
-    repo: str
-    target_branch: str
-    pr: Optional[int]
-    git_commit: str
+    commit_info: CommitInfo
     image_name: str
     image_tag: str
     build_env: dict[str, str]
@@ -161,10 +159,7 @@ def make_deployment_vars(
     mode: DeploymentMode,
     build_name: str,
     slug: str,
-    repo: str,
-    target_branch: str,
-    pr: int | None,
-    git_commit: str,
+    commit_info: CommitInfo,
     image: str,
 ) -> DeploymentVars:
     image_name, image_tag = _split_image_name_tag(image)
@@ -174,10 +169,7 @@ def make_deployment_vars(
         build_name=build_name,
         build_slug=slug,
         build_domain=settings.build_domain,
-        repo=repo,
-        target_branch=target_branch,
-        pr=pr,
-        git_commit=git_commit,
+        commit_info=commit_info,
         image_name=image_name,
         image_tag=image_tag,
         build_env=settings.build_env or {},

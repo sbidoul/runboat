@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import httpx
+from pydantic import BaseModel
 
 from .exceptions import NotFoundOnGitHub
 from .settings import settings
@@ -23,37 +23,30 @@ async def _github_request(method: str, url: str, json: Any = None) -> Any:
         return response.json()
 
 
-@dataclass
-class BranchInfo:
+class CommitInfo(BaseModel):
     repo: str
-    name: str
-    head_sha: str
+    target_branch: str
+    pr: Optional[int]
+    git_commit: str
 
 
-async def get_branch_info(repo: str, branch: str) -> BranchInfo:
+async def get_branch_info(repo: str, branch: str) -> CommitInfo:
     branch_data = await _github_request("GET", f"/repos/{repo}/git/ref/heads/{branch}")
-    return BranchInfo(
+    return CommitInfo(
         repo=repo,
-        name=branch,
-        head_sha=branch_data["object"]["sha"],
+        target_branch=branch,
+        pr=None,
+        git_commit=branch_data["object"]["sha"],
     )
 
 
-@dataclass
-class PullInfo:
-    repo: str
-    number: int
-    head_sha: str
-    target_branch: str
-
-
-async def get_pull_info(repo: str, pr: int) -> PullInfo:
+async def get_pull_info(repo: str, pr: int) -> CommitInfo:
     pr_data = await _github_request("GET", f"/repos/{repo}/pulls/{pr}")
-    return PullInfo(
+    return CommitInfo(
         repo=repo,
-        number=pr,
-        head_sha=pr_data["head"]["sha"],
         target_branch=pr_data["base"]["ref"],
+        pr=pr,
+        git_commit=pr_data["head"]["sha"],
     )
 
 

@@ -42,13 +42,13 @@ class RunboatBuildElement extends LitElement {
         <div class="build-card build-status-${this.build.status}">
             <p class="build-name">${this.build.name}</p>
             <p>
-                <a href="${this.build.repo_target_branch_link}">${this.build.repo} ${this.build.target_branch}</a>
-                ${this.build.pr?
-                    html`PR <a href="${this.build.repo_pr_link}">${this.build.pr}</a>`:""
+                <a href="${this.build.repo_target_branch_link}">${this.build.commit_info.repo} ${this.build.commit_info.target_branch}</a>
+                ${this.build.commit_info.pr?
+                    html`PR <a href="${this.build.repo_pr_link}">${this.build.commit_info.pr}</a>`:""
                 }
                 <br>
-                ${this.build.git_commit?
-                    html`(<a href="${this.build.repo_commit_link}">${this.build.git_commit.substring(0, 8)}</a>)`:""
+                ${this.build.commit_info.git_commit?
+                    html`(<a href="${this.build.repo_commit_link}">${this.build.commit_info.git_commit.substring(0, 8)}</a>)`:""
                 }
             </p>
             <p>

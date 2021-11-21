@@ -30,8 +30,8 @@
                 const build = oEvent.build;
                 buildElement.build = oEvent.event == "upd" ? build : {};
                 const repolinkElement = document.getElementById("repolink");
-                repolinkElement.href = `./builds.html?repo=${build.repo}`;
-                repolinkElement.text = build.repo;
+                repolinkElement.href = `./builds.html?repo=${build.commit_info.repo}`;
+                repolinkElement.text = build.commit_info.repo;
             }
             // TODO: evtSource error handling
         </script>

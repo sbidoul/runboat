@@ -47,9 +47,9 @@
                         // update event element
                         buildElement.build = oEvent.build;
                     } else {
-                        var rowId = `branch-${oEvent.build.target_branch}`;
-                        if (oEvent.build.pr) {
-                            rowId += `-pr-${oEvent.build.pr}`
+                        var rowId = `branch-${oEvent.build.commit_info.target_branch}`;
+                        if (oEvent.build.commit_info.pr) {
+                            rowId += `-pr-${oEvent.build.commit_info.pr}`
                         }
                         var rowElement = document.getElementById(rowId);
                         if (!rowElement) {

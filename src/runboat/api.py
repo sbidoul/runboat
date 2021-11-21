@@ -43,10 +43,7 @@ class Repo(BaseModel):
 
 class Build(BaseModel):
     name: str
-    repo: str
-    target_branch: str
-    pr: Optional[int]
-    git_commit: str
+    commit_info: github.CommitInfo
     image: str
     deploy_link: str
     repo_target_branch_link: str
@@ -117,13 +114,8 @@ async def undeploy_builds(
 )
 async def trigger_branch(repo: str, branch: str) -> None:
     """Trigger build for a branch."""
-    branch_info = await github.get_branch_info(repo, branch)
-    await controller.deploy_or_start(
-        repo=branch_info.repo,
-        target_branch=branch_info.name,
-        pr=None,
-        git_commit=branch_info.head_sha,
-    )
+    commit_info = await github.get_branch_info(repo, branch)
+    await controller.deploy_or_start(commit_info)
 
 
 @router.post(
@@ -132,13 +124,8 @@ async def trigger_branch(repo: str, branch: str) -> None:
 )
 async def trigger_pull(repo: str, pr: int) -> None:
     """Trigger build for a pull request."""
-    pull_info = await github.get_pull_info(repo, pr)
-    await controller.deploy_or_start(
-        repo=pull_info.repo,
-        target_branch=pull_info.target_branch,
-        pr=pull_info.number,
-        git_commit=pull_info.head_sha,
-    )
+    commit_info = await github.get_pull_info(repo, pr)
+    await controller.deploy_or_start(commit_info)
 
 
 async def _build_by_name(name: str) -> models.Build:
@@ -222,13 +209,15 @@ class BuildEventSource:
         return BuildEvent(event=event, build=Build.from_orm(build)).json()
 
     def on_build_event(self, event: models.BuildEvent, build: models.Build) -> None:
-        if self.repo and build.repo != self.repo:
+        if self.repo and build.commit_info.repo != self.repo:
             return
-        if self.target_branch and build.target_branch != self.target_branch:
+        if self.target_branch and build.commit_info.target_branch != self.target_branch:
             return
-        if self.branch and (build.target_branch != self.branch or build.pr):
+        if self.branch and (
+            build.commit_info.target_branch != self.branch or build.commit_info.pr
+        ):
             return
-        if self.pr and build.pr != self.pr:
+        if self.pr and build.commit_info.pr != self.pr:
             return
         if self.build_name and build.name != self.build_name:
             return

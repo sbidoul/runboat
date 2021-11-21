@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Iterator, Protocol, cast
 from weakref import WeakSet
 
+from .github import CommitInfo
 from .models import Build, BuildEvent, BuildInitStatus, BuildStatus, Repo
 
 _logger = logging.getLogger(__name__)
@@ -40,7 +41,12 @@ class BuildsDb:
 
     @classmethod
     def _build_from_row(cls, row: sqlite3.Row) -> Build:
-        return Build(**{k: row[k] for k in row.keys()})
+        commit_info_fields = {"repo", "target_branch", "pr", "git_commit"}
+        commit_info = CommitInfo(**{k: row[k] for k in commit_info_fields})
+        return Build(
+            commit_info=commit_info,
+            **{k: row[k] for k in row.keys() if k not in commit_info_fields}
+        )
 
     def reset(self) -> None:
         self._con = sqlite3.connect(":memory:")
@@ -123,10 +129,10 @@ class BuildsDb:
                 (
                     build.name,
                     build.deployment_name,
-                    build.repo,
-                    build.target_branch,
-                    build.pr,
-                    build.git_commit,
+                    build.commit_info.repo,
+                    build.commit_info.target_branch,
+                    build.commit_info.pr,
+                    build.commit_info.git_commit,
                     build.image,
                     build.desired_replicas,
                     build.status,
