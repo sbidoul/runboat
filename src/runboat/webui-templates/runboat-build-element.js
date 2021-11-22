@@ -12,6 +12,10 @@ class RunboatBuildElement extends LitElement {
         this.build = {};
     }
 
+    undeployed() {
+        this.build = {...this.build, status: null};
+    }
+
     static styles = css`
         .build-card {
             width: 16em;
@@ -38,22 +42,27 @@ class RunboatBuildElement extends LitElement {
     `;
 
     render() {
+        if (!this.build.name) {
+            return html`<div class="build-card"><p>Build not found...</p></div>`;
+        }
         return html`
         <div class="build-card build-status-${this.build.status}">
             <p class="build-name">${this.build.name}</p>
             <p>
-                <a href="${this.build.repo_target_branch_link}">${this.build.commit_info.repo} ${this.build.commit_info.target_branch}</a>
-                ${this.build.commit_info.pr?
-                    html`PR <a href="${this.build.repo_pr_link}">${this.build.commit_info.pr}</a>`:""
+                <a href="${this.build.repo_target_branch_link}">${this.build.commit_info?.repo} ${this.build.commit_info?.target_branch}</a>
+                ${this.build.commit_info?.pr?
+                    html`PR <a href="${this.build.repo_pr_link}">${this.build.commit_info?.pr}</a>`:""
                 }
                 <br>
-                ${this.build.commit_info.git_commit?
-                    html`(<a href="${this.build.repo_commit_link}">${this.build.commit_info.git_commit.substring(0, 8)}</a>)`:""
+                ${this.build.commit_info?.git_commit?
+                    html`(<a href="${this.build.repo_commit_link}">${this.build.commit_info?.git_commit.substring(0, 8)}</a>)`:""
                 }
             </p>
             <p>
-                ${this.build.status}
-                ⦙ 🗒 <a href="/api/v1/builds/${this.build.name}/init-log">init log</a>
+                ${this.build.status || "undeployed"}
+                ${this.build.status?
+                    html`⦙ 🗒 <a href="/api/v1/builds/${this.build.name}/init-log">init log</a>`:""
+                }
                 ${this.build.status == "started"?
                     html`⦙ 🗒 <a href="/api/v1/builds/${this.build.name}/log">log</a>`:""
                 }

@@ -13,7 +13,7 @@
     </head>
     <body>
         <runboat-build id="build"></runboat-build>
-        <p>Other builds for <a href="" id="repolink">this repo</a>.</p>
+        <p id="repolink"></p>
         <div id="footer">
             {{ footer_html }}
             {{ additional_footer_html }}
@@ -22,18 +22,41 @@
             import {RunboatBuildElement} from './runboat-build-element.js'
             customElements.define('runboat-build', RunboatBuildElement);
 
-            const buildName = new URLSearchParams(window.location.search).get("name");
             const buildElement = document.getElementById("build");
-            const evtSource = new EventSource(`/api/v1/build-events?build_name=${buildName}`);
-            evtSource.onmessage = function(event) {
+            var evtSource = null;
+
+            function onopen(event) {
+                console.log("connected");
+            }
+
+            function onmessage(event) {
                 var oEvent = JSON.parse(event.data);
                 const build = oEvent.build;
-                buildElement.build = oEvent.event == "upd" ? build : {};
+                if (oEvent.event == "upd") {
+                    buildElement.build = build;
+                } else if (oEvent.event == "del") {
+                    buildElement.undeployed();
+                }
                 const repolinkElement = document.getElementById("repolink");
-                repolinkElement.href = `./builds.html?repo=${build.commit_info.repo}`;
-                repolinkElement.text = build.commit_info.repo;
+                repolinkElement.innerHTML = `Other builds for <a href="./builds.html?repo=${build.commit_info.repo}">this repo</a>.`;
             }
-            // TODO: evtSource error handling
+
+            function onerror(event) {
+                evtSource.close();
+                console.log("error, will attempt to reconnect");
+                setTimeout(connect, 10000);
+            }
+
+            function connect() {
+                console.log("connecting...")
+                const buildName = new URLSearchParams(window.location.search).get("name");
+                evtSource = new EventSource(`/api/v1/build-events?build_name=${buildName}`);
+                evtSource.onopen = onopen;
+                evtSource.onmessage = onmessage;
+                evtSource.onerror = onerror;
+            }
+
+            connect();
         </script>
     </body>
 </html>
