@@ -22,7 +22,7 @@
         </style>
     </head>
     <body>
-        <div id="builds"></div>
+        <div id="builds">Connecting...</div>
         <div id="footer">
             {{ footer_html }}
             {{ additional_footer_html }}
@@ -35,6 +35,7 @@
 
             function onopen(event) {
                 console.log("connected");
+                document.getElementById("builds").innerHTML = '';
             }
 
             function onmessage(event) {
@@ -42,7 +43,7 @@
                 var buildElement = document.getElementById(oEvent.build.name);
                 if (oEvent.event == "upd") {
                     if (buildElement) {
-                        // update event element
+                        // update build element
                         buildElement.build = oEvent.build;
                     } else {
                         var rowId = `branch-${oEvent.build.commit_info.target_branch}`;
@@ -79,7 +80,6 @@
 
             function connect() {
                 console.log("connecting...")
-                document.getElementById("builds").innerHTML = '';
                 const repo = new URLSearchParams(window.location.search).get("repo");
                 const target_branch = new URLSearchParams(window.location.search).get("target_branch");
                 var url = `/api/v1/build-events?repo=${repo}`
