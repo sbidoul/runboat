@@ -1,8 +1,7 @@
 import re
 from typing import Optional
 
-from pydantic import BaseSettings
-from pydantic.main import BaseModel
+from pydantic import BaseModel, BaseSettings, validator
 
 from .exceptions import RepoOrBranchNotSupported
 
@@ -15,6 +14,14 @@ class RepoSettings(BaseModel):
     repo: str  # regex
     branch: str  # regex
     builds: list[BuildSettings]
+
+    @validator("builds")
+    def validate_builds(cls, v: list[BuildSettings]) -> list[BuildSettings]:
+        if len(v) != 1:
+            raise ValueError(
+                "One and only one build settings is allowed per repo/branch entry."
+            )
+        return v
 
 
 class Settings(BaseSettings):

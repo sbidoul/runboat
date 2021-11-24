@@ -182,10 +182,6 @@ class Build(BaseModel):
         build_settings = settings.get_build_settings(
             commit_info.repo, commit_info.target_branch
         )
-        if len(build_settings) > 1:
-            raise NotImplementedError(
-                "Having more than one build per commit is not supported yet."
-            )
         deployment_vars = k8s.make_deployment_vars(
             k8s.DeploymentMode.deployment,
             name,
