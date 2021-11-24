@@ -20,7 +20,7 @@ from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
 
 from .github import CommitInfo
-from .settings import settings
+from .settings import BuildSettings, settings
 from .utils import sync_to_async, sync_to_async_iterator
 
 _logger = logging.getLogger(__name__)
@@ -160,9 +160,9 @@ def make_deployment_vars(
     build_name: str,
     slug: str,
     commit_info: CommitInfo,
-    image: str,
+    build_settings: BuildSettings,
 ) -> DeploymentVars:
-    image_name, image_tag = _split_image_name_tag(image)
+    image_name, image_tag = _split_image_name_tag(build_settings.image)
     return DeploymentVars(
         mode=mode,
         namespace=settings.build_namespace,

@@ -41,7 +41,6 @@ class Build(BaseModel):
     name: str
     deployment_name: str
     commit_info: CommitInfo
-    image: str
     status: BuildStatus
     init_status: BuildInitStatus
     desired_replicas: int
@@ -86,7 +85,6 @@ class Build(BaseModel):
                 pr=deployment.metadata.annotations.get("runboat/pr") or None,
                 git_commit=deployment.metadata.annotations["runboat/git-commit"],
             ),
-            image=deployment.spec.template.spec.containers[0].image,
             init_status=deployment.metadata.annotations["runboat/init-status"],
             status=cls._status_from_deployment(deployment),
             desired_replicas=deployment.spec.replicas or 0,
@@ -193,7 +191,7 @@ class Build(BaseModel):
             name,
             slug,
             commit_info,
-            build_settings[0].image,
+            build_settings[0],
         )
         await k8s.deploy(deployment_vars)
         await github.notify_status(
@@ -257,7 +255,9 @@ class Build(BaseModel):
             self.name,
             self.slug,
             self.commit_info,
-            self.image,
+            settings.get_build_settings(
+                self.commit_info.repo, self.commit_info.target_branch
+            )[0],
         )
         await k8s.deploy(deployment_vars)
 
@@ -275,7 +275,9 @@ class Build(BaseModel):
             self.name,
             self.slug,
             self.commit_info,
-            self.image,
+            settings.get_build_settings(
+                self.commit_info.repo, self.commit_info.target_branch
+            )[0],
         )
         await k8s.deploy(deployment_vars)
 

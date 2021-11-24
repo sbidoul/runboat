@@ -44,7 +44,6 @@ class Repo(BaseModel):
 class Build(BaseModel):
     name: str
     commit_info: github.CommitInfo
-    image: str
     deploy_link: str
     repo_target_branch_link: str
     repo_pr_link: Optional[str]

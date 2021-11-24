@@ -1,5 +1,6 @@
 from runboat.github import CommitInfo
 from runboat.k8s import DeploymentMode, _render_kubefiles, make_deployment_vars
+from runboat.settings import BuildSettings
 
 EXPECTED = """\
 resources:
@@ -77,7 +78,7 @@ def test_render_kubefiles() -> None:
             pr=None,
             git_commit="abcdef123456789",
         ),
-        image="ghcr.io/oca/oca-ci:py3.8-odoo15.0",
+        build_settings=BuildSettings(image="ghcr.io/oca/oca-ci:py3.8-odoo15.0"),
     )
     with _render_kubefiles(deployment_vars) as tmp_path:
         assert (tmp_path / "kustomization.yaml").is_file()
