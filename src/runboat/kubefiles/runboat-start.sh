@@ -17,5 +17,5 @@ unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
   --no-database-list \
   -d ${PGDATABASE} \
-  --db-filter=^${PGDATABASE}
+  --db-filter=^${PGDATABASE} \
   --db_user=${PGUSER}
