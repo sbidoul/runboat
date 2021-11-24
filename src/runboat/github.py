@@ -30,7 +30,6 @@ class CommitInfo(BaseModel):
     git_commit: str
 
     @validator("repo")
-    @classmethod
     def validate_repo(cls, v: str) -> str:
         return v.lower()
 
