@@ -17,16 +17,13 @@ DEBIAN_FRONTEND=noninteractive apt-get -yqq install rsync
 # failed installation.
 rm -fr $ADDONS_DIR
 
-#
-# Clone an addons repository at git reference in $ADDONS_DIR.
-# Run oca_install_addons on it.
-#
-
+# Clone the repository at git reference into $ADDONS_DIR.
 git clone --quiet --filter=blob:none $RUNBOAT_GIT_REPO $ADDONS_DIR
 cd $ADDONS_DIR
 git fetch origin $RUNBOAT_GIT_REF:build
 git checkout build
 
+# Install.
 oca_install_addons
 
 # Keep a copy of the venv that we can re-use for shorter startup time.
