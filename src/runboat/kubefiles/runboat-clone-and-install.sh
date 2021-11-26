@@ -2,14 +2,16 @@
 
 set -ex
 
-DEBIAN_FRONTEND=noninteractive apt-get -yq install rsync
 
 # If it exists, copy the previously initialized venv.
 if [ -f /mnt/data/initialized ] ; then
-    rsync -a --delete /mnt/data/odoo-venv/ /opt/odoo-venv
+    #rsync -a --delete /mnt/data/odoo-venv/ /opt/odoo-venv
     pip list
+    # issue#23: install debian package dependencies (hack oca_install_addons to only
+    # install deb)
     exit 0
 fi
+DEBIAN_FRONTEND=noninteractive apt-get -yqq install rsync
 
 # Remove addons dir, in case we are reinitializing after a previously
 # failed installation.

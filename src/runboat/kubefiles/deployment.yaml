@@ -26,6 +26,9 @@ spec:
               mountPath: /runboat
             - name: data
               mountPath: /mnt/data
+            - name: data
+              mountPath: /opt/odoo-venv
+              subPath: odoo-venv
           envFrom:
             - secretRef:
                 name: odoosecretenv
