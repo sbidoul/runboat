@@ -189,8 +189,18 @@ class BuildsDb:
     def oldest_stopped(self, limit: int) -> list[Build]:
         """Return a list of oldest stopped builds."""
         rows = self._con.execute(
-            "SELECT * FROM builds WHERE status IN (?, ?, ?) "
-            "ORDER BY last_scaled LIMIT ?",
+            """
+WITH recent_builds as  (
+  SELECT ROW_NUMBER () OVER (
+     PARTITION BY repo, target_branch
+     ORDER BY create DESC
+   ) AS rownum, name
+   FROM builds
+   WHERE pr IS NULL AND rownum = 1
+)
+SELECT * FROM builds WHERE status IN (?, ?, ?)
+AND name NOT IN ( SELECT name FROM recent_builds)
+ORDER BY last_scaled LIMIT ?""",
             (BuildStatus.stopping, BuildStatus.stopped, BuildStatus.failed, limit),
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
