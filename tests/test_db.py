@@ -15,7 +15,7 @@ def _make_build(
     target_branch: str | None = None,
     pr: int | None = None,
     last_scaled: datetime.datetime | None = None,
-    created: datetime.datetime | None = None
+    created: datetime.datetime | None = None,
 ) -> Build:
     name = name or "build-a"
     return Build(
@@ -161,20 +161,25 @@ def test_repos() -> None:
     db.add(_make_build(name="b2", repo="oca/repo2"))
     assert db.repos() == [Repo(name="oca/repo1"), Repo(name="oca/repo2")]
 
+
 def test_oldest_stopped() -> None:
     db = BuildsDb()
-    db.add(_make_build(
-        name="b1",
-        repo="oca/repo1",
-        target_branch="15.0",
-        status=BuildStatus.stopped,
-        last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 0)
-    ))
-    db.add(_make_build(
-        name="b2",
-        repo="oca/repo1",
-        target_branch="15.0",
-        status=BuildStatus.stopped,
-        last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 1)
-    ))
+    db.add(
+        _make_build(
+            name="b1",
+            repo="oca/repo1",
+            target_branch="15.0",
+            status=BuildStatus.stopped,
+            last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 0),
+        )
+    )
+    db.add(
+        _make_build(
+            name="b2",
+            repo="oca/repo1",
+            target_branch="15.0",
+            status=BuildStatus.stopped,
+            last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 1),
+        )
+    )
     assert [b.name for b in db.oldest_stopped(limit=3)] == ["b1"]
