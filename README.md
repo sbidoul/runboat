@@ -64,6 +64,7 @@ For running the builds:
 For running the controller (runboat itself):
 
 - Python 3.10
+- sqlite3 >= 3.25
 - `kubectl`
 - A `KUBECONFIG` or an in-cluster service account that provides access to the namespace
   where the builds are deployed, with permissions to create and delete Service, Job,

@@ -187,10 +187,26 @@ class BuildsDb:
         return [self._build_from_row(row) for row in rows]
 
     def oldest_stopped(self, limit: int) -> list[Build]:
-        """Return a list of oldest stopped builds."""
+        """Return a list of oldest stopped builds.
+
+        Exclude the most recent build of each branch that we want to
+        preserve from eviction.
+        """
         rows = self._con.execute(
-            "SELECT * FROM builds WHERE status IN (?, ?, ?) "
-            "ORDER BY last_scaled LIMIT ?",
+            """\
+                SELECT * FROM (
+                    SELECT
+                        ROW_NUMBER () OVER (
+                            PARTITION BY repo, target_branch, pr
+                            ORDER BY created DESC
+                        ) AS rownum,
+                        *
+                    FROM builds
+                )
+                WHERE status IN (?, ?, ?) AND (rownum != 1 OR pr IS NOT NULL)
+                ORDER BY last_scaled
+                LIMIT ?
+            """,
             (BuildStatus.stopping, BuildStatus.stopped, BuildStatus.failed, limit),
         ).fetchall()
         return [self._build_from_row(row) for row in rows]
