@@ -162,6 +162,32 @@ def test_repos() -> None:
     assert db.repos() == [Repo(name="oca/repo1"), Repo(name="oca/repo2")]
 
 
+def test_oldest_started() -> None:
+    db = BuildsDb()
+    db.add(
+        _make_build(
+            "b1",
+            status=BuildStatus.started,
+            last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 0),
+        )
+    )
+    db.add(
+        _make_build(
+            "b2",
+            status=BuildStatus.started,
+            last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 2),
+        )
+    )
+    db.add(
+        _make_build(
+            "b3",
+            status=BuildStatus.stopped,
+            last_scaled=datetime.datetime(2021, 10, 11, 12, 0, 4),
+        )
+    )
+    assert [b.name for b in db.oldest_started(limit=3)] == ["b1", "b2"]
+
+
 def test_oldest_stopped() -> None:
     db = BuildsDb()
     db.add(
