@@ -194,7 +194,7 @@ class Controller:
                 continue  # no capacity for now, back to sleep
             to_initialize = self.db.to_initialize(limit=can_initialize)
             if not to_initialize:
-                continue  # nothing startable, back to sleep
+                continue  # nothing to initialize, back to sleep
             _logger.info(
                 f"{self.initializing} builds of max {self.max_initializing} "
                 f"are initializing. Launching {len(to_initialize)} initialization jobs."
