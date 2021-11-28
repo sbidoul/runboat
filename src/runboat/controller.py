@@ -84,17 +84,16 @@ class Controller:
     def undeploying(self) -> int:
         return self.db.count_by_status(BuildStatus.undeploying)
 
-    async def deploy_or_start(self, commit_info: CommitInfo) -> None:
+    async def deploy_commit(self, commit_info: CommitInfo) -> None:
+        """Deploy build for a commit, or do nothing if biuld already exist."""
         build = self.db.get_for_commit(
             repo=commit_info.repo,
             target_branch=commit_info.target_branch,
             pr=commit_info.pr,
             git_commit=commit_info.git_commit,
         )
-        if build is not None:
-            await build.start()
-            return
-        await Build.deploy(commit_info)
+        if build is None:
+            await Build.deploy(commit_info)
 
     async def get_build(self, build_name: str, db_only: bool = True) -> Build | None:
         build = self.db.get(build_name)

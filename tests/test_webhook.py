@@ -24,7 +24,7 @@ def test_webhook_github_push(mocker: MockerFixture) -> None:
     )
     response.raise_for_status()
     mock.assert_called_with(
-        controller.deploy_or_start,
+        controller.deploy_commit,
         CommitInfo(
             repo="oca/mis-builder",
             target_branch="15.0",
@@ -75,7 +75,7 @@ def test_webhook_github_pr(action: str, mocker: MockerFixture) -> None:
     )
     response.raise_for_status()
     mock.assert_called_with(
-        controller.deploy_or_start,
+        controller.deploy_commit,
         CommitInfo(
             repo="oca/mis-builder",
             target_branch="15.0",

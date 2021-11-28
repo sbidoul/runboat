@@ -115,7 +115,7 @@ async def undeploy_builds(
 async def trigger_branch(repo: str, branch: str) -> None:
     """Trigger build for a branch."""
     commit_info = await github.get_branch_info(repo, branch)
-    await controller.deploy_or_start(commit_info)
+    await controller.deploy_commit(commit_info)
 
 
 @router.post(
@@ -125,7 +125,7 @@ async def trigger_branch(repo: str, branch: str) -> None:
 async def trigger_pull(repo: str, pr: int) -> None:
     """Trigger build for a pull request."""
     commit_info = await github.get_pull_info(repo, pr)
-    await controller.deploy_or_start(commit_info)
+    await controller.deploy_commit(commit_info)
 
 
 async def _build_by_name(name: str) -> models.Build:

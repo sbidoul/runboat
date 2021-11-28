@@ -32,7 +32,7 @@ async def receive_payload(
                 )
                 return
             background_tasks.add_task(
-                controller.deploy_or_start,
+                controller.deploy_commit,
                 CommitInfo(
                     repo=repo,
                     target_branch=target_branch,
@@ -52,7 +52,7 @@ async def receive_payload(
             )
             return
         background_tasks.add_task(
-            controller.deploy_or_start,
+            controller.deploy_commit,
             CommitInfo(
                 repo=repo,
                 target_branch=target_branch,
