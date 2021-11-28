@@ -26,6 +26,8 @@ class Controller:
     - The 'initializer' starts initialization jobs for deployment that have been marked
       with 'runboat/init-status=todo', while making sure that the maximum number of
       deployments initializing concurrently does not exceed the limit.
+    - The 'cleaner' starts cleanup jobs for deployment that have been marked for
+      deletion.
     - The 'stopper' stops old running deployments.
     - The 'undeployer' undeploys old stopped deployments.
     """
@@ -35,11 +37,16 @@ class Controller:
         self._wakeup_initializer = asyncio.Event()
         self._wakeup_stopper = asyncio.Event()
         self._wakeup_undeployer = asyncio.Event()
+        self._wakeup_cleaner = asyncio.Event()
         self.db = BuildsDb()
         self.db.register_listener(self)
 
     def on_build_event(self, event: BuildEvent, build: Build) -> None:
-        self._wakeup()
+        self._wakeup_initializer.set()
+        self._wakeup_stopper.set()
+        self._wakeup_undeployer.set()
+        if event == BuildEvent.modified and build.status == BuildStatus.undeploying:
+            self._wakeup_cleaner.set()
 
     @property
     def started(self) -> int:
@@ -85,11 +92,6 @@ class Controller:
             return
         await Build.deploy(commit_info)
 
-    def _wakeup(self) -> None:
-        self._wakeup_initializer.set()
-        self._wakeup_stopper.set()
-        self._wakeup_undeployer.set()
-
     async def get_build(self, build_name: str, db_only: bool = True) -> Build | None:
         build = self.db.get(build_name)
         if build is not None:
@@ -119,16 +121,8 @@ class Controller:
             if not build_name:
                 continue
             if event_type in (None, "ADDED", "MODIFIED"):
-                prev_build = self.db.get(build_name)
                 build = Build.from_deployment(deployment)
                 self.db.add(build)
-                if build.status == BuildStatus.undeploying and (
-                    prev_build is None or prev_build.status != BuildStatus.undeploying
-                ):
-                    _logger.info(
-                        f"{build} has deletionTimestamp. Launching cleanup job."
-                    )
-                    await build.cleanup()
             elif event_type == "DELETED":
                 self.db.remove(build_name)
 
@@ -179,6 +173,13 @@ class Controller:
                         await build.on_cleanup_failed()
             elif event_type == "DELETED":
                 pass
+
+    async def cleaner(self) -> None:
+        while True:
+            await self._wakeup_cleaner.wait()
+            self._wakeup_cleaner.clear()
+            for build in self.db.to_cleanup():
+                await build.cleanup()
 
     async def initializer(self) -> None:
         while True:
@@ -250,6 +251,7 @@ class Controller:
         for f in (
             self.deployment_watcher,
             self.job_watcher,
+            self.cleaner,
             self.initializer,
             self.stopper,
             self.undeployer,

@@ -170,6 +170,13 @@ class BuildsDb:
         count = self._con.execute("SELECT COUNT(name) FROM builds").fetchone()[0]
         return cast(int, count)
 
+    def to_cleanup(self) -> list[Build]:
+        rows = self._con.execute(
+            "SELECT * FROM builds WHERE status=? ORDER BY created",
+            (BuildStatus.undeploying,),
+        ).fetchall()
+        return [self._build_from_row(row) for row in rows]
+
     def to_initialize(self, limit: int) -> list[Build]:
         """Return the list of builds to initialize, ordered by creation timestamp."""
         rows = self._con.execute(
