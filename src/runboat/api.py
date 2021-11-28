@@ -85,10 +85,11 @@ async def builds(
     target_branch: Optional[str] = None,
     branch: Optional[str] = None,
     pr: Optional[int] = None,
+    status: Optional[models.BuildStatus] = None,
 ) -> list[models.Build]:
     return list(
         controller.db.search(
-            repo=repo, target_branch=target_branch, branch=branch, pr=pr
+            repo=repo, target_branch=target_branch, branch=branch, pr=pr, status=status
         )
     )
 

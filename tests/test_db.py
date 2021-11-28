@@ -90,7 +90,7 @@ def test_search() -> None:
     db.add(build1 := _make_build(name="b1", repo="oca/repo1"))
     db.add(_make_build(name="b2", repo="oca/repo2"))
     assert len(list(db.search())) == 2
-    assert list(db.search("oca/repo1")) == [build1]
+    assert list(db.search(repo="oca/repo1")) == [build1]
 
 
 def test_search_by_branch_and_pr() -> None:
@@ -103,6 +103,15 @@ def test_search_by_branch_and_pr() -> None:
     assert list(db.search(target_branch="15.0")) == [build1, build2]
     # Search on pr.
     assert list(db.search(pr=1)) == [build2]
+
+
+def test_search_by_status() -> None:
+    db = BuildsDb()
+    db.add(build1 := _make_build(name="b1", status=BuildStatus.failed))
+    db.add(build2 := _make_build(name="b2", status=BuildStatus.started))
+    assert list(db.search(status=BuildStatus.failed)) == [build1]
+    assert list(db.search(status=BuildStatus.started)) == [build2]
+    assert list(db.search(status=BuildStatus.stopped)) == []
 
 
 def test_search_sort() -> None:

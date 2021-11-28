@@ -45,7 +45,7 @@ class BuildsDb:
         commit_info = CommitInfo(**{k: row[k] for k in commit_info_fields})
         return Build(
             commit_info=commit_info,
-            **{k: row[k] for k in row.keys() if k not in commit_info_fields}
+            **{k: row[k] for k in row.keys() if k not in commit_info_fields},
         )
 
     def reset(self) -> None:
@@ -224,11 +224,13 @@ class BuildsDb:
 
     def search(
         self,
+        *,
         repo: str | None = None,
         target_branch: str | None = None,
         branch: str | None = None,
         pr: int | None = None,
         name: str | None = None,
+        status: BuildStatus | None = None,
         sort: SortOrder = SortOrder.desc,
     ) -> Iterator[Build]:
         query = "SELECT * FROM builds "
@@ -250,6 +252,9 @@ class BuildsDb:
         if name:
             where.append("name=?")
             params.append(name)
+        if status:
+            where.append("status=?")
+            params.append(status.value)
         if where:
             query += "WHERE " + " AND ".join(where)
         if sort == SortOrder.desc:
