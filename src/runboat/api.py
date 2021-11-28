@@ -20,6 +20,7 @@ router = APIRouter()
 class Status(BaseModel):
     deployed: int
     max_deployed: int
+    failed: int
     stopped: int
     started: int
     max_started: int

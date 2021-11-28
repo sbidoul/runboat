@@ -53,6 +53,10 @@ class Controller:
         return self.db.count_by_status(BuildStatus.stopped)
 
     @property
+    def failed(self) -> int:
+        return self.db.count_by_status(BuildStatus.failed)
+
+    @property
     def started(self) -> int:
         return self.db.count_by_status(BuildStatus.started)
 
