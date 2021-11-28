@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     base_url: str = "http://localhost:8000"
     # HTML fragment for second footer.
     additional_footer_html: str = ""
+    # Disable posting of statuses to GitHub commits
+    disable_commit_statuses: bool = False
 
     def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
         for repo_settings in self.repos:

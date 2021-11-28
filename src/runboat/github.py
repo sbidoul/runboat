@@ -64,6 +64,8 @@ class GitHubStatusState(str, Enum):
 async def notify_status(
     repo: str, sha: str, state: GitHubStatusState, target_url: str | None
 ) -> None:
+    if settings.disable_commit_statuses:
+        return
     # https://docs.github.com/en/rest/reference/repos#create-a-commit-status
     await _github_request(
         "POST",
