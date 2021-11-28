@@ -49,6 +49,10 @@ class Controller:
             self._wakeup_cleaner.set()
 
     @property
+    def stopped(self) -> int:
+        return self.db.count_by_status(BuildStatus.stopped)
+
+    @property
     def started(self) -> int:
         return self.db.count_by_status(BuildStatus.started)
 
