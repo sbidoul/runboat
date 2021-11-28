@@ -53,7 +53,7 @@ class Build(BaseModel):
     webui_link: str
     status: models.BuildStatus
     created: datetime.datetime
-    last_scaled: Optional[datetime.datetime]
+    last_scaled: datetime.datetime
 
     class Config:
         orm_mode = True
