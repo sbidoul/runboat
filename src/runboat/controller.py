@@ -30,14 +30,8 @@ class Controller:
     - The 'undeployer' undeploys old stopped deployments.
     """
 
-    db: BuildsDb
-    _tasks: list[asyncio.Task[None]]
-    _wakeup_initializer: asyncio.Event
-    _wakeup_stopper: asyncio.Event
-    _wakeup_undeployer: asyncio.Event
-
     def __init__(self) -> None:
-        self._tasks = []
+        self._tasks: list[asyncio.Task[None]] = []
         self._wakeup_initializer = asyncio.Event()
         self._wakeup_stopper = asyncio.Event()
         self._wakeup_undeployer = asyncio.Event()
