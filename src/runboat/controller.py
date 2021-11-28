@@ -156,8 +156,9 @@ class Controller:
                 build = await self.get_build(build_name, db_only=False)
                 if build is None:
                     _logger.warning(
-                        f"Received job event for {build_name} "
-                        f"but the corresponding deployment is gone. "
+                        f"Received job event for {job.metadata.name} "
+                        f"of kind {job_kind} "
+                        f"but the corresponding deployment {build_name} is gone. "
                         f"Deleting all build resources."
                     )
                     await k8s.delete_resources(build_name)
