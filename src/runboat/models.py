@@ -214,7 +214,7 @@ class Build(BaseModel):
             return
         elif self.status == BuildStatus.failed:
             _logger.info(f"Marking failed {self} for reinitialization.")
-            await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
+            await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.initialize)
             if await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0):
                 await github.notify_status(
                     self.commit_info.repo,
@@ -259,8 +259,10 @@ class Build(BaseModel):
 
     async def cleanup(self) -> None:
         """Launch the clenaup job."""
-        # Delete the initialization job to reduce conflict with the cleanup job.
-        await k8s.delete_job(self.name, job_kind=k8s.DeploymentMode.initialize)
+        # Kill the initialization job to reduce conflict with the cleanup job, such as
+        # the database being created by the initialization after the cleanup job has
+        # completed.
+        await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.initialize)
         # Be sure the deployment is stopped.
         await self._patch(desired_replicas=0, not_found_ok=True)
         # Start cleanup job. on_cleanup_{started,succeeded,failed} callbacks will follow

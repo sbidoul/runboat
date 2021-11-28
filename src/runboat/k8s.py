@@ -242,18 +242,20 @@ async def delete_resources(build_name: str) -> None:
     )
 
 
-async def delete_job(build_name: str, job_kind: DeploymentMode) -> None:
+@sync_to_async
+def kill_job(build_name: str, job_kind: DeploymentMode) -> None:
     # TODO delete all resources with runboat/build and runboat/job-kind label
-    await _kubectl(
-        [
-            "-n",
-            settings.build_namespace,
-            "delete",
-            "job",
-            "-l",
-            f"runboat/build={build_name},runboat/job-kind={job_kind}",
-            "--wait=false",
-        ]
+    batchv1 = client.BatchV1Api()
+    batchv1.delete_collection_namespaced_job(
+        namespace=settings.build_namespace,
+        label_selector=f"runboat/build={build_name},runboat/job-kind={job_kind}",
+        grace_period_seconds=0,
+    )
+    corev1 = client.CoreV1Api()
+    corev1.delete_collection_namespaced_pod(
+        namespace=settings.build_namespace,
+        label_selector=f"runboat/build={build_name},runboat/job-kind={job_kind}",
+        grace_period_seconds=0,
     )
 
 
