@@ -199,39 +199,18 @@ class Build(BaseModel):
 
     async def start(self) -> None:
         """Start build if init succeeded, or reinitialize if failed."""
-        if self.status in (
-            BuildStatus.initializing,
-            BuildStatus.started,
-            BuildStatus.starting,
-        ):
-            _logger.info(
-                f"Ignoring start command for {self} "
-                "that is already started or starting."
-            )
+        if self.status not in (BuildStatus.stopped, BuildStatus.stopping):
+            _logger.info(f"Ignoring start command for {self} that is {self.status}.")
             return
-        elif self.status == BuildStatus.undeploying:
-            _logger.info(f"Ignoring start command for {self} that is undeploying.")
-            return
-        elif self.status == BuildStatus.failed:
-            _logger.info(f"Marking failed {self} for reinitialization.")
-            await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.initialize)
-            if await self._patch(init_status=BuildInitStatus.todo, desired_replicas=0):
-                await github.notify_status(
-                    self.commit_info.repo,
-                    self.commit_info.git_commit,
-                    GitHubStatusState.pending,
-                    target_url=self.live_link,
-                )
-        elif self.status in (BuildStatus.stopped, BuildStatus.stopping):
-            _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
-            await self._patch(desired_replicas=1)
+        _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
+        await self._patch(desired_replicas=1)
 
     async def stop(self) -> None:
-        if self.status == BuildStatus.started:
-            _logger.info(f"Stopping {self} that was last scaled on {self.last_scaled}.")
-            await self._patch(desired_replicas=0)
-        else:
-            _logger.info(f"Ignoring stop command for {self} that is not started.")
+        if self.status != BuildStatus.started:
+            _logger.info(f"Ignoring stop command for {self} that is {self.status}.")
+            return
+        _logger.info(f"Stopping {self} that was last scaled on {self.last_scaled}.")
+        await self._patch(desired_replicas=0)
 
     async def undeploy(self) -> None:
         # To undeploy, we delete the deployment. Due to the finalizer, the deletion
