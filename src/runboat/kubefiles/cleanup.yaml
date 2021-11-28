@@ -27,4 +27,5 @@ spec:
           configMap:
             name: runboat-scripts
       restartPolicy: Never
+  completions: 1
   backoffLimit: 6
