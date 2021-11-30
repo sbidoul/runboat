@@ -10,6 +10,12 @@ from .settings import settings
 
 _logger = logging.getLogger(__name__)
 
+# In some circumstances, on_build_event can be called very frequently (e.g. when the
+# controller starts and discovers existing deployments). A small delay before the wakeup
+# of the background tasks and the clearing of the wakeup avoids waking up the tasks
+# too often.
+EVENT_BUFFERING_DELAY = 1
+
 
 class Controller:
     """The controller monitors and manages the deployments.
@@ -45,8 +51,7 @@ class Controller:
         self._wakeup_initializer.set()
         self._wakeup_stopper.set()
         self._wakeup_undeployer.set()
-        if event == BuildEvent.modified and build.status == BuildStatus.undeploying:
-            self._wakeup_cleaner.set()
+        self._wakeup_cleaner.set()
 
     @property
     def stopped(self) -> int:
@@ -184,6 +189,7 @@ class Controller:
     async def cleaner(self) -> None:
         while True:
             await self._wakeup_cleaner.wait()
+            await asyncio.sleep(EVENT_BUFFERING_DELAY)
             self._wakeup_cleaner.clear()
             for build in self.db.to_cleanup():
                 await build.cleanup()
@@ -191,6 +197,7 @@ class Controller:
     async def initializer(self) -> None:
         while True:
             await self._wakeup_initializer.wait()
+            await asyncio.sleep(EVENT_BUFFERING_DELAY)
             self._wakeup_initializer.clear()
             can_initialize = self.max_initializing - self.initializing
             if can_initialize <= 0:
@@ -208,6 +215,7 @@ class Controller:
     async def stopper(self) -> None:
         while True:
             await self._wakeup_stopper.wait()
+            await asyncio.sleep(EVENT_BUFFERING_DELAY)
             self._wakeup_stopper.clear()
             can_stop = self.started - self.max_started
             if can_stop <= 0:
@@ -225,6 +233,7 @@ class Controller:
     async def undeployer(self) -> None:
         while True:
             await self._wakeup_undeployer.wait()
+            await asyncio.sleep(EVENT_BUFFERING_DELAY)
             self._wakeup_undeployer.clear()
             can_undeploy = self.deployed - self.max_deployed
             if can_undeploy <= 0:
