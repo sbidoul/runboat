@@ -170,6 +170,13 @@ class BuildsDb:
         count = self._con.execute("SELECT COUNT(name) FROM builds").fetchone()[0]
         return cast(int, count)
 
+    def count_deployed(self) -> int:
+        count = self._con.execute(
+            "SELECT COUNT(name) FROM builds WHERE status!=?",
+            (BuildStatus.undeploying,),
+        ).fetchone()[0]
+        return cast(int, count)
+
     def to_cleanup(self) -> list[Build]:
         rows = self._con.execute(
             "SELECT * FROM builds WHERE status=? ORDER BY created",

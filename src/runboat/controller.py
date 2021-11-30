@@ -85,7 +85,7 @@ class Controller:
 
     @property
     def deployed(self) -> int:
-        return self.db.count_all()
+        return self.db.count_deployed()
 
     @property
     def max_deployed(self) -> int:
