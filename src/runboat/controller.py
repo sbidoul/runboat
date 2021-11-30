@@ -15,6 +15,8 @@ _logger = logging.getLogger(__name__)
 # of the background tasks and the clearing of the wakeup avoids waking up the tasks
 # too often.
 EVENT_BUFFERING_DELAY = 1
+# When an exception happens in background tasks, restart them after a delay.
+WALKING_DEAD_RESTART_DELAY = 5
 
 
 class Controller:
@@ -256,13 +258,18 @@ class Controller:
                 _logger.info(f"(Re)starting {func.__name__}")
                 try:
                     await func()
+                except k8s.WatchException as e:
+                    _logger.info(
+                        f"Watch error {e} in {func.__name__}, "
+                        f"restarting in {WALKING_DEAD_RESTART_DELAY} sec."
+                    )
+                    await asyncio.sleep(WALKING_DEAD_RESTART_DELAY)
                 except Exception:
-                    delay = 5
                     _logger.exception(
                         f"Unhandled exception in {func.__name__}, "
-                        f"restarting in {delay} sec."
+                        f"restarting in {WALKING_DEAD_RESTART_DELAY} sec."
                     )
-                    await asyncio.sleep(delay)
+                    await asyncio.sleep(WALKING_DEAD_RESTART_DELAY)
 
         for f in (
             self.deployment_watcher,

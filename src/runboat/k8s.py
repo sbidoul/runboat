@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-import time
 from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
@@ -80,6 +79,10 @@ def patch_deployment(
         raise
 
 
+class WatchException(Exception):
+    pass
+
+
 def _watch(
     list_method: Callable[..., Any], *args: Any, **kwargs: Any
 ) -> Generator[tuple[str | None, Any], None, None]:
@@ -113,12 +116,7 @@ def _watch(
                 except (urllib3.exceptions.TimeoutError, TimeoutError):
                     continue
         except Exception as e:
-            delay = 5
-            _logger.info(
-                f"Error {e} watching {list_method.__name__}. Retrying in {delay} sec."
-            )
-            time.sleep(delay)
-            continue
+            raise WatchException(f"{e} in {list_method.__name__}") from e
 
 
 @sync_to_async_iterator
