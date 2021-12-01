@@ -1,8 +1,5 @@
 import {LitElement, html, css} from 'https://unpkg.com/lit@2.0.2?module';
-import dayjs from 'https://unpkg.com/dayjs@1.10.7/esm';
-import relativeTime from 'https://unpkg.com/dayjs@1.10.7/esm/plugin/relativeTime';
-
-dayjs.extend(relativeTime);
+import 'https://unpkg.com/@github/time-elements@latest?module';
 
 class RunboatBuildElement extends LitElement {
     static get properties() {
@@ -39,7 +36,7 @@ class RunboatBuildElement extends LitElement {
         .build-status-failed {
             background-color: lightcoral;
         }
-        .age {
+        time-ago {
             color: gray;
             white-space: nowrap;
         }
@@ -64,7 +61,7 @@ class RunboatBuildElement extends LitElement {
                 ${this.build.commit_info?.git_commit?
                     html`(<a href="${this.build.repo_commit_link}">${this.build.commit_info?.git_commit.substring(0, 8)}</a>)`:""
                 }
-                <span class="age">${dayjs(this.build.created).fromNow()}</span>
+                <time-ago datetime="${this.build.created}"></time-ago>
             </p>
             <p>
                 ${this.build.status || "undeployed"}
