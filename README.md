@@ -17,7 +17,7 @@ Runboat has the following main components:
 - A REST API to list builds and trigger new deployments as well as start, stop, redeploy
   or undeploy builds.
 - A GitHub webhook to automatically trigger new builds on pushes to branches and pull
-  requests of supported repositories.
+  requests of supported repositories and branches (configured via regular expressions).
 - A controller that performs the following tasks:
 
   - monitor deployments in a kubernetes namespaces to maintain the in-memory database;
@@ -25,16 +25,13 @@ Runboat has the following main components:
     install dependencies, create the corresponding postgres database and install the
     addons in it;
   - initialization jobs are started concurrently up to a configured limit;
-  - when the initialization job succeeds, scale up the deployment, so it becomes
-    accessible;
-  - when the initializaiton job fails, flag the deployment as failed;
+  - when the initialization job succeeds, preserve the database, filestore, and virtual
+    environment, so everything is ready for an almost instantaneous startup;
+  - when the initialization job fails, flag the deployment as failed;
   - when there are too many deployments started, stop the oldest started;
   - when there are too many deployments, delete the oldest created;
   - when a deployment is deleted, run a cleanup job to drop the database and delete
     all kubernetes resources associated with the deployment.
-
-When a deployment is stopped, the corresponding postgres  database and filesystem volume
-remain present, so deployments can restart almost instantly.
 
 This approach allows the deployment of a very large number of builds which consume no
 memory nor CPU until they are started. The number of started deployment can also be
@@ -68,8 +65,8 @@ For running the controller (runboat itself):
 - `kubectl`
 - A `KUBECONFIG` or an in-cluster service account that provides access to the namespace
   where the builds are deployed, with permissions to create and delete Service, Job,
-  Deployment, Ingress, Secret and ConfigMap resources as well as read and watch
-  Deployments and Jobs.
+  Deployment, PersistentVolumeClaim, Ingress, Secret and ConfigMap resources as well as
+  read and watch Deployments and Jobs.
 - Some sort of reverse proxy to expose the REST API.
 
 The controller can be run outside the kubernetes cluster or deployed inside it, or even
@@ -82,7 +79,8 @@ All resources to be deployed in kubernetes for a build are in
 `kustomization.yaml` jinja template that leads to three possible resource groups
 depending on a `mode` variable in the jinja rendering context:
 
-- `deployment` creates a kubernetes deployment with its associated service and ingress;
+- `deployment` creates a kubernetes deployment with its associated resources (pvc,
+  service, ingress, ...);
 - `initialization` creates a job that creates the database;
 - `cleanup` creates a job that drops the database;
 
@@ -136,7 +134,6 @@ should happen if there is more).
 Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
 `run_in_executor`, SIGINT/SIGTERM handling does not work very well, and gunicorn makes
 it more robust. https://bugs.python.org/issue29309
-
 
 ## Configuration
 

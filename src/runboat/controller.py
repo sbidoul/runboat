@@ -96,7 +96,7 @@ class Controller:
         return self.db.count_by_status(BuildStatus.undeploying)
 
     async def deploy_commit(self, commit_info: CommitInfo) -> None:
-        """Deploy build for a commit, or do nothing if biuld already exist."""
+        """Deploy build for a commit, or do nothing if build already exist."""
         build = self.db.get_for_commit(
             repo=commit_info.repo,
             target_branch=commit_info.target_branch,
