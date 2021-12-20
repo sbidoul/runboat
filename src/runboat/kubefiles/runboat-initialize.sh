@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Install all addons in the test database.
+# Clone repo and install all addons in the test database.
 #
 
 set -ex
@@ -17,7 +17,6 @@ ADDONS=$(addons --addons-dir ${ADDONS_DIR} --include "${INCLUDE}" --exclude "${E
 
 unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
-  --db-template=template1 \
   -d ${PGDATABASE} \
   -i ${ADDONS:-base} \
   --stop-after-init
