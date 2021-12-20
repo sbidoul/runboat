@@ -31,7 +31,6 @@ class Status(BaseModel):
 
     class Config:
         orm_mode = True
-        read_with_orm_mode = True
 
 
 class Repo(BaseModel):
@@ -40,7 +39,6 @@ class Repo(BaseModel):
 
     class Config:
         orm_mode = True
-        read_with_orm_mode = True
 
 
 class Build(BaseModel):
@@ -57,7 +55,6 @@ class Build(BaseModel):
 
     class Config:
         orm_mode = True
-        read_with_orm_mode = True
 
 
 class BuildEvent(BaseModel):
