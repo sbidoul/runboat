@@ -30,7 +30,7 @@ test = [
     "pytest-mock",
 ]
 mypy = [
-    "mypy",
+    "mypy>=0.930",
 ]
 
 [project.urls]

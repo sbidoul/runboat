@@ -21,14 +21,12 @@ def slugify(s: str | int) -> str:
     return re.sub(r"[^a-z0-9]", "-", str(s).lower())
 
 
-# TODO replace ... with P below when mypy supports PEP 612
-#      (https://github.com/python/mypy/issues/8645)
 P = ParamSpec("P")
 R = TypeVar("R")
 T = TypeVar("T")
 
 
-def sync_to_async(func: Callable[..., R]) -> Callable[..., Awaitable[R]]:
+def sync_to_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     @wraps(func)
     async def inner(*args: Any, **kwargs: Any) -> R:
         f = functools.partial(func, *args, **kwargs)
@@ -38,8 +36,8 @@ def sync_to_async(func: Callable[..., R]) -> Callable[..., Awaitable[R]]:
 
 
 def sync_to_async_iterator(
-    iterator_func: Callable[..., Generator[R, None, None]]
-) -> Callable[..., AsyncGenerator[R, None]]:
+    iterator_func: Callable[P, Generator[R, None, None]]
+) -> Callable[P, AsyncGenerator[R, None]]:
     @sync_to_async
     def async_next(iterator: Iterator[R]) -> R:
         try:
