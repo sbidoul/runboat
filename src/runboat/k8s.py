@@ -17,6 +17,7 @@ from kubernetes.client.exceptions import ApiException
 from kubernetes.client.models.v1_deployment import V1Deployment
 from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
+from typing_extensions import NotRequired
 
 from .github import CommitInfo
 from .settings import BuildSettings, settings
@@ -56,10 +57,10 @@ def delete_deployment(deployment_name: str) -> None:
     )
 
 
-class PatchOperation(TypedDict, total=False):
+class PatchOperation(TypedDict):
     op: str
     path: str
-    value: str | int  # maybe absent, hence total=False above
+    value: NotRequired[str | int]
 
 
 @sync_to_async
