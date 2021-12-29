@@ -10,6 +10,7 @@ spec:
       labels:
         runboat/job-kind: initialize
     spec:
+      enableServiceLinks: false
       containers:
         - name: initalize
           image: odoo

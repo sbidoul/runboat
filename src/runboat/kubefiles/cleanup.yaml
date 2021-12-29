@@ -10,6 +10,7 @@ spec:
       labels:
         runboat/job-kind: cleanup
     spec:
+      enableServiceLinks: false
       containers:
         - name: cleanup
           image: postgres
