@@ -78,6 +78,7 @@ class RunboatBuildElement extends LitElement {
             <p>
                 <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped"}">start</button>
                 <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
+                <button @click="${this.resetHandler}">reset</button>
             </p>
         </div>
         `;
@@ -89,6 +90,10 @@ class RunboatBuildElement extends LitElement {
 
     stopHandler(e) {
         fetch(`/api/v1/builds/${this.build.name}/stop`, {method: 'POST'});
+    }
+
+    resetHandler(e) {
+        fetch(`/api/v1/builds/${this.build.name}/reset`, {method: 'POST'});
     }
 }
 

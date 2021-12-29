@@ -177,6 +177,13 @@ async def stop_build(name: str) -> None:
     await build.stop()
 
 
+@router.post("/builds/{name}/reset")
+async def reset_build(name: str) -> None:
+    """Redeploy, so as to reinitialize."""
+    build = await _build_by_name(name)
+    await build.redeploy()
+
+
 @router.delete("/builds/{name}", dependencies=[Depends(authenticated)])
 async def undeploy_build(name: str) -> None:
     """Delete the deployment and drop the database."""

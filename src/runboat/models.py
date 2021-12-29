@@ -220,6 +220,28 @@ class Build(BaseModel):
         # to remove the deployment.
         await k8s.delete_deployment(self.deployment_name)
 
+    async def redeploy(self) -> None:
+        """Redeploy a build, to reinitialize it."""
+        _logger.info(f"Redeploying {self}.")
+        await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.cleanup)
+        await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.initialize)
+        deployment_vars = k8s.make_deployment_vars(
+            k8s.DeploymentMode.deployment,
+            self.name,
+            self.slug,
+            self.commit_info,
+            settings.get_build_settings(
+                self.commit_info.repo, self.commit_info.target_branch
+            )[0],
+        )
+        await k8s.deploy(deployment_vars)
+        await github.notify_status(
+            self.commit_info.repo,
+            self.commit_info.git_commit,
+            GitHubStatusState.pending,
+            target_url=None,
+        )
+
     async def initialize(self) -> None:
         """Launch the initialization job."""
         # Start initizalization job. on_initialize_{started,succeeded,failed} callbacks
