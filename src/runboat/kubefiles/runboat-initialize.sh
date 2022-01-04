@@ -17,6 +17,7 @@ ADDONS=$(addons --addons-dir ${ADDONS_DIR} --include "${INCLUDE}" --exclude "${E
 
 unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
+  --db-template=template1 \
   -d ${PGDATABASE} \
   -i ${ADDONS:-base} \
   --stop-after-init
