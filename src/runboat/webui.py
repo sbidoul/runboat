@@ -57,10 +57,16 @@ def mount(app: FastAPI) -> None:
 
 
 @router.get("/builds", response_class=RedirectResponse)
-async def builds(repo: str, target_branch: str | None = None) -> Response:
+async def builds(
+    repo: str,
+    target_branch: str | None = None,
+    branch: str | None = None,
+) -> Response:
     url = f"/webui/builds.html?repo={repo}"
     if target_branch:
         url += f"&target_branch={target_branch}"
+    if branch:
+        url += f"&branch={branch}"
     return RedirectResponse(url=url)
 
 
