@@ -1,7 +1,6 @@
 import shutil
 from importlib import resources
 from pathlib import Path
-from typing import Optional
 
 import jinja2
 from fastapi import APIRouter, FastAPI, HTTPException, Response, status
@@ -58,7 +57,7 @@ def mount(app: FastAPI) -> None:
 
 
 @router.get("/builds", response_class=RedirectResponse)
-async def builds(repo: str, target_branch: Optional[str] = None) -> Response:
+async def builds(repo: str, target_branch: str | None = None) -> Response:
     url = f"/webui/builds.html?repo={repo}"
     if target_branch:
         url += f"&target_branch={target_branch}"
@@ -66,7 +65,7 @@ async def builds(repo: str, target_branch: Optional[str] = None) -> Response:
 
 
 @router.get("/builds/{name}", response_class=RedirectResponse)
-async def build(name: str, live: Optional[str] = None) -> Response:
+async def build(name: str, live: str | None = None) -> Response:
     build = controller.db.get(name)
     if not build:
         raise HTTPException(status.HTTP_404_NOT_FOUND)

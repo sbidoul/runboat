@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 
 from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -46,7 +46,7 @@ class Build(BaseModel):
     commit_info: github.CommitInfo
     deploy_link: str
     repo_target_branch_link: str
-    repo_pr_link: Optional[str]
+    repo_pr_link: str | None
     repo_commit_link: str
     webui_link: str
     status: models.BuildStatus
@@ -78,11 +78,11 @@ async def repos() -> list[models.Repo]:
     response_model_exclude_none=True,
 )
 async def builds(
-    repo: Optional[str] = None,
-    target_branch: Optional[str] = None,
-    branch: Optional[str] = None,
-    pr: Optional[int] = None,
-    status: Optional[models.BuildStatus] = None,
+    repo: str | None = None,
+    target_branch: str | None = None,
+    branch: str | None = None,
+    pr: int | None = None,
+    status: models.BuildStatus | None = None,
 ) -> list[models.Build]:
     return list(
         controller.db.search(
@@ -96,10 +96,10 @@ async def builds(
     dependencies=[Depends(authenticated)],
 )
 async def undeploy_builds(
-    repo: Optional[str] = None,
-    target_branch: Optional[str] = None,
-    branch: Optional[str] = None,
-    pr: Optional[int] = None,
+    repo: str | None = None,
+    target_branch: str | None = None,
+    branch: str | None = None,
+    pr: int | None = None,
 ) -> None:
     for build in controller.db.search(
         repo=repo, target_branch=target_branch, branch=branch, pr=pr
@@ -254,11 +254,11 @@ class BuildEventSource:
 @router.get("/build-events")
 async def build_events(
     request: Request,
-    repo: Optional[str] = None,
-    target_branch: Optional[str] = None,
-    branch: Optional[str] = None,
-    pr: Optional[int] = None,
-    build_name: Optional[str] = None,
+    repo: str | None = None,
+    target_branch: str | None = None,
+    branch: str | None = None,
+    pr: int | None = None,
+    build_name: str | None = None,
 ) -> EventSourceResponse:
     event_source = BuildEventSource(
         request, repo, target_branch, branch, pr, build_name

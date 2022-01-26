@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from pydantic import BaseModel, BaseSettings, validator
 
@@ -41,18 +40,18 @@ class Settings(BaseSettings):
     # The wildcard domain where the builds will be reacheable.
     build_domain: str
     # A dictionary of environment variables to set in the build container and jobs.
-    build_env: Optional[dict[str, str]]
+    build_env: dict[str, str] | None
     # A dictionary of secret environment variables to set in the build container and
     # jobs.
-    build_secret_env: Optional[dict[str, str]]
+    build_secret_env: dict[str, str] | None
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
-    build_template_vars: Optional[dict[str, str]]
+    build_template_vars: dict[str, str] | None
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
-    github_token: Optional[str]
+    github_token: str | None
     # The file with the python logging configuration to use for the runboat controller.
-    log_config: Optional[str]
+    log_config: str | None
     # The base url where the runboat UI and API is exposed on internet.
     # Used to generate backlinks in GitHub statuses
     base_url: str = "http://localhost:8000"

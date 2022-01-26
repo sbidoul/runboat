@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from pydantic import BaseModel, validator
@@ -26,7 +26,7 @@ async def _github_request(method: str, url: str, json: Any = None) -> Any:
 class CommitInfo(BaseModel):
     repo: str
     target_branch: str
-    pr: Optional[int]
+    pr: int | None
     git_commit: str
 
     @validator("repo")
