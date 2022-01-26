@@ -13,10 +13,3 @@ spec:
                 name: odoo
                 port:
                   number: 8069
-          - path: /longpolling
-            pathType: Prefix
-            backend:
-              service:
-                name: odoo
-                port:
-                  number: 8072

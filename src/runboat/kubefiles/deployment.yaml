@@ -38,8 +38,6 @@ spec:
           ports:
             - name: web
               containerPort: 8069
-            - name: longpolling
-              containerPort: 8072
           readinessProbe:
             tcpSocket:
               port: 8069
