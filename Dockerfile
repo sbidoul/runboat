@@ -2,8 +2,9 @@ FROM python:3.10
 
 LABEL maintainer="Stéphane Bidoul"
 
+ADD https://dl.k8s.io/release/stable.txt /tmp/kubectl-version.txt
 RUN curl -L \
-  "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+  "https://dl.k8s.io/release/$(cat /tmp/kubectl-version.txt)/bin/linux/amd64/kubectl" \
   -o /usr/local/bin/kubectl \
   && chmod +x /usr/local/bin/kubectl
 
