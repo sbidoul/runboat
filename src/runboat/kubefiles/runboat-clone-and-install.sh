@@ -15,7 +15,15 @@ git fetch origin $RUNBOAT_GIT_REF:build
 git checkout build
 
 # Install.
-oca_install_addons
+INSTALL_METHOD=${INSTALL_METHOD:-oca_install_addons}
+if [[ "${INSTALL_METHOD}" == "oca_install_addons" ]] ; then
+    oca_install_addons
+elif [[ "${INSTALL_METHOD}" == "editable_pip_install" ]] ; then
+    pip install -e .
+else
+    echo "Unsupported INSTALL_METHOD: '${INSTALL_METHOD}'"
+    exit 1
+fi
 
 # Keep a copy of the venv that we can re-use for shorter startup time.
 DEBIAN_FRONTEND=noninteractive apt-get -yqq install rsync

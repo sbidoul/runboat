@@ -7,6 +7,10 @@ from .exceptions import RepoOrBranchNotSupported
 
 class BuildSettings(BaseModel):
     image: str  # container image:tag
+    # These extend the respective global settings.
+    env: dict[str, str] = {}
+    secret_env: dict[str, str] = {}
+    template_vars: dict[str, str] = {}
 
 
 class RepoSettings(BaseModel):
@@ -40,13 +44,13 @@ class Settings(BaseSettings):
     # The wildcard domain where the builds will be reacheable.
     build_domain: str
     # A dictionary of environment variables to set in the build container and jobs.
-    build_env: dict[str, str] | None
+    build_env: dict[str, str] = {}
     # A dictionary of secret environment variables to set in the build container and
     # jobs.
-    build_secret_env: dict[str, str] | None
+    build_secret_env: dict[str, str] = {}
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
-    build_template_vars: dict[str, str] | None
+    build_template_vars: dict[str, str] = {}
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
     github_token: str | None
