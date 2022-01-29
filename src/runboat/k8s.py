@@ -171,9 +171,9 @@ def make_deployment_vars(
         commit_info=commit_info,
         image_name=image_name,
         image_tag=image_tag,
-        build_env=settings.build_env or {},
-        build_secret_env=settings.build_secret_env or {},
-        build_template_vars=settings.build_template_vars or {},
+        build_env=settings.build_env | build_settings.env,
+        build_secret_env=settings.build_secret_env | build_settings.secret_env,
+        build_template_vars=settings.build_template_vars | build_settings.template_vars,
     )
 
 
