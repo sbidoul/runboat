@@ -5,6 +5,7 @@ from pytest_mock import MockerFixture
 from runboat.app import app
 from runboat.controller import controller
 from runboat.github import CommitInfo
+from runboat.webhooks import _verify_github_signature
 
 client = TestClient(app)
 
@@ -136,4 +137,19 @@ def test_webhook_github_pr_close(mocker: MockerFixture) -> None:
         controller.undeploy_builds,
         repo="oca/mis-builder",
         pr=381,
+    )
+
+
+def test_verify_github_signature() -> None:
+    assert _verify_github_signature(None, None, b"body")  # no secret configured, ok
+    assert not _verify_github_signature(
+        None, b"secret", b"body"
+    )  # no X-Hub-Signature-256
+    assert not _verify_github_signature(
+        "sha256=invalid-sig", b"secret", b"body"
+    )  # no X-Hub-Signature-256
+    assert _verify_github_signature(
+        "sha256=dc46983557fea127b43af721467eb9b3fde2338fe3e14f51952aa8478c13d355",
+        b"secret",
+        b"body",
     )

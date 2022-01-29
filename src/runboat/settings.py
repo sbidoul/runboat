@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
     github_token: str | None
+    # The secret used to verify GitHub webhook signatures
+    github_webhook_secret: bytes | None
     # The file with the python logging configuration to use for the runboat controller.
     log_config: str | None
     # The base url where the runboat UI and API is exposed on internet.
