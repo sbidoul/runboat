@@ -1,3 +1,4 @@
+import hmac
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Header, Request
@@ -11,13 +12,33 @@ _logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _verify_github_signature(
+    x_hub_signature_256: str | None, secret: bytes | None, body: bytes
+) -> bool:
+    if not secret:
+        return True
+    if not x_hub_signature_256:
+        _logger.warning("Got payload without X-Hub-Signature-256")
+        return False
+    signature = "sha256=" + hmac.new(secret, body, "sha256").hexdigest()
+    if not hmac.compare_digest(signature, x_hub_signature_256):
+        _logger.warning("Got payload with invalid X-Hub-Signature-256")
+        return False
+    return True
+
+
 @router.post("/webhooks/github")
 async def receive_payload(
     background_tasks: BackgroundTasks,
     request: Request,
     x_github_event: str = Header(...),
+    x_hub_signature_256: str | None = Header(None),
 ) -> None:
-    # TODO check x-hub-signature
+    body = await request.body()
+    if not _verify_github_signature(
+        x_hub_signature_256, settings.github_webhook_secret, body
+    ):
+        return
     payload = await request.json()
     if x_github_event == "pull_request":
         repo = payload["repository"]["full_name"]
