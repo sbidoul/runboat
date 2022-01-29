@@ -85,7 +85,7 @@ def test_webhook_github_pr(action: str, mocker: MockerFixture) -> None:
     )
 
 
-@pytest.mark.parametrize("action", ["opened", "synchronize"])
+@pytest.mark.parametrize("action", ["opened", "synchronize", "closed"])
 def test_webhook_github_pr_unsupported_branch(
     action: str, mocker: MockerFixture
 ) -> None:
@@ -111,3 +111,29 @@ def test_webhook_github_pr_unsupported_branch(
     )
     response.raise_for_status()
     mock.assert_not_called()
+
+
+def test_webhook_github_pr_close(mocker: MockerFixture) -> None:
+    mock = mocker.patch("fastapi.BackgroundTasks.add_task")
+    response = client.post(
+        "/webhooks/github",
+        headers={
+            "X-GitHub-Event": "pull_request",
+        },
+        json={
+            "action": "closed",
+            "repository": {"full_name": "oca/mis-builder"},
+            "pull_request": {
+                "base": {
+                    "ref": "15.0",
+                },
+                "number": 381,
+            },
+        },
+    )
+    response.raise_for_status()
+    mock.assert_called_with(
+        controller.undeploy_builds,
+        repo="oca/mis-builder",
+        pr=381,
+    )

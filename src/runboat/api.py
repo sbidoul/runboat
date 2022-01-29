@@ -101,10 +101,7 @@ async def undeploy_builds(
     branch: str | None = None,
     pr: int | None = None,
 ) -> None:
-    for build in controller.db.search(
-        repo=repo, target_branch=target_branch, branch=branch, pr=pr
-    ):
-        await build.undeploy()
+    await controller.undeploy_builds(repo, target_branch, branch, pr)
 
 
 @router.post(

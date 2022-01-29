@@ -20,17 +20,17 @@ async def receive_payload(
     # TODO check x-hub-signature
     payload = await request.json()
     if x_github_event == "pull_request":
+        repo = payload["repository"]["full_name"]
+        target_branch = payload["pull_request"]["base"]["ref"]
+        if not settings.is_repo_and_branch_supported(repo, target_branch):
+            _logger.debug(
+                "Ignoring %s payload for unsupported repo %s or target branch %s",
+                x_github_event,
+                repo,
+                target_branch,
+            )
+            return
         if payload["action"] in ("opened", "synchronize"):
-            repo = payload["repository"]["full_name"]
-            target_branch = payload["pull_request"]["base"]["ref"]
-            if not settings.is_repo_and_branch_supported(repo, target_branch):
-                _logger.debug(
-                    "Ignoring %s payload for unsupported repo %s or target branch %s",
-                    x_github_event,
-                    repo,
-                    target_branch,
-                )
-                return
             background_tasks.add_task(
                 controller.deploy_commit,
                 CommitInfo(
@@ -39,6 +39,12 @@ async def receive_payload(
                     pr=payload["pull_request"]["number"],
                     git_commit=payload["pull_request"]["head"]["sha"],
                 ),
+            )
+        elif payload["action"] in ("closed",):
+            background_tasks.add_task(
+                controller.undeploy_builds,
+                repo=repo,
+                pr=payload["pull_request"]["number"],
             )
     elif x_github_event == "push":
         repo = payload["repository"]["full_name"]

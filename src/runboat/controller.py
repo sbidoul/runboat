@@ -106,6 +106,18 @@ class Controller:
         if build is None:
             await Build.deploy(commit_info)
 
+    async def undeploy_builds(
+        self,
+        repo: str | None = None,
+        target_branch: str | None = None,
+        branch: str | None = None,
+        pr: int | None = None,
+    ) -> None:
+        for build in self.db.search(
+            repo=repo, target_branch=target_branch, branch=branch, pr=pr
+        ):
+            await build.undeploy()
+
     async def get_build(self, build_name: str, db_only: bool = True) -> Build | None:
         build = self.db.get(build_name)
         if build is not None:
