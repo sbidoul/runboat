@@ -76,24 +76,32 @@ class RunboatBuildElement extends LitElement {
                 }
             </p>
             <p>
-                <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped"}">start</button>
-                <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started"}">stop</button>
-                <button @click="${this.resetHandler}">reset</button>
+                <button @click="${this.startHandler}" ?disabled="${this.build.status != "stopped" || this.build.status == RunboatBuildElement.clickedStatus}">start</button>
+                <button @click="${this.stopHandler}" ?disabled="${this.build.status != "started" || this.build.status == RunboatBuildElement.clickedStatus}">stop</button>
+                <button @click="${this.resetHandler}" ?disabled="${this.build.status == RunboatBuildElement.clickedStatus}">reset</button>
             </p>
         </div>
         `;
     }
 
     startHandler(e) {
-        fetch(`/api/v1/builds/${this.build.name}/start`, {method: 'POST'});
+        this.actionHandler("start");
     }
 
     stopHandler(e) {
-        fetch(`/api/v1/builds/${this.build.name}/stop`, {method: 'POST'});
+        this.actionHandler("stop");
     }
 
     resetHandler(e) {
-        fetch(`/api/v1/builds/${this.build.name}/reset`, {method: 'POST'});
+        this.actionHandler("reset");
+    }
+
+    static clickedStatus = "⏳";
+
+    actionHandler(action) {
+        this.build.status = RunboatBuildElement.clickedStatus;
+        this.requestUpdate();
+        fetch(`/api/v1/builds/${this.build.name}/${action}`, {method: 'POST'});
     }
 }
 
