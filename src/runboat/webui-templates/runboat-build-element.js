@@ -1,4 +1,4 @@
-import {LitElement, html, css} from 'https://unpkg.com/lit@2.0.2?module';
+import {LitElement, html, css} from 'https://unpkg.com/lit@2.1.2?module';
 import 'https://unpkg.com/@github/time-elements@latest?module';
 
 class RunboatBuildElement extends LitElement {
