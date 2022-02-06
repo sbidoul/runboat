@@ -1,0 +1,39 @@
+@startuml deployment
+
+actor "Runboat UI\n(Browser)" as RunboatUI
+
+component Runboat
+interface "WebUI: /builds, /builds/{name}\nSSE: /build-events\nAPI: /docs, /api/v1/...\n(8000)" as API
+interface "/webhooks/github" as Webhook
+
+interface "HTTP\n(80)" as IngressHTTP
+actor "Builds UI\n(Browser)" as BuildsUI
+component Kubernetes {
+    collections "Builds\n(Deployment,\nPersistentVolumeClaim,\n...)" as Builds
+    interface "HTTP\n(8069)" as BuildsHTTP
+    component Ingress
+}
+interface "Kubernetes API\n(HTTPS)" as K8SAPI
+
+database Postgres
+
+component GitHub
+
+Webhook - Runboat
+API -- Runboat
+
+GitHub -> Webhook
+
+RunboatUI <--> API
+
+K8SAPI - Kubernetes
+
+Runboat <-> K8SAPI  : "kubectl / HTTPS"
+
+Builds - BuildsHTTP
+BuildsHTTP <- Ingress
+Builds -- Postgres
+IngressHTTP -- Ingress
+BuildsUI --> IngressHTTP
+
+@enduml

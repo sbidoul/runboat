@@ -72,6 +72,34 @@ For running the controller (runboat itself):
 The controller can be run outside the kubernetes cluster or deployed inside it, or even
 in a different cluster.
 
+## Deployment quickstart
+
+A typical deployment looks like this.
+
+![Deployment diagram](./docs/deployment/deployment.png)
+
+The wiki has an example
+[docker-compose](https://github.com/sbidoul/runboat/wiki/example-docker-compose)
+configuration to get you started with running the runboat controller.
+
+In that docker compose, you will need to provide configuration parameters for the
+postgres database and the kubernetes cluster:
+
+- For postgres: host, port, user, password (the postgres user must exist and have
+  permissions to create databases)
+- For kubernetes:
+  - The name of the kubernetes namespace where the builds are deployed
+  - A KUBECONFIG for a kubernetes account that can create and delete resources in that
+    namespaces
+  - The name of a kubernetes Storage Class that can allocate Persistent Volumes that are
+    reclaimed on delete.
+  - The DNS domain corresponding to a wildcard DNS entry pointing to the kubernetes
+    ingress (so if your wildcard DNS record is `*.runboat-builds.mydomain.com`, you
+    provide `runboat-builds.mydomain.com`).
+
+Note that you can deploy Runboat itself as well Postgres inside the same kubernetes
+cluster, or even a different one, depending on your taste.
+
 ## Kubernetes resources
 
 All resources to be deployed in kubernetes for a build are in
