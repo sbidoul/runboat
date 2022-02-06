@@ -26,20 +26,20 @@ API -- Runboat
 
 Git -- GitHub
 GitHubAPI -- GitHub
-Webhook <-- GitHub : "Events:\npush,\npull_request"
-Runboat --> GitHubAPI : "Get Commit Info,\nSend Status updates"
+Webhook <.. GitHub : "Events:\npush,\npull_request"
+Runboat ..> GitHubAPI : "Get Commit Info,\nSend Status updates"
 
-RunboatUI <--> API
+RunboatUI <..> API
 
 Builds - BuildsHTTP
-BuildsHTTP <- Ingress
-Builds --> Git : "git clone"
-Builds -- Postgres
+BuildsHTTP <. Ingress
+Builds ..> Git : "git clone"
+Builds ..> Postgres
 IngressHTTP -- Ingress
-BuildsUI --> IngressHTTP
+BuildsUI ..> IngressHTTP
 
 K8SAPI - Kubernetes
 
-Runboat <-> K8SAPI  : "kubectl / HTTPS"
+Runboat <.> K8SAPI  : "kubectl / HTTPS"
 
 @enduml
