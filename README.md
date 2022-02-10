@@ -78,27 +78,27 @@ A typical deployment looks like this.
 
 ![Deployment diagram](./docs/deployment/deployment.png)
 
-The wiki has an example
-[docker-compose](https://github.com/sbidoul/runboat/wiki/example-docker-compose)
-configuration to get you started with running the runboat controller.
+The wiki has an example [docker-compose
+configuration](https://github.com/sbidoul/runboat/wiki/example-docker-compose) to get
+you started with running the runboat controller.
 
-In that docker compose, you will need to provide configuration parameters for the
-postgres database and the kubernetes cluster:
+In that docker compose, you must provide configuration parameters for the postgres
+database and the kubernetes cluster:
 
 - For postgres: host, port, user, password (the postgres user must exist and have
-  permissions to create databases)
+  permissions to create databases).
 - For kubernetes:
-  - The name of the kubernetes namespace where the builds are deployed
+  - The name of the kubernetes namespace where the builds are deployed.
   - A KUBECONFIG for a kubernetes account that can create and delete resources in that
-    namespaces
+    namespace.
   - The name of a kubernetes Storage Class that can allocate Persistent Volumes that are
     reclaimed on delete.
   - The DNS domain corresponding to a wildcard DNS entry pointing to the kubernetes
     ingress (so if your wildcard DNS record is `*.runboat-builds.mydomain.com`, you
     provide `runboat-builds.mydomain.com`).
 
-Note that you can deploy Runboat itself as well Postgres inside the same kubernetes
-cluster, or even a different one, depending on your taste.
+Note that you can deploy Runboat itself as well Postgres outside or inside the
+kubernetes cluster, or even a different one, depending on your taste.
 
 ## Kubernetes resources
 
@@ -161,7 +161,9 @@ should happen if there is more).
 
 Gunicorn also necessary so SIGINT/SIGTERM shutdowns after a few seconds. Since we use
 `run_in_executor`, SIGINT/SIGTERM handling does not work very well, and gunicorn makes
-it more robust. https://bugs.python.org/issue29309
+it more robust. See https://bugs.python.org/issue29309. This should resolve itself when
+we switch to using an async kubernetes client (tracked in
+[#6](https://github.com/sbidoul/runboat/issues/6)).
 
 ## Configuration
 
