@@ -28,10 +28,10 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 1Gi
+              memory: 2Gi
             requests:
               cpu: 1000m
-              memory: 2Gi
+              memory: 1Gi
       volumes:
         - name: runboat-scripts
           configMap:
