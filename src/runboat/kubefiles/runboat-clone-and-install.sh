@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -exo pipefail
 
 # Remove initialization sentinel, in case we are reinitializing.
 rm -fr /mnt/data/initialized
@@ -8,11 +8,10 @@ rm -fr /mnt/data/initialized
 # Remove addons dir, in case we are reinitializing after a previously
 # failed installation.
 rm -fr $ADDONS_DIR
-# Clone the repository at git reference into $ADDONS_DIR.
-git clone --quiet --filter=blob:none $RUNBOAT_GIT_REPO $ADDONS_DIR
+# Download the repository at git reference into $ADDONS_DIR.
+mkdir -p $ADDONS_DIR
 cd $ADDONS_DIR
-git fetch origin $RUNBOAT_GIT_REF:build
-git checkout build
+curl -sSL https://github.com/${RUNBOAT_GIT_REPO}/tarball/${RUNBOAT_GIT_REF} | tar zxf - --strip-components=1
 
 # Install.
 INSTALL_METHOD=${INSTALL_METHOD:-oca_install_addons}

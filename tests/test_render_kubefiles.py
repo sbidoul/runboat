@@ -37,7 +37,7 @@ configMapGenerator:
     literals:
       - PGDATABASE=build-name
       - ADDONS_DIR=/mnt/data/odoo-addons-dir
-      - RUNBOAT_GIT_REPO=https://github.com/oca/mis-builder
+      - RUNBOAT_GIT_REPO=oca/mis-builder
       - RUNBOAT_GIT_REF=abcdef123456789
   - name: runboat-scripts
     files:

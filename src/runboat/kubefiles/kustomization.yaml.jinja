@@ -41,7 +41,7 @@ configMapGenerator:
     literals:
       - PGDATABASE={{ build_name }}
       - ADDONS_DIR=/mnt/data/odoo-addons-dir
-      - RUNBOAT_GIT_REPO=https://github.com/{{ commit_info.repo }}
+      - RUNBOAT_GIT_REPO={{ commit_info.repo }}
       - RUNBOAT_GIT_REF={{ commit_info.git_commit }}
       {%- for key, value in build_env.items() %}
       - {{ key }}={{ value }}
