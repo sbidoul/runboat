@@ -14,6 +14,12 @@ fi
 # show what is installed (the venv in /opt/odoo-venv has been mounted)
 pip list
 
+# Add ADDONS_DIR to addons_path (because that oca_install_addons did,
+# but $ODOO_RC is not on a persistent volume, so it is lost when we
+# start in another container).
+echo "addons_path=${ADDONS_PATH},${ADDONS_DIR}" >> ${ODOO_RC}
+cat ${ODOO_RC}
+
 # Install 'deb' external dependencies of all Odoo addons found in path.
 DEBIAN_FRONTEND=noninteractive apt-get install -qq --no-install-recommends $(oca_list_external_dependencies deb)
 
