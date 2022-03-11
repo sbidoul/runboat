@@ -25,6 +25,7 @@ else
 fi
 
 # Keep a copy of the venv that we can re-use for shorter startup time.
+DEBIAN_FRONTEND=noninteractive apt-get -yqq update
 DEBIAN_FRONTEND=noninteractive apt-get -yqq install rsync
 rsync -a --delete /opt/odoo-venv/ /mnt/data/odoo-venv
 
