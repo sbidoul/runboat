@@ -9,6 +9,8 @@ rm -fr /mnt/data/*
 # failed installation.
 rm -fr $ADDONS_DIR
 # Download the repository at git reference into $ADDONS_DIR.
+# We use curl instead of git clone because the git clone method used more than 1GB RAM,
+# which exceeded the default pod memory limit.
 mkdir -p $ADDONS_DIR
 cd $ADDONS_DIR
 curl -sSL https://github.com/${RUNBOAT_GIT_REPO}/tarball/${RUNBOAT_GIT_REF} | tar zxf - --strip-components=1
