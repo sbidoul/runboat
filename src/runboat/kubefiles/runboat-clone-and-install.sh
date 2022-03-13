@@ -2,8 +2,8 @@
 
 set -exo pipefail
 
-# Remove initialization sentinel, in case we are reinitializing.
-rm -fr /mnt/data/initialized
+# Remove initialization sentinel and data, in case we are reinitializing.
+rm -fr /mnt/data/*
 
 # Remove addons dir, in case we are reinitializing after a previously
 # failed installation.
@@ -25,7 +25,6 @@ else
 fi
 
 # Keep a copy of the venv that we can re-use for shorter startup time.
-DEBIAN_FRONTEND=noninteractive apt-get -yqq install rsync
-rsync -a --delete /opt/odoo-venv/ /mnt/data/odoo-venv
+cp -ar /opt/odoo-venv/ /mnt/data/odoo-venv
 
 touch /mnt/data/initialized
