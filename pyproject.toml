@@ -32,6 +32,7 @@ test = [
 ]
 mypy = [
     "mypy>=0.930",
+    "types-urllib3",
 ]
 
 [project.urls]
@@ -51,5 +52,5 @@ strict = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = ["uvicorn.*", "urllib3.*", "kubernetes.*", "ansi2html"]
+module = ["uvicorn.*", "kubernetes.*", "ansi2html"]
 ignore_missing_imports = true
