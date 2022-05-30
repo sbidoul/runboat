@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 from enum import Enum
-from typing import Iterator, Protocol, cast
+from typing import Any, Iterator, Protocol, cast
 from weakref import WeakSet
 
 from .github import CommitInfo
@@ -40,18 +40,12 @@ class BuildsDb:
         self._listeners.add(listener)
 
     @classmethod
-    def _build_from_row(cls, row: sqlite3.Row) -> Build:
+    def _build_from_row(cls, row: "sqlite3.Row[Any]") -> Build:
         commit_info_fields = {"repo", "target_branch", "pr", "git_commit"}
         commit_info = CommitInfo(**{k: row[k] for k in commit_info_fields})
-        # TODO: remove type ignore below with mypy > 0.943 which should include
-        # https://github.com/python/typeshed/commit/b0611bc03105f9f7455846ddc
         return Build(
             commit_info=commit_info,
-            **{
-                k: row[k]
-                for k in row.keys()  # type: ignore[no-untyped-call]
-                if k not in commit_info_fields
-            },
+            **{k: row[k] for k in row.keys() if k not in commit_info_fields},
         )
 
     def reset(self) -> None:
