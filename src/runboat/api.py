@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, Request, status

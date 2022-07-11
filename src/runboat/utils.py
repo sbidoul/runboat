@@ -5,14 +5,11 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
 from typing import (
     Any,
-    AsyncGenerator,
-    Awaitable,
     Callable,
-    Generator,
-    Iterator,
     ParamSpec,
     TypeVar,
 )
+from collections.abc import AsyncGenerator, Awaitable, Generator, Iterator
 
 _pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="sync_to_async")
 
