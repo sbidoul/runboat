@@ -145,7 +145,7 @@ async def init_log(name: str) -> str:
     log = await build.init_log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
+    return Ansi2HTMLConverter().convert(log)
 
 
 @router.get(
@@ -157,7 +157,7 @@ async def log(name: str) -> str:
     log = await build.log()
     if not log:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="No log found.")
-    return Ansi2HTMLConverter().convert(log)  # type: ignore [no-any-return]
+    return Ansi2HTMLConverter().convert(log)
 
 
 @router.post("/builds/{name}/start")
