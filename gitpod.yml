@@ -1,0 +1,20 @@
+image:
+  file: Dockerfile
+
+ports:
+- port: 5432 # PostgreSQL
+  onOpen: ignore
+- port: 8069 # Odoo
+  onOpen: open-preview
+- port: 8000 # API
+  onOpen: open-browser
+
+tasks:
+  - init: |
+      pip install --upgrade pip
+      cp .env.sample .env
+      echo "More work need to be done on .env file..."
+  - command: uvicorn runboat.app:app --log-config=log-config.yaml
+  
+  # run in prod:
+  #gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app.
