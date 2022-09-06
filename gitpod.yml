@@ -15,6 +15,6 @@ tasks:
       cp .env.sample .env
       echo "More work need to be done on .env file..."
   - command: uvicorn runboat.app:app --log-config=log-config.yaml
-  
+
   # run in prod:
   #gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app.
