@@ -45,6 +45,7 @@ class Build(BaseModel):
     name: str
     commit_info: github.CommitInfo
     deploy_link: str
+    deploy_link_mailhog: str
     repo_target_branch_link: str
     repo_pr_link: str | None
     repo_commit_link: str

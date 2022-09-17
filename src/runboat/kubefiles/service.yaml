@@ -13,5 +13,9 @@ spec:
       targetPort: 8072
       protocol: TCP
       name: longpolling
+    - port: 8025
+      targetPort: 8025
+      protocol: TCP
+      name: mailhog-web
   selector:
     app: odoo

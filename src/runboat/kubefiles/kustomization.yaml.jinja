@@ -3,7 +3,8 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
+  - ingress_odoo.yaml
+  - ingress_mailhog.yaml
   {%- elif mode == "initialize" %}
   - pvc.yaml
   - initialize.yaml
@@ -28,6 +29,9 @@ images:
   - name: odoo
     newName: "{{ image_name }}"
     newTag: "{{ image_tag }}"
+  - name: mailhog
+    newName: "mailhog/mailhog"
+    newTag: "latest"
 
 secretGenerator:
   - name: odoosecretenv
@@ -71,3 +75,10 @@ patches:
       - op: replace
         path: /spec/rules/0/host
         value: {{ build_slug }}.{{ build_domain }}
+  - target:
+      kind: Ingress
+      name: mailhog
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: {{ build_slug }}.mail.{{ build_domain }}

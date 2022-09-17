@@ -136,6 +136,10 @@ class Build(BaseModel):
         return f"http://{self.slug}.{settings.build_domain}"
 
     @property
+    def deploy_link_mailhog(self) -> str:
+        return f"http://{self.slug}.mail.{settings.build_domain}"
+
+    @property
     def repo_target_branch_link(self) -> str:
         return (
             f"https://github.com/{self.commit_info.repo}"
