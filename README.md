@@ -171,10 +171,17 @@ See environment variables examples in [Dockerfile](./Dockerfile),
 [.env.sample](./.env.sample) and their documentation in
 [settings.py](./src/runboat/settings.py).
 
-## Author and contributors
+## Credits
 
-Authored by Stéphane Bidoul (@sbidoul).
+Authored by Stéphane Bidoul (@sbidoul) and
+[contributors](https://github.com/sbidoul/runboat/graphs/contributors) with support of
+[ACSONE](https://acsone.eu).
 
 Contributions welcome.
 
 Do not hesitate to reach out for help on how to get started.
+
+## License
+
+`runboat` is distributed under the terms of the
+[MIT](https://spdx.org/licenses/MIT.html) license.
