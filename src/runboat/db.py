@@ -1,7 +1,8 @@
 import logging
 import sqlite3
+from collections.abc import Iterator
 from enum import Enum
-from typing import Any, Iterator, Protocol, cast
+from typing import Any, Protocol, cast
 from weakref import WeakSet
 
 from .github import CommitInfo
