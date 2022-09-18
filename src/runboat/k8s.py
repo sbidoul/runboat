@@ -4,11 +4,12 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable, Generator, TypedDict, cast
+from typing import Any, Callable, TypedDict, cast
 
 import urllib3
 from jinja2 import Template
