@@ -19,7 +19,7 @@ class RunboatBuildElement extends LitElement {
 
     static styles = css`
         .build-card {
-            width: 16.2em;
+            width: 16.5em;
             padding: 0.5em;
             border-radius: 0.5em;
             background-color: lightgray;
