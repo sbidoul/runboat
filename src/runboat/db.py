@@ -2,7 +2,7 @@ import logging
 import sqlite3
 from collections.abc import Iterator
 from enum import Enum
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 from weakref import WeakSet
 
 from .github import CommitInfo
@@ -41,7 +41,7 @@ class BuildsDb:
         self._listeners.add(listener)
 
     @classmethod
-    def _build_from_row(cls, row: "sqlite3.Row[Any]") -> Build:
+    def _build_from_row(cls, row: "sqlite3.Row") -> Build:
         commit_info_fields = {"repo", "target_branch", "pr", "git_commit"}
         commit_info = CommitInfo(**{k: row[k] for k in commit_info_fields})
         return Build(
