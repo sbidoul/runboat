@@ -56,6 +56,37 @@ spec:
             requests:
               cpu: 50m
               memory: 100Mi
+        - name: mailhog
+          image: mailhog
+          env:
+            - name: MH_API_BIND_ADDR
+              value: 0.0.0.0:8025
+            - name: MH_UI_BIND_ADDR
+              value: 0.0.0.0:8025
+            - name: MH_SMTP_BIND_ADDR
+              value: 0.0.0.0:1025
+          ports:
+            - name: smtp
+              containerPort: 1025
+            - name: web
+              containerPort: 8025
+          readinessProbe:
+            tcpSocket:
+              port: 8025
+            initialDelaySeconds: 2
+            periodSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: 8025
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            limits:
+              cpu: 100m
+              memory: 200Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
       volumes:
         - name: runboat-scripts
           configMap:

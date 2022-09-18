@@ -31,4 +31,6 @@ unbuffer $(which odoo || which openerp-server) \
   --no-database-list \
   --database ${PGDATABASE} \
   --db-filter=^${PGDATABASE} \
-  --db_user=${PGUSER}
+  --db_user=${PGUSER} \
+  --smtp=localhost \
+  --smtp-port=1025

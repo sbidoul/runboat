@@ -7,7 +7,8 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
+  - ingress_odoo.yaml
+  - ingress_mailhog.yaml
 
 namespace: runboat-builds
 
@@ -26,6 +27,9 @@ images:
   - name: odoo
     newName: "ghcr.io/oca/oca-ci"
     newTag: "py3.8-odoo15.0"
+  - name: mailhog
+    newName: "mailhog/mailhog"
+    newTag: "latest"
 
 secretGenerator:
   - name: odoosecretenv
@@ -64,6 +68,13 @@ patches:
       - op: replace
         path: /spec/rules/0/host
         value: build-slug.runboat.odoo-community.org
+  - target:
+      kind: Ingress
+      name: mailhog
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: build-slug.mail.runboat.odoo-community.org
 """
 
 
