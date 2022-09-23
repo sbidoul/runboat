@@ -282,6 +282,9 @@ def log(build_name: str, job_kind: DeploymentMode | None) -> str | None:
         corev1.read_namespaced_pod_log(
             pod.metadata.name,
             namespace=settings.build_namespace,
+            container=pod.metadata.annotations.get(
+                "kubectl.kubernetes.io/default-container"
+            ),
             tail_lines=None if job_kind else None,
             follow=False,
         ),
