@@ -70,7 +70,7 @@ spec:
           ports:
             - name: smtp
               containerPort: 1025
-            - name: web
+            - name: mailhog-web
               containerPort: 8025
           readinessProbe:
             tcpSocket:
