@@ -21,7 +21,14 @@ echo "addons_path=${ADDONS_PATH},${ADDONS_DIR}" >> ${ODOO_RC}
 cat ${ODOO_RC}
 
 # Install 'deb' external dependencies of all Odoo addons found in path.
-DEBIAN_FRONTEND=noninteractive apt-get install -qq --no-install-recommends $(oca_list_external_dependencies deb)
+# This is also something oca_install_addons did, but that is not persisted
+# when we start in another container.
+deb_deps=$(oca_list_external_dependencies deb)
+if [ -n "$deb_deps" ]; then
+    apt-get update -qq
+    # Install 'deb' external dependencies of all Odoo addons found in path.
+    DEBIAN_FRONTEND=noninteractive apt-get install -qq --no-install-recommends ${deb_deps}
+fi
 
 oca_wait_for_postgres
 
