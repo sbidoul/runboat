@@ -141,6 +141,22 @@ resources:
 - it removes the deployment finalizers and deletes resources matching the
   `runboat/build` label after the cleanup job succeeded.
 
+### Alternative Kubefiles
+
+By default, Runboat relies on its bundled Kubefiles:
+[src/runboat/kubefiles](./src/runboat/kubefiles)
+
+But you can define:
+
+- a different default path through environment variable
+  `RUNBOAT_BUILD_DEFAULT_KUBEFILES_PATH`;
+- a different path for a specific repo,
+  by defining the `kubefiles_path` key in `RUNBOAT_REPOS`, e.g.:
+
+```
+RUNBOAT_REPOS=[{"repo": "^oca/.*", "branch": "^15.0$", "builds": [{"image": "ghcr.io/oca/oca-ci/py3.8-odoo15.0:latest", "kubefiles_path": "/tmp"}]}]
+```
+
 ## Developing
 
 - setup environment variables (start from `.env.sample`, the meaning of the environment

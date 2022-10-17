@@ -1,8 +1,18 @@
 import re
+from pathlib import Path
 
 from pydantic import BaseModel, BaseSettings, validator
 
 from .exceptions import RepoOrBranchNotSupported
+
+
+def validate_path(v: str | None) -> Path | None:
+    if not v:
+        return None
+    p = Path(v)
+    if not p.is_dir():
+        raise ValueError(f"Invalid path: {p}")
+    return p
 
 
 class BuildSettings(BaseModel):
@@ -11,6 +21,11 @@ class BuildSettings(BaseModel):
     env: dict[str, str] = {}
     secret_env: dict[str, str] = {}
     template_vars: dict[str, str] = {}
+    kubefiles_path: Path | None
+
+    validate_kubefiles_path = validator("kubefiles_path", allow_reuse=True)(
+        validate_path
+    )
 
 
 class RepoSettings(BaseModel):
@@ -51,6 +66,8 @@ class Settings(BaseSettings):
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
     build_template_vars: dict[str, str] = {}
+    # The path of the default kubefiles to be used.
+    build_default_kubefiles_path: Path | None
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
     github_token: str | None
@@ -65,6 +82,10 @@ class Settings(BaseSettings):
     additional_footer_html: str = ""
     # Disable posting of statuses to GitHub commits
     disable_commit_statuses: bool = False
+
+    validate_build_default_kubefiles_path = validator(
+        "build_default_kubefiles_path", allow_reuse=True
+    )(validate_path)
 
     def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
         for repo_settings in self.repos:
