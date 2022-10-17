@@ -179,11 +179,23 @@ def make_deployment_vars(
 
 
 @contextmanager
-def _render_kubefiles(deployment_vars: DeploymentVars) -> Generator[Path, None, None]:
-    with resources.path(
-        __package__, "kubefiles"
+def _get_kubefiles_path(kubefiles_path: Path | None) -> Generator[Path, None, None]:
+    if kubefiles_path:
+        yield kubefiles_path
+    else:
+        with resources.path(__package__, "kubefiles") as default_kubefiles_path:
+            yield default_kubefiles_path
+
+
+@contextmanager
+def _render_kubefiles(
+    kubefiles_path: Path | None, deployment_vars: DeploymentVars
+) -> Generator[Path, None, None]:
+    with _get_kubefiles_path(
+        kubefiles_path
     ) as kubefiles_path, tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
+        _logger.debug("kubefiles path: %s", kubefiles_path)
         # TODO async copytree, or make this whole _render_kubefiles run_in_executor
         shutil.copytree(kubefiles_path, tmp_path, dirs_exist_ok=True)
         template = Template((tmp_path / "kustomization.yaml.jinja").read_text())
@@ -203,8 +215,8 @@ async def _kubectl(args: list[str]) -> None:
         raise subprocess.CalledProcessError(return_code, ["kubectl"] + args)
 
 
-async def deploy(deployment_vars: DeploymentVars) -> None:
-    with _render_kubefiles(deployment_vars) as tmp_path:
+async def deploy(kubefiles_path: Path | None, deployment_vars: DeploymentVars) -> None:
+    with _render_kubefiles(kubefiles_path, deployment_vars) as tmp_path:
         # Dry-run first to avoid creating some resources when the creation of the
         # deployment itself fails. In such cases, we would have resource leak as the
         # existence of deployment is how the controller knows it has something to

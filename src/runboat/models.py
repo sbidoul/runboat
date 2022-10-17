@@ -178,27 +178,39 @@ class Build(BaseModel):
         return await k8s.log(self.name, job_kind=None)
 
     @classmethod
-    async def deploy(cls, commit_info: CommitInfo) -> None:
-        """Deploy a build, without starting it."""
-        name = f"b{uuid.uuid4()}"
-        slug = cls.make_slug(commit_info)
-        _logger.info(f"Deploying {slug} ({name}).")
+    async def _deploy(
+        cls, commit_info: CommitInfo, name: str, slug: str, job_kind: k8s.DeploymentMode
+    ) -> None:
+        """Internal method to prepare for and handle a k8s.deploy()"""
         build_settings = settings.get_build_settings(
             commit_info.repo, commit_info.target_branch
+        )[0]
+        kubefiles_path = (
+            build_settings.kubefiles_path or settings.build_default_kubefiles_path
         )
         deployment_vars = k8s.make_deployment_vars(
-            k8s.DeploymentMode.deployment,
+            job_kind,
             name,
             slug,
             commit_info,
-            build_settings[0],
+            build_settings,
         )
-        await k8s.deploy(deployment_vars)
+        await k8s.deploy(kubefiles_path, deployment_vars)
         await github.notify_status(
             commit_info.repo,
             commit_info.git_commit,
             GitHubStatusState.pending,
             target_url=None,
+        )
+
+    @classmethod
+    async def deploy(cls, commit_info: CommitInfo) -> None:
+        """Deploy a build, without starting it."""
+        name = f"b{uuid.uuid4()}"
+        slug = cls.make_slug(commit_info)
+        _logger.info(f"Deploying {slug} ({name}).")
+        await cls._deploy(
+            commit_info, name, slug, job_kind=k8s.DeploymentMode.deployment
         )
 
     async def start(self) -> None:
@@ -229,41 +241,27 @@ class Build(BaseModel):
         _logger.info(f"Redeploying {self}.")
         await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.cleanup)
         await k8s.kill_job(self.name, job_kind=k8s.DeploymentMode.initialize)
-        deployment_vars = k8s.make_deployment_vars(
-            k8s.DeploymentMode.deployment,
+        await self._deploy(
+            self.commit_info,
             self.name,
             self.slug,
-            self.commit_info,
-            settings.get_build_settings(
-                self.commit_info.repo, self.commit_info.target_branch
-            )[0],
-        )
-        await k8s.deploy(deployment_vars)
-        await github.notify_status(
-            self.commit_info.repo,
-            self.commit_info.git_commit,
-            GitHubStatusState.pending,
-            target_url=None,
+            job_kind=k8s.DeploymentMode.deployment,
         )
 
     async def initialize(self) -> None:
         """Launch the initialization job."""
-        # Start initizalization job. on_initialize_{started,succeeded,failed} callbacks
+        # Start initialization job. on_initialize_{started,succeeded,failed} callbacks
         # will follow from job events.
         _logger.info(f"Deploying initialize job for {self}.")
-        deployment_vars = k8s.make_deployment_vars(
-            k8s.DeploymentMode.initialize,
+        await self._deploy(
+            self.commit_info,
             self.name,
             self.slug,
-            self.commit_info,
-            settings.get_build_settings(
-                self.commit_info.repo, self.commit_info.target_branch
-            )[0],
+            job_kind=k8s.DeploymentMode.initialize,
         )
-        await k8s.deploy(deployment_vars)
 
     async def cleanup(self) -> None:
-        """Launch the clenaup job."""
+        """Launch the cleanup job."""
         # Kill the initialization job to reduce conflict with the cleanup job, such as
         # the database being created by the initialization after the cleanup job has
         # completed.
@@ -273,16 +271,9 @@ class Build(BaseModel):
         # Start cleanup job. on_cleanup_{started,succeeded,failed} callbacks will follow
         # from job events.
         _logger.info(f"Deploying cleanup job for {self}.")
-        deployment_vars = k8s.make_deployment_vars(
-            k8s.DeploymentMode.cleanup,
-            self.name,
-            self.slug,
-            self.commit_info,
-            settings.get_build_settings(
-                self.commit_info.repo, self.commit_info.target_branch
-            )[0],
+        await self._deploy(
+            self.commit_info, self.name, self.slug, job_kind=k8s.DeploymentMode.cleanup
         )
-        await k8s.deploy(deployment_vars)
 
     async def on_initialize_started(self) -> None:
         if self.init_status == BuildInitStatus.started:
