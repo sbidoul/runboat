@@ -23,7 +23,7 @@ class BuildSettings(BaseModel):
     template_vars: dict[str, str] = {}
     kubefiles_path: Path | None
 
-    validate_kubefiles_path = validator("kubefiles_path", allow_reuse=True)(
+    validate_kubefiles_path = validator("kubefiles_path", allow_reuse=True, pre=True)(
         validate_path
     )
 
@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     disable_commit_statuses: bool = False
 
     validate_build_default_kubefiles_path = validator(
-        "build_default_kubefiles_path", allow_reuse=True
+        "build_default_kubefiles_path", allow_reuse=True, pre=True
     )(validate_path)
 
     def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
