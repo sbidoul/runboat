@@ -1,5 +1,0 @@
-[flake8]
-max-line-length = 88
-; E203 for black
-; B008 does not like fastapi Depends
-extend-ignore = E203,B008

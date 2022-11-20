@@ -181,7 +181,7 @@ class Build(BaseModel):
     async def _deploy(
         cls, commit_info: CommitInfo, name: str, slug: str, job_kind: k8s.DeploymentMode
     ) -> None:
-        """Internal method to prepare for and handle a k8s.deploy()"""
+        """Internal method to prepare for and handle a k8s.deploy()."""
         build_settings = settings.get_build_settings(
             commit_info.repo, commit_info.target_branch
         )[0]

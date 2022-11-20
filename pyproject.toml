@@ -38,8 +38,25 @@ mypy = [
 [project.urls]
 Home = "https://github.com/sbidoul/runboat"
 
-[tool.isort]
-profile = 'black'
+[tool.ruff]
+fix = false
+select = [
+    "E", "F", "U", "N", "S", "C", "B", "A", "I", "T", "Q", "YTT", "BLE", "C", "RUF", "M"
+]
+ignore = [
+    "B008",
+    "BLE001",
+    "N805",
+    "N818",
+    "S101",
+    "U007",
+]
+
+[tool.ruff.mccabe]
+max-complexity = 15
+
+[tool.ruff.isort]
+known-first-party = ["runboat"]
 
 [tool.pytest.ini_options]
 env_override_existing_values = 1
