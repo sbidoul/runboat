@@ -34,8 +34,8 @@ def sync_to_async_iterator(
     def async_next(iterator: Iterator[R]) -> R:
         try:
             return next(iterator)
-        except StopIteration:
-            raise StopAsyncIteration()
+        except StopIteration as e:
+            raise StopAsyncIteration() from e
 
     @sync_to_async
     def async_iterator_func(*args: Any, **kwargs: Any) -> Generator[R, None, None]:
