@@ -39,17 +39,18 @@ mypy = [
 Home = "https://github.com/sbidoul/runboat"
 
 [tool.ruff]
-fix = false
+fix = true
+target-version = "py310"
 select = [
-    "E", "F", "U", "N", "S", "C", "B", "A", "I", "T", "Q", "YTT", "BLE", "C", "RUF", "M"
-]
-ignore = [
-    "B008",
-    "BLE001",
-    "N805",
-    "N818",
-    "S101",
-    "U007",
+    "F", # pyflakes
+    "E", # pycodestyle
+    "W", # pycodestyle
+    "C90", # mccabe
+    "I", # isort
+    "UP", # pyupgrade
+    "T10", # flake8-debugger
+    "PLE", # pylint errors
+    "RUF",
 ]
 
 [tool.ruff.mccabe]

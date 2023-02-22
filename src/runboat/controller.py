@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from collections.abc import Awaitable
-from typing import Any, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from . import k8s
 from .db import BuildsDb

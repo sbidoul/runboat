@@ -4,12 +4,12 @@ import os
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable, TypedDict, cast
+from typing import Any, TypedDict, cast
 
 import urllib3
 from jinja2 import Template
@@ -212,7 +212,7 @@ async def _kubectl(args: list[str]) -> None:
     )
     return_code = await proc.wait()
     if return_code != 0:
-        raise subprocess.CalledProcessError(return_code, ["kubectl"] + args)
+        raise subprocess.CalledProcessError(return_code, ["kubectl", *args])
 
 
 async def deploy(kubefiles_path: Path | None, deployment_vars: DeploymentVars) -> None:

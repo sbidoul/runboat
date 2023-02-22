@@ -1,10 +1,10 @@
 import asyncio
 import functools
 import re
-from collections.abc import AsyncGenerator, Awaitable, Generator, Iterator
+from collections.abc import AsyncGenerator, Awaitable, Callable, Generator, Iterator
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 _pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="sync_to_async")
 
