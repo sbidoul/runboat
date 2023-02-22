@@ -13,7 +13,7 @@ oca_wait_for_postgres
 # Drop database, in case we are reinitializing.
 dropdb --if-exists $PGDATABASE
 
-ADDONS=$(addons --addons-dir ${ADDONS_DIR} --include "${INCLUDE}" --exclude "${EXCLUDE}" list)
+ADDONS=$(manifestoo --select-addons-dir ${ADDONS_DIR} --select-include "${INCLUDE}" --select-exclude "${EXCLUDE}" list --separator=,)
 
 unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
