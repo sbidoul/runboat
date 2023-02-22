@@ -49,6 +49,7 @@ select = [
     "I", # isort
     "UP", # pyupgrade
     "T10", # flake8-debugger
+    "T20", # flake8-print
     "PLE", # pylint errors
     "RUF",
 ]
