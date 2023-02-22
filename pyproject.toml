@@ -71,3 +71,6 @@ show_error_codes = true
 [[tool.mypy.overrides]]
 module = ["uvicorn.*", "kubernetes.*", "ansi2html"]
 ignore_missing_imports = true
+
+[tool.pip-deepfreeze.sync]
+extras = "test,mypy"
