@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 from ansi2html import Ansi2HTMLConverter
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sse_starlette.sse import EventSourceResponse
 from starlette.status import HTTP_404_NOT_FOUND
 
@@ -18,6 +18,8 @@ router = APIRouter()
 
 
 class Status(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     deployed: int
     max_deployed: int
     failed: int
@@ -29,19 +31,17 @@ class Status(BaseModel):
     max_initializing: int
     undeploying: int
 
-    class Config:
-        orm_mode = True
-
 
 class Repo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     link: str
 
-    class Config:
-        orm_mode = True
-
 
 class Build(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     commit_info: github.CommitInfo
     deploy_link: str
@@ -53,9 +53,6 @@ class Build(BaseModel):
     status: models.BuildStatus
     created: datetime.datetime
     last_scaled: datetime.datetime
-
-    class Config:
-        orm_mode = True
 
 
 class BuildEvent(BaseModel):

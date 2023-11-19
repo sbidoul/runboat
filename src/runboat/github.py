@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from .exceptions import NotFoundOnGitHub
 from .settings import settings
@@ -32,7 +32,7 @@ class CommitInfo(BaseModel):
     pr: int | None
     git_commit: str
 
-    @validator("repo")
+    @field_validator("repo")
     def validate_repo(cls, v: str) -> str:
         return v.lower()
 

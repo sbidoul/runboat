@@ -16,6 +16,8 @@ dependencies = [
     "httpx",
     "jinja2",
     "kubernetes",
+    "pydantic>=2",
+    "pydantic-settings",
     "rich",
     "sse-starlette",
     "uvicorn",
