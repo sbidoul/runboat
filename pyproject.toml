@@ -11,7 +11,7 @@ classifiers = [
 ]
 dependencies = [
     "ansi2html",
-    "fastapi",
+    "fastapi>=0.93",
     "gunicorn",
     "httpx",
     "jinja2",
