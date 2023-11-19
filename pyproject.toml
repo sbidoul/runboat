@@ -20,6 +20,7 @@ dependencies = [
     "sse-starlette",
     "uvicorn",
 ]
+requires-python = "==3.12.*"
 dynamic = ["version", "description"]
 
 [project.optional-dependencies]
