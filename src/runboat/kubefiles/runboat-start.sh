@@ -14,6 +14,9 @@ fi
 # show what is installed (the venv in /opt/odoo-venv has been mounted)
 pip list
 
+# Make sure users cannot create databases.
+echo "admin_passwd=$(python3 -c 'import secrets; print(secrets.token_hex())')" >> ${ODOO_RC}
+
 # Add ADDONS_DIR to addons_path (because that oca_install_addons did,
 # but $ODOO_RC is not on a persistent volume, so it is lost when we
 # start in another container).
@@ -35,8 +38,6 @@ oca_wait_for_postgres
 # --db_user is necessary for Odoo <= 10
 unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
-  --no-database-list \
-  --database ${PGDATABASE} \
   --db-filter=^${PGDATABASE} \
   --db_user=${PGUSER} \
   --smtp=localhost \
