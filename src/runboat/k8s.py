@@ -183,7 +183,9 @@ def _get_kubefiles_path(kubefiles_path: Path | None) -> Generator[Path, None, No
     if kubefiles_path:
         yield kubefiles_path
     else:
-        with resources.path(__package__, "kubefiles") as default_kubefiles_path:
+        with resources.as_file(
+            resources.files(__package__).joinpath("kubefiles")
+        ) as default_kubefiles_path:
             yield default_kubefiles_path
 
 
