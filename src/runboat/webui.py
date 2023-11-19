@@ -40,7 +40,9 @@ def mount(app: FastAPI) -> None:
     directory, which is then mounted under the /webui route.
     """
     webui_path = Path(__file__).parent / "webui"
-    with resources.path("runboat", "webui-templates") as webui_template_path:
+    with resources.as_file(
+        resources.files(__package__).joinpath("webui-templates")
+    ) as webui_template_path:
         for path in webui_template_path.iterdir():
             if path.name.endswith(".jinja"):
                 template = jinja2.Template(path.read_text())

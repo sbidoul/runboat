@@ -27,7 +27,6 @@ def _make_build(
             pr=pr or None,
             git_commit="0d35a10f161b410f2baa3d416a338d191b6dabc0",
         ),
-        image="ghcr.io/oca/oca-ci:py3.8-odoo15.0",
         status=status or BuildStatus.starting,
         init_status=init_status or BuildInitStatus.todo,
         desired_replicas=0,

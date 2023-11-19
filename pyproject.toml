@@ -11,15 +11,18 @@ classifiers = [
 ]
 dependencies = [
     "ansi2html",
-    "fastapi",
+    "fastapi>=0.93",
     "gunicorn",
     "httpx",
     "jinja2",
     "kubernetes",
+    "pydantic>=2",
+    "pydantic-settings",
     "rich",
     "sse-starlette",
     "uvicorn",
 ]
+requires-python = "==3.12.*"
 dynamic = ["version", "description"]
 
 [project.optional-dependencies]
@@ -37,6 +40,8 @@ mypy = [
 
 [project.urls]
 Home = "https://github.com/sbidoul/runboat"
+
+# ruff
 
 [tool.ruff]
 fix = true
@@ -60,19 +65,30 @@ max-complexity = 15
 [tool.ruff.isort]
 known-first-party = ["runboat"]
 
+# pytest
+
 [tool.pytest.ini_options]
 env_override_existing_values = 1
 env_files = [".env.test"]
 asyncio_mode = "strict"
-# flake8 config is in .flake8
+
+# mypy
 
 [tool.mypy]
 strict = true
 show_error_codes = true
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["uvicorn.*", "kubernetes.*", "ansi2html"]
+module = ["kubernetes.*"]
 ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# pip-deepfreeze
 
 [tool.pip-deepfreeze.sync]
 extras = "test,mypy"

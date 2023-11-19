@@ -1,7 +1,9 @@
 import re
 from pathlib import Path
+from typing import Annotated
 
-from pydantic import BaseModel, BaseSettings, validator
+from pydantic import BaseModel, BeforeValidator, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .exceptions import RepoOrBranchNotSupported
 
@@ -21,11 +23,7 @@ class BuildSettings(BaseModel):
     env: dict[str, str] = {}
     secret_env: dict[str, str] = {}
     template_vars: dict[str, str] = {}
-    kubefiles_path: Path | None
-
-    validate_kubefiles_path = validator("kubefiles_path", allow_reuse=True, pre=True)(
-        validate_path
-    )
+    kubefiles_path: Annotated[Path | None, BeforeValidator(validate_path)] = None
 
 
 class RepoSettings(BaseModel):
@@ -33,7 +31,7 @@ class RepoSettings(BaseModel):
     branch: str  # regex
     builds: list[BuildSettings]
 
-    @validator("builds")
+    @field_validator("builds")
     def validate_builds(cls, v: list[BuildSettings]) -> list[BuildSettings]:
         if len(v) != 1:
             raise ValueError(
@@ -43,6 +41,8 @@ class RepoSettings(BaseModel):
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="RUNBOAT_")
+
     # Configuration for supported repositories and branches.
     repos: list[RepoSettings]
     # A user and password to protect the most sensitive operations of the API.
@@ -59,15 +59,17 @@ class Settings(BaseSettings):
     # The wildcard domain where the builds will be reacheable.
     build_domain: str
     # A dictionary of environment variables to set in the build container and jobs.
-    build_env: dict[str, str] = {}
+    build_env: dict[str, str] = {}  # noqa: RUF012
     # A dictionary of secret environment variables to set in the build container and
     # jobs.
-    build_secret_env: dict[str, str] = {}
+    build_secret_env: dict[str, str] = {}  # noqa: RUF012
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
-    build_template_vars: dict[str, str] = {}
+    build_template_vars: dict[str, str] = {}  # noqa: RUF012
     # The path of the default kubefiles to be used.
-    build_default_kubefiles_path: Path | None
+    build_default_kubefiles_path: Annotated[
+        Path | None, BeforeValidator(validate_path)
+    ] = None
     # The token to use for the GitHub api calls (to query branches and pull requests,
     # and report build statuses).
     github_token: str | None
@@ -82,10 +84,6 @@ class Settings(BaseSettings):
     additional_footer_html: str = ""
     # Disable posting of statuses to GitHub commits
     disable_commit_statuses: bool = False
-
-    validate_build_default_kubefiles_path = validator(
-        "build_default_kubefiles_path", allow_reuse=True, pre=True
-    )(validate_path)
 
     def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
         for repo_settings in self.repos:
@@ -105,9 +103,6 @@ class Settings(BaseSettings):
             return False
         else:
             return True
-
-    class Config:
-        env_prefix = "RUNBOAT_"
 
 
 settings = Settings()

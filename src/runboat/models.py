@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Optional
 
 from kubernetes.client.models.v1_deployment import V1Deployment
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from . import github, k8s
 from .github import CommitInfo, GitHubStatusState
@@ -38,6 +38,8 @@ class BuildInitStatus(str, Enum):
 
 
 class Build(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     deployment_name: str
     commit_info: CommitInfo
@@ -46,9 +48,6 @@ class Build(BaseModel):
     desired_replicas: int
     last_scaled: datetime.datetime
     created: datetime.datetime
-
-    class Config:
-        read_with_orm_mode = True
 
     def __str__(self) -> str:
         return f"{self.slug} ({self.name})"
@@ -377,11 +376,10 @@ class Build(BaseModel):
 
 
 class Repo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
 
     @property
     def link(self) -> str:
         return f"https://github.com/{self.name}"
-
-    class Config:
-        read_with_orm_mode = True
