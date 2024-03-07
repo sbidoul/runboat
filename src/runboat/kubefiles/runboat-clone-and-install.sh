@@ -14,6 +14,8 @@ rm -fr $ADDONS_DIR
 mkdir -p $ADDONS_DIR
 cd $ADDONS_DIR
 curl -sSL https://github.com/${RUNBOAT_GIT_REPO}/tarball/${RUNBOAT_GIT_REF} | tar zxf - --strip-components=1
+# We need to create a git repo in case wheels are built for any of these modules later
+git init && git add . && git commit -m "init"
 
 # Install.
 INSTALL_METHOD=${INSTALL_METHOD:-oca_install_addons}
