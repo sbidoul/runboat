@@ -193,9 +193,10 @@ def _get_kubefiles_path(kubefiles_path: Path | None) -> Generator[Path, None, No
 def _render_kubefiles(
     kubefiles_path: Path | None, deployment_vars: DeploymentVars
 ) -> Generator[Path, None, None]:
-    with _get_kubefiles_path(
-        kubefiles_path
-    ) as kubefiles_path, tempfile.TemporaryDirectory() as tmp_dir:
+    with (
+        _get_kubefiles_path(kubefiles_path) as kubefiles_path,
+        tempfile.TemporaryDirectory() as tmp_dir,
+    ):
         tmp_path = Path(tmp_dir)
         _logger.debug("kubefiles path: %s", kubefiles_path)
         # TODO async copytree, or make this whole _render_kubefiles run_in_executor

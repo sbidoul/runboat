@@ -19,8 +19,7 @@ class SortOrder(Enum):
 
 
 class BuildListener(Protocol):
-    def on_build_event(self, event: BuildEvent, build: Build) -> None:
-        ...
+    def on_build_event(self, event: BuildEvent, build: Build) -> None: ...
 
 
 class BuildsDb:

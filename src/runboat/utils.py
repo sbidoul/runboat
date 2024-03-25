@@ -28,7 +28,7 @@ def sync_to_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
 
 
 def sync_to_async_iterator(
-    iterator_func: Callable[P, Generator[R, None, None]]
+    iterator_func: Callable[P, Generator[R, None, None]],
 ) -> Callable[P, AsyncGenerator[R, None]]:
     @sync_to_async
     def async_next(iterator: Iterator[R]) -> R:
