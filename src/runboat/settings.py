@@ -59,13 +59,13 @@ class Settings(BaseSettings):
     # The wildcard domain where the builds will be reacheable.
     build_domain: str
     # A dictionary of environment variables to set in the build container and jobs.
-    build_env: dict[str, str] = {}  # noqa: RUF012
+    build_env: dict[str, str] = {}
     # A dictionary of secret environment variables to set in the build container and
     # jobs.
-    build_secret_env: dict[str, str] = {}  # noqa: RUF012
+    build_secret_env: dict[str, str] = {}
     # A dictionary of variables to be set in the jinja rendering context for the
     # kubefiles.
-    build_template_vars: dict[str, str] = {}  # noqa: RUF012
+    build_template_vars: dict[str, str] = {}
     # The path of the default kubefiles to be used.
     build_default_kubefiles_path: Annotated[
         Path | None, BeforeValidator(validate_path)
