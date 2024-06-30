@@ -46,6 +46,8 @@ Home = "https://github.com/sbidoul/runboat"
 [tool.ruff]
 fix = true
 target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     "F", # pyflakes
     "E", # pycodestyle
@@ -59,10 +61,10 @@ select = [
     "RUF",
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["runboat"]
 
 # pytest
