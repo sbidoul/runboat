@@ -56,11 +56,11 @@ For running the builds:
 - A namespace in a kubernetes cluster.
 - A wildcard DNS domain that points to the kubernetes ingress.
 - A postgres database, accessible from within the cluster namespace with a user with
-  permissions to create database.
+  permissions to create databases.
 
 For running the controller (runboat itself):
 
-- Python 3.10
+- Python 3.12
 - sqlite3 >= 3.25
 - `kubectl`
 - A `KUBECONFIG` or an in-cluster service account that provides access to the namespace
