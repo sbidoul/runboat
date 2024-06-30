@@ -45,7 +45,6 @@ Home = "https://github.com/sbidoul/runboat"
 
 [tool.ruff]
 fix = true
-target-version = "py310"
 
 [tool.ruff.lint]
 select = [

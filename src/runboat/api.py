@@ -237,7 +237,7 @@ class BuildEventSource:
         while True:
             try:
                 event = await asyncio.wait_for(self.queue.get(), timeout=10)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
             else:
                 yield event

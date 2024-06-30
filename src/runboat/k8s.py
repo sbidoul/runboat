@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 import urllib3
 from jinja2 import Template
@@ -18,7 +18,6 @@ from kubernetes.client.exceptions import ApiException
 from kubernetes.client.models.v1_deployment import V1Deployment
 from kubernetes.client.models.v1_job import V1Job
 from pydantic import BaseModel
-from typing_extensions import NotRequired
 
 from .github import CommitInfo
 from .settings import BuildSettings, settings
