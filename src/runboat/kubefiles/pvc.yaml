@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: data
+  name: runboat-pvc-001
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: do-block-storage
   resources:
     requests:
       storage: 200Mi
