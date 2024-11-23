@@ -1,5 +1,6 @@
 import hmac
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Header, Request
 
@@ -31,8 +32,8 @@ def _verify_github_signature(
 async def receive_payload(
     background_tasks: BackgroundTasks,
     request: Request,
-    x_github_event: str = Header(...),
-    x_hub_signature_256: str | None = Header(None),
+    x_github_event: Annotated[str, Header(...)],
+    x_hub_signature_256: Annotated[str | None, Header(None)],
 ) -> None:
     body = await request.body()
     if not _verify_github_signature(

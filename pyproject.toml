@@ -58,6 +58,7 @@ select = [
     "T20", # flake8-print
     "PLE", # pylint errors
     "RUF",
+    "FAST", # fastapi
 ]
 
 [tool.ruff.lint.mccabe]
