@@ -28,8 +28,8 @@ def sync_to_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
 
 
 def sync_to_async_iterator(
-    iterator_func: Callable[P, Generator[R, None, None]],
-) -> Callable[P, AsyncGenerator[R, None]]:
+    iterator_func: Callable[P, Generator[R]],
+) -> Callable[P, AsyncGenerator[R]]:
     @sync_to_async
     def async_next(iterator: Iterator[R]) -> R:
         try:
@@ -38,11 +38,11 @@ def sync_to_async_iterator(
             raise StopAsyncIteration() from e
 
     @sync_to_async
-    def async_iterator_func(*args: Any, **kwargs: Any) -> Generator[R, None, None]:
+    def async_iterator_func(*args: Any, **kwargs: Any) -> Generator[R]:
         return iterator_func(*args, **kwargs)
 
     @wraps(iterator_func)
-    async def inner(*args: Any, **kwargs: Any) -> AsyncGenerator[R, None]:
+    async def inner(*args: Any, **kwargs: Any) -> AsyncGenerator[R]:
         iterator = await async_iterator_func(*args, **kwargs)
         while True:
             try:

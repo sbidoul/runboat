@@ -60,7 +60,7 @@ For running the builds:
 
 For running the controller (runboat itself):
 
-- Python 3.12
+- Python 3.13
 - sqlite3 >= 3.25
 - `kubectl`
 - A `KUBECONFIG` or an in-cluster service account that provides access to the namespace
