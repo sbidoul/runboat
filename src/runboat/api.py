@@ -224,7 +224,7 @@ class BuildEventSource:
             return
         self.queue.put_nowait(self._serialize(event, build))
 
-    async def events(self) -> AsyncGenerator[str, None]:
+    async def events(self) -> AsyncGenerator[str]:
         for build in controller.db.search(
             repo=self.repo,
             target_branch=self.target_branch,

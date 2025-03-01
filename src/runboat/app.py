@@ -7,7 +7,7 @@ from . import __version__, api, controller, k8s, webhooks, webui
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await k8s.load_kube_config()
     await controller.controller.start()
     yield
