@@ -35,7 +35,6 @@ test = [
 ]
 mypy = [
     "mypy>=0.930",
-    "types-urllib3",
 ]
 
 [project.urls]
