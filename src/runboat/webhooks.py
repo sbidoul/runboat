@@ -33,7 +33,7 @@ async def receive_payload(
     background_tasks: BackgroundTasks,
     request: Request,
     x_github_event: Annotated[str, Header(...)],
-    x_hub_signature_256: Annotated[str | None, Header(None)],
+    x_hub_signature_256: Annotated[str | None, Header(...)] = None,
 ) -> None:
     body = await request.body()
     if not _verify_github_signature(
