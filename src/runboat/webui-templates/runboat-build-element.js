@@ -1,5 +1,5 @@
-import {LitElement, html, css} from 'https://unpkg.com/lit@2.1.2?module';
-import 'https://unpkg.com/@github/time-elements@latest?module';
+import {LitElement, html, css} from 'https://esm.run/lit@2.1.2?module';
+import 'https://esm.run/@github/time-elements@latest?module';
 
 class RunboatBuildElement extends LitElement {
     static get properties() {
