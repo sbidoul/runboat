@@ -182,7 +182,7 @@ class Controller:
                         f"but the corresponding deployment {build_name} is gone. "
                         f"Deleting all build resources."
                     )
-                    await k8s.delete_resources(build_name)
+                    await k8s.delete_deployment_resources(build_name)
                     continue
                 if job_kind == "initialize":
                     if job.status.active:
