@@ -319,7 +319,7 @@ class Build(BaseModel):
 
     async def on_cleanup_succeeded(self) -> None:
         _logger.info(f"Cleanup job succeeded for {self}, deleting resources.")
-        await k8s.delete_resources(self.name)
+        await k8s.delete_deployment_resources(self.name)
         _logger.debug("Removing finalizer for %s.", self)
         await self._patch(remove_finalizers=True, not_found_ok=True)
 
