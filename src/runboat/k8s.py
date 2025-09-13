@@ -242,13 +242,12 @@ async def deploy(kubefiles_path: Path | None, deployment_vars: DeploymentVars) -
 
 
 async def delete_resources(build_name: str) -> None:
-    # TODO delete all resources with runboat/build label
     await _kubectl(
         [
             "-n",
             settings.build_namespace,
             "delete",
-            "configmap,deployment,ingress,job,secret,service,pvc",
+            "all",
             "-l",
             f"runboat/build={build_name}",
             "--wait=false",
