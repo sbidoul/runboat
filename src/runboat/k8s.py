@@ -200,10 +200,12 @@ def _render_kubefiles(
         _logger.debug("kubefiles path: %s", kubefiles_path)
         # TODO async copytree, or make this whole _render_kubefiles run_in_executor
         shutil.copytree(kubefiles_path, tmp_path, dirs_exist_ok=True)
-        template = Template((tmp_path / "kustomization.yaml.jinja").read_text())
-        (tmp_path / "kustomization.yaml").write_text(
-            template.render(dict(deployment_vars))
-        )
+        for template_path in tmp_path.rglob("*.jinja"):
+            template = Template(template_path.read_text())
+            template_path.with_suffix("").write_text(
+                template.render(dict(deployment_vars))
+            )
+            template_path.unlink()
         yield tmp_path
 
 
