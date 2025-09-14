@@ -4,7 +4,7 @@ import re
 from collections.abc import AsyncGenerator, Awaitable, Callable, Generator, Iterator
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import Any
 
 _pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="sync_to_async")
 
@@ -13,12 +13,7 @@ def slugify(s: str | int) -> str:
     return re.sub(r"[^a-z0-9]", "-", str(s).lower())
 
 
-P = ParamSpec("P")
-R = TypeVar("R")
-T = TypeVar("T")
-
-
-def sync_to_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
+def sync_to_async[**P, R](func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     @wraps(func)
     async def inner(*args: Any, **kwargs: Any) -> R:
         f = functools.partial(func, *args, **kwargs)
@@ -27,7 +22,7 @@ def sync_to_async(func: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     return inner
 
 
-def sync_to_async_iterator(
+def sync_to_async_iterator[**P, R](
     iterator_func: Callable[P, Generator[R]],
 ) -> Callable[P, AsyncGenerator[R]]:
     @sync_to_async
