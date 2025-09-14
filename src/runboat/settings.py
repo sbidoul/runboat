@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     deployment_resource_types: str = (
         "deployment,service,ingress,configmap,secret,pvc,job"
     )
+    # Set to true if there is no cleanup job, and merely deleting the resources
+    # is enough.
+    no_cleanup_job: bool = False
 
     def get_build_settings(self, repo: str, target_branch: str) -> list[BuildSettings]:
         for repo_settings in self.repos:

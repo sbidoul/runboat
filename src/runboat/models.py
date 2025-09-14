@@ -259,8 +259,16 @@ class Build(BaseModel):
             job_kind=k8s.DeploymentMode.initialize,
         )
 
+    async def _delete_deployment_resources(self) -> None:
+        await k8s.delete_deployment_resources(self.name)
+        _logger.debug("Removing finalizer for %s.", self)
+        await self._patch(remove_finalizers=True, not_found_ok=True)
+
     async def cleanup(self) -> None:
         """Launch the cleanup job."""
+        if settings.no_cleanup_job:
+            await self._delete_deployment_resources()
+            return
         # Kill the initialization job to reduce conflict with the cleanup job, such as
         # the database being created by the initialization after the cleanup job has
         # completed.
@@ -319,9 +327,7 @@ class Build(BaseModel):
 
     async def on_cleanup_succeeded(self) -> None:
         _logger.info(f"Cleanup job succeeded for {self}, deleting resources.")
-        await k8s.delete_deployment_resources(self.name)
-        _logger.debug("Removing finalizer for %s.", self)
-        await self._patch(remove_finalizers=True, not_found_ok=True)
+        await self._delete_deployment_resources()
 
     async def on_cleanup_failed(self) -> None:
         _logger.error(f"Cleanup job failed for {self}, manual intervention required.")
