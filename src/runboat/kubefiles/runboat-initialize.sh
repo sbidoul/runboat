@@ -16,6 +16,11 @@ dropdb --if-exists ${PGDATABASE}-baseonly
 
 ADDONS=$(manifestoo --select-addons-dir ${ADDONS_DIR} --select-include "${INCLUDE}" --select-exclude "${EXCLUDE}" list --separator=,)
 
+# In Odoo 19+, demo data is not loaded by default. We enable it via $ODOO_RC,
+# because --with-demo does not exists in previous version and would error out,
+# while unknown options in the configuration file are ignored.
+echo "with_demo = True" >> $ODOO_RC
+
 # Create the baseonly database if installation failed.
 unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
