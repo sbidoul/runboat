@@ -138,6 +138,8 @@ class DeploymentMode(str, Enum):
     deployment = "deployment"
     initialize = "initialize"
     cleanup = "cleanup"
+    start = "start"
+    stop = "stop"
 
 
 class DeploymentVars(BaseModel):

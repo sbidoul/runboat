@@ -195,12 +195,6 @@ class Build(BaseModel):
             build_settings,
         )
         await k8s.deploy(kubefiles_path, deployment_vars)
-        await github.notify_status(
-            commit_info.repo,
-            commit_info.git_commit,
-            GitHubStatusState.pending,
-            target_url=None,
-        )
 
     @classmethod
     async def deploy(cls, commit_info: CommitInfo) -> None:
@@ -211,6 +205,12 @@ class Build(BaseModel):
         await cls._deploy(
             commit_info, name, slug, job_kind=k8s.DeploymentMode.deployment
         )
+        await github.notify_status(
+            commit_info.repo,
+            commit_info.git_commit,
+            GitHubStatusState.pending,
+            target_url=None,
+        )
 
     async def start(self) -> None:
         """Start build if init succeeded, or reinitialize if failed."""
@@ -218,6 +218,12 @@ class Build(BaseModel):
             _logger.info(f"Ignoring start command for {self} that is {self.status}.")
             return
         _logger.info(f"Starting {self} that was last scaled on {self.last_scaled}.")
+        await self._deploy(
+            self.commit_info,
+            self.name,
+            self.slug,
+            job_kind=k8s.DeploymentMode.start,
+        )
         await self._patch(desired_replicas=1)
 
     async def stop(self) -> None:
@@ -226,6 +232,12 @@ class Build(BaseModel):
             return
         _logger.info(f"Stopping {self} that was last scaled on {self.last_scaled}.")
         await self._patch(desired_replicas=0)
+        await self._deploy(
+            self.commit_info,
+            self.name,
+            self.slug,
+            job_kind=k8s.DeploymentMode.stop,
+        )
 
     async def undeploy(self) -> None:
         # To undeploy, we delete the deployment. Due to the finalizer, the deletion
@@ -245,6 +257,12 @@ class Build(BaseModel):
             self.name,
             self.slug,
             job_kind=k8s.DeploymentMode.deployment,
+        )
+        await github.notify_status(
+            self.commit_info.repo,
+            self.commit_info.git_commit,
+            GitHubStatusState.pending,
+            target_url=None,
         )
 
     async def initialize(self) -> None:
@@ -300,6 +318,12 @@ class Build(BaseModel):
             # is restarting, and is notified of existing initialization jobs.
             return
         _logger.info(f"Initialization job succeded for {self}, ready to start.")
+        await self._deploy(
+            self.commit_info,
+            self.name,
+            self.slug,
+            job_kind=k8s.DeploymentMode.stop,
+        )
         if await self._patch(init_status=BuildInitStatus.succeeded):
             await github.notify_status(
                 self.commit_info.repo,
@@ -314,6 +338,12 @@ class Build(BaseModel):
             # restarting, and is notified of existing initialization jobs.
             return
         _logger.info(f"Initialization job failed for {self}.")
+        await self._deploy(
+            self.commit_info,
+            self.name,
+            self.slug,
+            job_kind=k8s.DeploymentMode.stop,
+        )
         if await self._patch(init_status=BuildInitStatus.failed, desired_replicas=0):
             await github.notify_status(
                 self.commit_info.repo,
