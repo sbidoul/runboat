@@ -138,6 +138,8 @@ class DeploymentMode(str, Enum):
     deployment = "deployment"
     initialize = "initialize"
     cleanup = "cleanup"
+    start = "start"
+    stop = "stop"
 
 
 class DeploymentVars(BaseModel):
@@ -260,6 +262,7 @@ async def delete_deployment_resources(build_name: str) -> None:
 @sync_to_async
 def kill_job(build_name: str, job_kind: DeploymentMode) -> None:
     # TODO delete all resources with runboat/build and runboat/job-kind label
+    assert job_kind in (DeploymentMode.initialize, DeploymentMode.cleanup)
     batchv1 = client.BatchV1Api()
     batchv1.delete_collection_namespaced_job(
         namespace=settings.build_namespace,

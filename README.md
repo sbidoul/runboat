@@ -104,15 +104,21 @@ kubernetes cluster, or even a different one, depending on your taste.
 
 All resources to be deployed in kubernetes for a build are in
 [src/runboat/kubefiles](./src/runboat/kubefiles). They are gathered together from a
-`kustomization.yaml` jinja template that leads to three possible resource groups
+`kustomization.yaml` jinja template that leads to 5 possible resource groups
 depending on a `mode` variable in the jinja rendering context:
 
 - `deployment` creates a kubernetes deployment with its associated resources (pvc,
-  service, ingress, ...);
-- `initialization` creates a job that creates the database;
-- `cleanup` creates a job that drops the database;
+  service, ingress, ...).
+- `initialization` creates a job that performs installation and initializes the database;
+- `start` updates the resources before scaling up the deployment to 1. This can be
+  useful to scale up other resources that must only be present while the main
+  deployment is running.
+- `stop` updates the resources after initialization and before scaling down the
+  deployment to 0. This can be useful to scale down other resources that must
+  only be present while the main deployment is running.
+- `cleanup` creates a job that perform cleanup before tearing down all resources.
 
-Besides the three modes, the controller has limited knowledge of what the kubefiles
+Besides the 5 modes, the controller has limited knowledge of what the kubefiles
 actually deploy. It expects the following to hold true:
 
 - the `runboat/build` label is set on all resources, with the unique build name as
