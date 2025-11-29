@@ -16,8 +16,11 @@ namespace: {{ namespace }}
 
 namePrefix: "{{ build_name }}-"
 
-commonLabels:
-  runboat/build: "{{ build_name }}"
+labels:
+  - pairs:
+      runboat/build: "{{ build_name }}"
+    includeSelectors: true
+    includeTemplates: true
 
 commonAnnotations:
   runboat/repo: "{{ commit_info.repo }}"
