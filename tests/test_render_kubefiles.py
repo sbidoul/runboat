@@ -14,8 +14,11 @@ namespace: runboat-builds
 
 namePrefix: "build-name-"
 
-commonLabels:
-  runboat/build: "build-name"
+labels:
+  - pairs:
+      runboat/build: "build-name"
+    includeSelectors: true
+    includeTemplates: true
 
 commonAnnotations:
   runboat/repo: "oca/mis-builder"
