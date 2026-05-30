@@ -16,8 +16,10 @@ Runboat has the following main components:
 - An in-memory database of deployed builds, with their current status.
 - A REST API to list builds and trigger new deployments as well as start, stop, redeploy
   or undeploy builds.
-- A GitHub webhook to automatically trigger new builds on pushes to branches and pull
+- A git forge webhook to automatically trigger new builds on pushes to branches and pull
   requests of supported repositories and branches (configured via regular expressions).
+  GitHub is the default; Forgejo/Gitea and other GitHub-compatible forges are supported
+  via `RUNBOAT_FORGE_API_BASE_URL` and `RUNBOAT_FORGE_WEB_BASE_URL`.
 - A controller that performs the following tasks:
 
   - monitor deployments in a kubernetes namespaces to maintain the in-memory database;

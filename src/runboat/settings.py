@@ -70,10 +70,17 @@ class Settings(BaseSettings):
     build_default_kubefiles_path: Annotated[
         Path | None, BeforeValidator(validate_path)
     ] = None
-    # The token to use for the GitHub api calls (to query branches and pull requests,
-    # and report build statuses).
+    # The base URL of the git forge API (e.g. https://api.github.com for GitHub,
+    # or https://git.example.com/api/v1 for Forgejo/Gitea).
+    # Defaults to the GitHub API for backwards compatibility.
+    forge_api_base_url: str = "https://api.github.com"
+    # The base URL of the git forge web UI (e.g. https://github.com for GitHub,
+    # or https://git.example.com for Forgejo/Gitea).
+    forge_web_base_url: str = "https://github.com"
+    # The token to use for the git forge API calls (to query branches and pull
+    # requests, and report build statuses).
     github_token: str | None = None
-    # The secret used to verify GitHub webhook signatures
+    # The secret used to verify git forge webhook signatures (X-Hub-Signature-256).
     github_webhook_secret: bytes | None = None
     # The file with the python logging configuration to use for the runboat controller.
     log_config: str | None = None
