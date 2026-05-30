@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 async def _github_request(method: str, url: str, json: Any = None) -> Any:
     async with httpx.AsyncClient() as client:
-        full_url = f"https://api.github.com{url}"
+        full_url = f"{settings.forge_api_base_url}{url}"
         headers = {
             "Accept": "application/vnd.github.v3+json",
         }
@@ -21,7 +21,7 @@ async def _github_request(method: str, url: str, json: Any = None) -> Any:
             headers["Authorization"] = f"token {settings.github_token}"
         response = await client.request(method, full_url, headers=headers, json=json)
         if response.status_code == 404:
-            raise NotFoundOnGitHub(f"GitHub URL not found: {full_url}.")
+            raise NotFoundOnGitHub(f"Forge URL not found: {full_url}.")
         response.raise_for_status()
         return response.json()
 

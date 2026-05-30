@@ -141,23 +141,22 @@ class Build(BaseModel):
     @property
     def repo_target_branch_link(self) -> str:
         return (
-            f"https://github.com/{self.commit_info.repo}"
-            f"/tree/{self.commit_info.target_branch}"
+            f"{settings.forge_web_base_url}/{self.commit_info.repo}"
+            f"/src/branch/{self.commit_info.target_branch}"
         )
 
     @property
     def repo_pr_link(self) -> str | None:
         if not self.commit_info.pr:
             return None
-        return f"https://github.com/{self.commit_info.repo}/pull/{self.commit_info.pr}"
+        return f"{settings.forge_web_base_url}/{self.commit_info.repo}/pulls/{self.commit_info.pr}"
 
     @property
     def repo_commit_link(self) -> str:
-        link = f"https://github.com/{self.commit_info.repo}"
+        link = f"{settings.forge_web_base_url}/{self.commit_info.repo}"
         if self.commit_info.pr:
             return (
-                f"{link}/pull/{self.commit_info.pr}"
-                f"/commits/{self.commit_info.git_commit}"
+                f"{link}/pulls/{self.commit_info.pr}"
             )
         else:
             return f"{link}/commit/{self.commit_info.git_commit}"
@@ -418,4 +417,4 @@ class Repo(BaseModel):
 
     @property
     def link(self) -> str:
-        return f"https://github.com/{self.name}"
+        return f"{settings.forge_web_base_url}/{self.name}"
