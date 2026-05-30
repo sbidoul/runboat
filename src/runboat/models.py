@@ -155,9 +155,7 @@ class Build(BaseModel):
     def repo_commit_link(self) -> str:
         link = f"{settings.forge_web_base_url}/{self.commit_info.repo}"
         if self.commit_info.pr:
-            return (
-                f"{link}/pulls/{self.commit_info.pr}"
-            )
+            return f"{link}/pulls/{self.commit_info.pr}"
         else:
             return f"{link}/commit/{self.commit_info.git_commit}"
 
