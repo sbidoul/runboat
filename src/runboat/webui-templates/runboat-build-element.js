@@ -1,5 +1,5 @@
 import {LitElement, html, css} from 'https://esm.run/lit@2.1.2?module';
-import 'https://esm.run/@github/time-elements@latest?module';
+import 'https://esm.run/@github/relative-time-element@latest?module';
 
 class RunboatBuildElement extends LitElement {
     static get properties() {
@@ -36,9 +36,10 @@ class RunboatBuildElement extends LitElement {
         .build-status-failed {
             background-color: lightcoral;
         }
-        time-ago {
+        relative-time {
             color: gray;
             white-space: nowrap;
+            font-size: small
         }
         p {
             margin-top: 0.5em;
@@ -61,7 +62,7 @@ class RunboatBuildElement extends LitElement {
                 ${this.build.commit_info?.git_commit?
                     html`(<a href="${this.build.repo_commit_link}">${this.build.commit_info?.git_commit.substring(0, 8)}</a>)`:""
                 }
-                <time-ago datetime="${this.build.created}"></time-ago>
+                <relative-time datetime="${this.build.created}"></relative-time>
             </p>
             <p>
                 ${this.build.status || "undeployed"}
