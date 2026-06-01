@@ -23,7 +23,8 @@ dependencies = [
     "uvicorn",
 ]
 requires-python = "==3.13.*"
-dynamic = ["version", "description"]
+version = "0.2"
+description = "A simple Odoo runbot lookalike using kubernetes."
 
 [project.optional-dependencies]
 test = [
@@ -89,8 +90,3 @@ ignore_missing_imports = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
-# pip-deepfreeze
-
-[tool.pip-deepfreeze.sync]
-extras = "test,mypy"
