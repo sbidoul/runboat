@@ -31,9 +31,32 @@ unbuffer $(which odoo || which openerp-server) \
 
 # Try to install all addons, but do not fail in case of error, to let the build start
 # so users can work with the 'baseonly' database.
-unbuffer $(which odoo || which openerp-server) \
+if unbuffer $(which odoo || which openerp-server) \
   --data-dir=/mnt/data/odoo-data-dir \
   --db-template=template1 \
   -d ${PGDATABASE} \
   -i ${ADDONS:-base} \
-  --stop-after-init || dropdb --if-exists ${PGDATABASE} && exit 0
+  --stop-after-init ; then
+  # Grant admin all groups (except the exclusive portal/public user types) so
+  # addon menus are visible to reviewers; best effort, never fails the build.
+  $(which odoo || which openerp-server) shell \
+    --data-dir=/mnt/data/odoo-data-dir \
+    -d ${PGDATABASE} \
+    --no-http <<'PYEOF' || true
+Groups = env["res.groups"]
+admin = env.ref("base.user_admin", raise_if_not_found=False) or env.ref("base.user_root")
+field = "group_ids" if "group_ids" in admin._fields else "groups_id"
+bad = Groups.browse()
+for xid in ("base.group_portal", "base.group_public"):
+    g = env.ref(xid, raise_if_not_found=False)
+    if g:
+        bad |= g
+closure = next((f for f in ("all_implied_ids", "trans_implied_ids") if f in Groups._fields), "implied_ids")
+groups = (Groups.search([("share", "=", False)]) - bad).filtered(lambda g: not (g[closure] & bad))
+admin.write({field: [(4, g.id) for g in groups]})
+env.cr.commit()
+PYEOF
+else
+  dropdb --if-exists ${PGDATABASE}
+fi
+exit 0
