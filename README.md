@@ -167,16 +167,15 @@ RUNBOAT_REPOS=[{"repo": "^oca/.*", "branch": "^15.0$", "builds": [{"image": "ghc
 
 - setup environment variables (start from `.env.sample`, the meaning of the environment
   variables is documented in [settings.py](./src/runboat/settings.py))
-- create a virtualenv, make sure to have pip>=21.3.1 and `pip install -c
-  requirements.txt -e .[test]`
-- run with `uvicorn runboat.app:app --log-config=log-config.yaml`
+- install uv and run `uv sync --extra test`
+- run with `uv run uvicorn runboat.app:app --log-config=log-config.yaml`
 - api documentation is at `http://localhost:8000/docs`
-- run tests with `pytest` (environment variables used in tests are declared in
+- run tests with `uv run pytest` (environment variables used in tests are declared in
   `.env.test`)
 
 ## Running in production
 
-`gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app`.
+`uv run gunicorn -w 1 -k runboat.uvicorn.RunboatUvicornWorker runboat.app:app`.
 
 One and only one worker process is allowed at the moment (although nothing really bad
 should happen if there is more).

@@ -89,8 +89,3 @@ ignore_missing_imports = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
-# pip-deepfreeze
-
-[tool.pip-deepfreeze.sync]
-extras = "test,mypy"
